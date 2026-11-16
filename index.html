@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCA Cricket Scorebook Generator</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --panel: #ffffff;
+    --border: #d0d7de;
+    --primary: #1b2a4a;
+    --accent: #2563eb;
+    --text: #1f2937;
+    --muted: #6b7280;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .innings-tabs {
+    display: flex;
+    background: rgba(0,0,0,0.25);
+    padding: 3px;
+    border-radius: 7px;
+    gap: 4px;
+  }
+
+  .tab-btn {
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .tab-btn.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  header .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 13px;
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: background 0.15s, transform 0.05s;
+  }
+
+  button:active { transform: translateY(1px); }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #1d4ed8; }
+
+  .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.25); }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 385px 1fr;
+    gap: 20px;
+    padding: 18px 20px;
+    flex: 1;
+  }
+
+  .sidebar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: calc(100vh - 86px);
+    overflow-y: auto;
+  }
+
+  .sidebar h2 {
+    margin: 2px 0 2px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 5px;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  input[type="text"], select, textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: inherit;
+  }
+
+  textarea {
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 10.5px;
+    resize: vertical;
+    min-height: 88px;
+  }
+
+  .file-drop {
+    border: 1.5px dashed #9ca3af;
+    border-radius: 6px;
+    padding: 9px;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--muted);
+    background: #f9fafb;
+    cursor: pointer;
+  }
+
+  .file-drop:hover {
+    border-color: var(--accent);
+    background: #eff6ff;
+    color: var(--accent);
+  }
+
+  .preview-container {
+    background: #525659;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow: auto;
+    max-height: calc(100vh - 86px);
+  }
+
+  .sheet-wrapper {
+    background: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    width: 100%;
+    max-width: 1220px;
+    aspect-ratio: 1000 / 750;
+  }
+
+  svg#scorebook {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .status-bar {
+    font-size: 11.5px;
+    color: #059669;
+    font-weight: 500;
+  }
+
+  @media print {
+    @page {
+      size: A4 landscape;
+      margin: 4mm;
+    }
+    body { background: white; }
+    header, .sidebar { display: none !important; }
+    .workspace { display: block; padding: 0; }
+    .preview-container {
+      background: white;
+      padding: 0;
+      max-height: none;
+      overflow: visible;
+    }
+    .sheet-wrapper {
+      box-shadow: none;
+      max-width: none;
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sydney Cricket Association — Digital Scorebook</h1>
+  <div class="innings-tabs">
+    <button id="tab1" class="tab-btn active" onclick="switchInnings(1)">1st Innings</button>
+    <button id="tab2" class="tab-btn" onclick="switchInnings(2)">2nd Innings</button>
+  </div>
+  <div class="actions">
+    <button class="btn-secondary" onclick="loadSampleData()">Load Sample Match</button>
+    <button class="btn-secondary" onclick="clearCurrentInnings()">Clear Innings</button>
+    <button class="btn-secondary" onclick="exportPNG()">Export Ultra-HD PNG</button>
+    <button class="btn-primary" onclick="window.print()">Print / Save PDF</button>
+  </div>
+</header>
+
+<div class="workspace">
+  <div class="sidebar">
+    <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
+
+    <div class="field-group">
+      <label>Upload CSV File (Ball, Score, Outcome, Innings)</label>
+      <div class="file-drop" onclick="document.getElementById('csvFile').click()">
+        Click to select CSV file for <span id="dropInningsLabel">1st Innings</span>
+        <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="handleCSVUpload(event)">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>CSV Content (Optional if PlayHQ feed pasted)</label>
+      <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;11.7,1--61,T Brownie to E Tencate : 1 run,1st Innings..."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label>PlayHQ / Live Feed Text (Enriches Full Names &amp; Dismissals)</label>
+      <textarea id="playhqInput" placeholder="Over 12&#10;11.6&#10;1&#10;Thomas Brownie to Ernest Tencate&#10;Ernest Tencate made 1 run..."></textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field-group">
+        <label>Dot Ball Format</label>
+        <select id="dotFormat" onchange="saveCurrentInputs(); renderScorebook()">
+          <option value="grouped" selected>Grouped (10d 1 6d)</option>
+          <option value="individual">Individual (. . . 1)</option>
+          <option value="scoring_only">Scoring Shots Only (1 4 2)</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Innings Label</label>
+        <input type="text" id="metaInnings" value="1st" oninput="saveCurrentInputs(); renderScorebook()">
+      </div>
+    </div>
+
+    <button class="btn-primary" style="width:100%" onclick="parseAndRender()">Generate / Update Scorebook</button>
+    <div id="statusMsg" class="status-bar">Ready.</div>
+
+    <h2>Match &amp; Innings Header Details</h2>
+    <div class="field-group">
+      <label>Competition (Shared)</label>
+      <input type="text" id="metaComp" value="SEJCA U13 Boys Gee Shield" oninput="saveSharedMeta(); renderScorebook()">
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Club (Shared)</label>
+        <input type="text" id="metaClub" value="North Shore Junior Cricket Association" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+      <div class="field-group">
+        <label>Grade (Shared)</label>
+        <input type="text" id="metaGrade" value="U13 Boys Gee Shield" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Match Against (Shared)</label>
+        <input type="text" id="metaAgainst" value="" placeholder="e.g. St George" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+      <div class="field-group">
+        <label>Played At (Shared)</label>
+        <input type="text" id="metaVenue" value="" placeholder="e.g. Primula Oval" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Innings Of (This Innings)</label>
+        <input type="text" id="metaTeam" value="North Shore U13 Gee Shield" oninput="saveCurrentInputs(); renderScorebook()">
+      </div>
+      <div class="field-group">
+        <label>Toss Won By (Shared)</label>
+        <input type="text" id="metaToss" value="" placeholder="e.g. North Shore (bat)" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Round No (Shared)</label>
+        <input type="text" id="metaRound" value="" placeholder="e.g. 5" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+      <div class="field-group">
+        <label>Date (Shared)</label>
+        <input type="text" id="metaDate" value="16/11/2026" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label>Result (Shared)</label>
+        <input type="text" id="metaResult" value="" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+      <div class="field-group">
+        <label>Scorers (Shared)</label>
+        <input type="text" id="metaScorers" value="electronic scored" oninput="saveSharedMeta(); renderScorebook()">
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-container">
+    <div class="sheet-wrapper">
+      <svg id="scorebook" viewBox="0 0 1000 750" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLE_CSV = `Ball,Score,Outcome,Innings
+11.7,1--61,T Brownie to E Tencate : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+11.6,1--60,T Brownie to E Tencate : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+11.5,1--60,T Brownie to E Tencate : 1wd,1st Innings - SEJCA U13 Boys Gee Shield
+11.4,1--59,T Brownie to E Tencate : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
+11.3,1--55,T Brownie to E Tencate : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+11.2,1--55,T Brownie to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+11.1,1--54,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+10.6,1--54,R Edwards to E Tencate : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+10.5,1--54,R Edwards to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+10.4,1--53,R Edwards to E Tencate : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+10.3,1--52,R Edwards to E Tencate : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
+10.2,1--48,R Edwards to E Tencate : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+10.1,1--48,R Edwards to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+9.6,1--47,T Brownie to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+9.5,1--46,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+9.4,1--46,T Brownie to J Markezic : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
+9.3,1--42,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+9.2,1--42,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+9.1,1--42,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+8.6,1--42,R Edwards to R Cregg : R Cregg dismissed,1st Innings - SEJCA U13 Boys Gee Shield
+8.5,0--42,R Edwards to R Cregg : 2 runs,1st Innings - SEJCA U13 Boys Gee Shield
+8.4,0--40,R Edwards to R Cregg : 2 runs,1st Innings - SEJCA U13 Boys Gee Shield
+8.3,0--38,R Edwards to R Cregg : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
+8.2,0--34,R Edwards to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+8.1,0--34,R Edwards to R Cregg : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
+7.6,0--30,T Brownie to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+7.5,0--29,T Brownie to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+7.4,0--29,T Brownie to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+7.3,0--29,T Brownie to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+7.2,0--28,T Brownie to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+7.1,0--27,T Brownie to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+6.6,0--27,R Edwards to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+6.5,0--27,R Edwards to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+6.4,0--26,R Edwards to R Cregg : 2 runs,1st Innings - SEJCA U13 Boys Gee Shield
+6.3,0--24,R Edwards to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+6.2,0--24,R Edwards to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+6.1,0--23,R Edwards to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+5.6,0--23,S Elliott to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+5.5,0--22,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+5.4,0--22,S Elliott to J Markezic : 2 runs,1st Innings - SEJCA U13 Boys Gee Shield
+5.3,0--20,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+5.2,0--20,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+5.1,0--20,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+4.7,0--20,H Atkinson to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+4.6,0--19,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+4.5,0--19,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+4.4,0--19,H Atkinson to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+4.3,0--18,H Atkinson to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+4.2,0--18,H Atkinson to R Cregg : 1wd,1st Innings - SEJCA U13 Boys Gee Shield
+4.1,0--17,H Atkinson to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+3.6,0--17,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+3.5,0--17,S Elliott to J Markezic : 4b,1st Innings - SEJCA U13 Boys Gee Shield
+3.4,0--13,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+3.3,0--13,S Elliott to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+3.2,0--12,S Elliott to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+3.1,0--12,S Elliott to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+2.6,0--12,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+2.5,0--12,H Atkinson to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+2.4,0--11,H Atkinson to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+2.3,0--10,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+2.2,0--10,H Atkinson to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+2.1,0--9,H Atkinson to R Cregg : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
+1.6,0--5,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+1.5,0--5,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+1.4,0--5,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+1.3,0--5,S Elliott to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
+1.2,0--4,S Elliott to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+1.1,0--4,S Elliott to R Cregg : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
+0.6,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+0.5,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+0.4,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+0.3,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+0.2,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
+0.1,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield`;
+
+const SAMPLE_PLAYHQ = `Over 12
+11.6
+1
+Thomas Brownie to Ernest Tencate
+Ernest Tencate made 1 run
+11.5
+●
+Thomas Brownie to Ernest Tencate
+Dot ball
+11.5
+WD
+Thomas Brownie to Ernest Tencate
+Thomas Brownie bowled 1 wide
+11.4
+4
+Thomas Brownie to Ernest Tencate
+Ernest Tencate made 4 runs
+11.3
+●
+Thomas Brownie to Ernest Tencate
+Dot ball
+11.2
+1
+Thomas Brownie to James Markezic
+James Markezic made 1 run
+11.1
+●
+Thomas Brownie to James Markezic
+Dot ball
+Over 11
+10.6
+●
+Roman Edwards to Ernest Tencate
+Dot ball
+10.5
+1
+Roman Edwards to James Markezic
+James Markezic made 1 run
+10.4
+1
+Roman Edwards to Ernest Tencate
+Ernest Tencate made 1 run
+10.3
+4
+Roman Edwards to Ernest Tencate
+Ernest Tencate made 4 runs
+10.2
+●
+Roman Edwards to Ernest Tencate
+Dot ball
+10.1
+1
+Roman Edwards to James Markezic
+James Markezic made 1 run
+Over 10
+9.6
+1
+Thomas Brownie to James Markezic
+James Markezic made 1 run
+9.5
+●
+Thomas Brownie to James Markezic
+Dot ball
+9.4
+4
+Thomas Brownie to James Markezic
+James Markezic made 4 runs
+9.3
+●
+Thomas Brownie to James Markezic
+Dot ball
+9.2
+●
+Thomas Brownie to James Markezic
+Dot ball
+9.1
+●
+Thomas Brownie to James Markezic
+Dot ball
+Over 9
+8.6
+W
+Roman Edwards to Ryan Cregg
+Ryan Cregg was out leg before wicket
+8.5
+2
+Roman Edwards to Ryan Cregg
+Ryan Cregg made 2 runs
+8.4
+2
+Roman Edwards to Ryan Cregg
+Ryan Cregg made 2 runs
+8.3
+4
+Roman Edwards to Ryan Cregg
+Ryan Cregg made 4 runs
+8.2
+●
+Roman Edwards to Ryan Cregg
+Dot ball
+8.1
+4
+Roman Edwards to Ryan Cregg
+Ryan Cregg made 4 runs
+Over 8
+7.6
+1
+Thomas Brownie to Ryan Cregg
+Ryan Cregg made 1 run
+7.5
+●
+Thomas Brownie to Ryan Cregg
+Dot ball
+7.4
+●
+Thomas Brownie to Ryan Cregg
+Dot ball
+7.3
+1
+Thomas Brownie to James Markezic
+James Markezic made 1 run
+7.2
+1
+Thomas Brownie to Ryan Cregg
+Ryan Cregg made 1 run
+7.1
+●
+Thomas Brownie to Ryan Cregg
+Dot ball
+Over 7
+6.6
+●
+Roman Edwards to James Markezic
+Dot ball
+6.5
+1
+Roman Edwards to Ryan Cregg
+Ryan Cregg made 1 run
+6.4
+2
+Roman Edwards to Ryan Cregg
+Ryan Cregg made 2 runs
+6.3
+●
+Roman Edwards to Ryan Cregg
+Dot ball
+6.2
+1
+Roman Edwards to James Markezic
+James Markezic made 1 run
+6.1
+●
+Roman Edwards to James Markezic
+Dot ball
+Over 6
+5.6
+1
+Stirling Elliott to James Markezic
+James Markezic made 1 run
+5.5
+●
+Stirling Elliott to James Markezic
+Dot ball
+5.4
+2
+Stirling Elliott to James Markezic
+James Markezic made 2 runs
+5.3
+●
+Stirling Elliott to James Markezic
+Dot ball
+5.2
+●
+Stirling Elliott to James Markezic
+Dot ball
+5.1
+●
+Stirling Elliott to James Markezic
+Dot ball
+Over 5
+4.6
+1
+Harvey Atkinson to James Markezic
+James Markezic made 1 run
+4.5
+●
+Harvey Atkinson to James Markezic
+Dot ball
+4.4
+●
+Harvey Atkinson to James Markezic
+Dot ball
+4.3
+1
+Harvey Atkinson to Ryan Cregg
+Ryan Cregg made 1 run
+4.2
+●
+Harvey Atkinson to Ryan Cregg
+Dot ball
+4.2
+WD
+Harvey Atkinson to Ryan Cregg
+Harvey Atkinson bowled 1 wide
+4.1
+●
+Harvey Atkinson to Ryan Cregg
+Dot ball
+Over 4
+3.6
+●
+Stirling Elliott to James Markezic
+Dot ball
+3.5
+B
+Stirling Elliott to James Markezic
+4 byes
+3.4
+●
+Stirling Elliott to James Markezic
+Dot ball
+3.3
+1
+Stirling Elliott to Ryan Cregg
+Ryan Cregg made 1 run
+3.2
+●
+Stirling Elliott to Ryan Cregg
+Dot ball
+3.1
+●
+Stirling Elliott to Ryan Cregg
+Dot ball
+Over 3
+2.6
+●
+Harvey Atkinson to James Markezic
+Dot ball
+2.5
+1
+Harvey Atkinson to Ryan Cregg
+Ryan Cregg made 1 run
+2.4
+1
+Harvey Atkinson to James Markezic
+James Markezic made 1 run
+2.3
+●
+Harvey Atkinson to James Markezic
+Dot ball
+2.2
+1
+Harvey Atkinson to Ryan Cregg
+Ryan Cregg made 1 run
+2.1
+4
+Harvey Atkinson to Ryan Cregg
+Ryan Cregg made 4 runs
+Over 2
+1.6
+●
+Stirling Elliott to James Markezic
+Dot ball
+1.5
+●
+Stirling Elliott to James Markezic
+Dot ball
+1.4
+●
+Stirling Elliott to James Markezic
+Dot ball
+1.3
+1
+Stirling Elliott to Ryan Cregg
+Ryan Cregg made 1 run
+1.2
+●
+Stirling Elliott to Ryan Cregg
+Dot ball
+1.1
+4
+Stirling Elliott to Ryan Cregg
+Ryan Cregg made 4 runs
+Over 1
+0.6
+●
+Harvey Atkinson to James Markezic
+Dot ball
+0.5
+●
+Harvey Atkinson to James Markezic
+Dot ball
+0.4
+●
+Harvey Atkinson to James Markezic
+Dot ball
+0.3
+●
+Harvey Atkinson to James Markezic
+Dot ball
+0.2
+●
+Harvey Atkinson to James Markezic
+Dot ball
+0.1
+●
+Harvey Atkinson to James Markezic
+Dot ball`;
+
+let activeInnings = 1;
+
+const sharedMeta = {
+  comp: 'SEJCA U13 Boys Gee Shield',
+  club: 'North Shore Junior Cricket Association',
+  grade: 'U13 Boys Gee Shield',
+  against: '',
+  venue: '',
+  toss: '',
+  round: '',
+  date: '16/11/2026',
+  result: '',
+  scorers: 'electronic scored'
+};
+
+const inningsStore = {
+  1: {
+    label: '1st',
+    team: 'North Shore U13 Gee Shield',
+    csv: '',
+    playhq: '',
+    dotFormat: 'grouped',
+    parsed: null
+  },
+  2: {
+    label: '2nd',
+    team: '',
+    csv: '',
+    playhq: '',
+    dotFormat: 'grouped',
+    parsed: null
+  }
+};
+
+function emptyScorebookModel() {
+  return {
+    batters: [],
+    bowlers: [],
+    fowList: [],
+    overSummary: [],
+    sundries: { byes: [], legByes: [], wides: [], noBalls: [] },
+    byesTotal: 0,
+    lbTotal: 0,
+    widesTotal: 0,
+    nbTotal: 0,
+    totalSundries: 0,
+    totalScore: 0,
+    totalWickets: 0,
+    totalOvers: 0
+  };
+}
+
+function saveSharedMeta() {
+  sharedMeta.comp = document.getElementById('metaComp').value;
+  sharedMeta.club = document.getElementById('metaClub').value;
+  sharedMeta.grade = document.getElementById('metaGrade').value;
+  sharedMeta.against = document.getElementById('metaAgainst').value;
+  sharedMeta.venue = document.getElementById('metaVenue').value;
+  sharedMeta.toss = document.getElementById('metaToss').value;
+  sharedMeta.round = document.getElementById('metaRound').value;
+  sharedMeta.date = document.getElementById('metaDate').value;
+  sharedMeta.result = document.getElementById('metaResult').value;
+  sharedMeta.scorers = document.getElementById('metaScorers').value;
+}
+
+function saveCurrentInputs() {
+  const st = inningsStore[activeInnings];
+  st.csv = document.getElementById('csvInput').value;
+  st.playhq = document.getElementById('playhqInput').value;
+  st.dotFormat = document.getElementById('dotFormat').value;
+  st.label = document.getElementById('metaInnings').value;
+  st.team = document.getElementById('metaTeam').value;
+}
+
+function switchInnings(num) {
+  saveCurrentInputs();
+  saveSharedMeta();
+  activeInnings = num;
+
+  document.getElementById('tab1').classList.toggle('active', num === 1);
+  document.getElementById('tab2').classList.toggle('active', num === 2);
+
+  const ord = num === 1 ? '1st Innings' : '2nd Innings';
+  document.getElementById('sidebarInningsTitle').textContent = `${ord} — Ball-by-Ball Input`;
+  document.getElementById('dropInningsLabel').textContent = ord;
+
+  const st = inningsStore[num];
+  document.getElementById('csvInput').value = st.csv;
+  document.getElementById('playhqInput').value = st.playhq;
+  document.getElementById('dotFormat').value = st.dotFormat;
+  document.getElementById('metaInnings').value = st.label;
+  document.getElementById('metaTeam').value = st.team;
+
+  if (!st.parsed) {
+    if (st.csv.trim() || st.playhq.trim()) {
+      parseAndRender();
+    } else {
+      st.parsed = emptyScorebookModel();
+      document.getElementById('statusMsg').textContent = `${ord}: blank sheet ready — paste CSV or PlayHQ feed.`;
+      renderScorebook();
+    }
+  } else {
+    document.getElementById('statusMsg').textContent =
+      `${ord}: ${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}.`;
+    renderScorebook();
+  }
+}
+
+function clearCurrentInnings() {
+  const st = inningsStore[activeInnings];
+  st.csv = '';
+  st.playhq = '';
+  st.parsed = emptyScorebookModel();
+  document.getElementById('csvInput').value = '';
+  document.getElementById('playhqInput').value = '';
+  document.getElementById('statusMsg').textContent = `${activeInnings === 1 ? '1st' : '2nd'} Innings cleared.`;
+  renderScorebook();
+}
+
+function handleCSVUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    document.getElementById('csvInput').value = evt.target.result;
+    parseAndRender();
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function loadSampleData() {
+  inningsStore[1].csv = SAMPLE_CSV;
+  inningsStore[1].playhq = SAMPLE_PLAYHQ;
+  inningsStore[1].label = '1st';
+  inningsStore[1].team = 'North Shore U13 Gee Shield';
+  if (activeInnings !== 1) {
+    switchInnings(1);
+  } else {
+    document.getElementById('csvInput').value = SAMPLE_CSV;
+    document.getElementById('playhqInput').value = SAMPLE_PLAYHQ;
+    document.getElementById('metaInnings').value = '1st';
+    document.getElementById('metaTeam').value = 'North Shore U13 Gee Shield';
+    parseAndRender();
+  }
+}
+
+function parsePlayHQ(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Over '));
+  const items = [];
+  for (let i = 0; i + 3 < lines.length; i += 4) {
+    const ball = lines[i];
+    const badge = lines[i + 1];
+    const matchup = lines[i + 2];
+    const desc = lines[i + 3];
+    if (!matchup.includes(' to ')) continue;
+    const [bowler, batter] = matchup.split(' to ').map(s => s.trim());
+    items.push({ ball, badge, bowler, batter, desc });
+  }
+  return items;
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) return [];
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(',');
+    if (parts.length < 3) continue;
+    const ball = parts[0].trim();
+    const score = parts[1].trim();
+    const outcome = parts[2].trim();
+    const innings = parts.slice(3).join(',').trim();
+    const m = outcome.match(/^(.+?)\s+to\s+(.+?)\s*:\s*(.+)$/);
+    if (!m) continue;
+    rows.push({
+      ball,
+      score,
+      bowler: m[1].trim(),
+      batter: m[2].trim(),
+      event: m[3].trim(),
+      innings
+    });
+  }
+  return rows;
+}
+
+function parseDismissal(desc) {
+  const d = desc.toLowerCase();
+  if (d.includes('leg before wicket') || d.includes('lbw')) return 'LBW';
+  if (d.includes('bowled')) return 'bowled';
+  if (d.includes('caught')) return 'caught';
+  if (d.includes('run out')) return 'run out';
+  if (d.includes('stumped')) return 'stumped';
+  return 'out';
+}
+
+function parseAndRender() {
+  saveCurrentInputs();
+  const st = inningsStore[activeInnings];
+  const csvRows = parseCSV(st.csv.trim());
+  const phqRows = parsePlayHQ(st.playhq.trim());
+
+  let deliveries = [];
+
+  if (csvRows.length > 0 && phqRows.length === csvRows.length) {
+    for (let i = csvRows.length - 1; i >= 0; i--) {
+      const c = csvRows[i];
+      const p = phqRows[i];
+      deliveries.push(normalizeDelivery(p.ball, c.score, p.bowler, p.batter, c.event, p.badge, p.desc));
+    }
+  } else if (csvRows.length > 0) {
+    for (let i = csvRows.length - 1; i >= 0; i--) {
+      const c = csvRows[i];
+      deliveries.push(normalizeDelivery(c.ball, c.score, c.bowler, c.batter, c.event, '', ''));
+    }
+  } else if (phqRows.length > 0) {
+    let cumRuns = 0;
+    let cumWkts = 0;
+    for (let i = phqRows.length - 1; i >= 0; i--) {
+      const p = phqRows[i];
+      const d = normalizeDelivery(p.ball, '', p.bowler, p.batter, '', p.badge, p.desc);
+      cumRuns += d.batterRuns + d.extras;
+      if (d.isWicket) cumWkts += 1;
+      d.score = `${cumWkts}/${cumRuns}`;
+      deliveries.push(d);
+    }
+  } else {
+    st.parsed = emptyScorebookModel();
+    document.getElementById('statusMsg').textContent = 'No valid ball-by-ball rows found — showing blank sheet.';
+    renderScorebook();
+    return;
+  }
+
+  st.parsed = buildScorebookModel(deliveries);
+  document.getElementById('statusMsg').textContent =
+    `Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`;
+  renderScorebook();
+}
+
+function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, badge, desc) {
+  const overNum = parseInt(ballStr.split('.')[0], 10) + 1;
+  let batterRuns = 0;
+  let extras = 0;
+  let extraType = '';
+  let isLegal = true;
+  let isWicket = false;
+  let dismissalType = '';
+
+  const ev = (csvEvent || '').toLowerCase();
+  const bdg = (badge || '').toUpperCase();
+
+  if (bdg === 'WD' || ev.includes('wd') || ev.includes('wide')) {
+    const m = ev.match(/(\d+)\s*wd/) || desc.match(/(\d+)\s*wide/);
+    extras = m ? parseInt(m[1], 10) : 1;
+    extraType = 'Wide';
+    isLegal = false;
+  } else if (bdg === 'NB' || ev.includes('nb') || ev.includes('no ball')) {
+    const m = ev.match(/(\d+)\s*nb/);
+    extras = m ? parseInt(m[1], 10) : 1;
+    extraType = 'NoBall';
+    isLegal = false;
+  } else if (bdg === 'LB' || ev.includes('lb')) {
+    const m = ev.match(/(\d+)\s*lb/) || desc.match(/(\d+)\s*leg bye/);
+    extras = m ? parseInt(m[1], 10) : 1;
+    extraType = 'LegBye';
+  } else if (bdg === 'B' || ev.match(/^\d+b$/)) {
+    const m = ev.match(/(\d+)b/) || desc.match(/(\d+)\s*bye/);
+    extras = m ? parseInt(m[1], 10) : 1;
+    extraType = 'Bye';
+  } else if (bdg === 'W' || ev.includes('dismissed') || ev.includes('out')) {
+    isWicket = true;
+    dismissalType = desc ? parseDismissal(desc) : 'out';
+  } else if (/^\d+$/.test(bdg)) {
+    batterRuns = parseInt(bdg, 10);
+  } else {
+    const m = ev.match(/^(\d+)\s*run/);
+    if (m) batterRuns = parseInt(m[1], 10);
+  }
+
+  return {
+    over: overNum,
+    ball: ballStr,
+    score: scoreStr.replace('--', '/'),
+    bowler,
+    batter,
+    batterRuns,
+    extras,
+    extraType,
+    isLegal,
+    isWicket,
+    dismissalType
+  };
+}
+
+function buildScorebookModel(deliveries) {
+  const batters = {};
+  const batterOrder = [];
+  const bowlers = {};
+  const bowlerOrder = [];
+  const fowList = [];
+  const overSummary = [];
+
+  const sundries = { byes: [], legByes: [], wides: [], noBalls: [] };
+  let totalScore = 0;
+  let totalWickets = 0;
+
+  const ensureBatter = (name) => {
+    if (!batters[name]) {
+      batters[name] = {
+        name,
+        balls: 0,
+        runs: 0,
+        events: [],
+        howOut: 'Not out',
+        bowlerOut: ''
+      };
+      batterOrder.push(name);
+    }
+  };
+
+  const ensureBowler = (name) => {
+    if (!bowlers[name]) {
+      bowlers[name] = {
+        name,
+        index: bowlerOrder.length + 1,
+        legalBalls: 0,
+        maidens: 0,
+        wides: 0,
+        noBalls: 0,
+        wickets: 0,
+        runs: 0,
+        oversMap: {}
+      };
+      bowlerOrder.push(name);
+    }
+  };
+
+  deliveries.forEach(d => {
+    ensureBatter(d.batter);
+    ensureBowler(d.bowler);
+
+    const bat = batters[d.batter];
+    const bwl = bowlers[d.bowler];
+
+    if (!bwl.oversMap[d.over]) {
+      bwl.oversMap[d.over] = { tokens: [], runsConceded: 0, wicketsTaken: 0 };
+    }
+    const ovObj = bwl.oversMap[d.over];
+
+    totalScore += d.batterRuns + d.extras;
+
+    if (d.extraType === 'Wide') {
+      sundries.wides.push(d.extras);
+      bwl.wides += d.extras;
+      bwl.runs += d.extras;
+      ovObj.runsConceded += d.extras;
+      ovObj.tokens.push('W');
+    } else if (d.extraType === 'NoBall') {
+      sundries.noBalls.push(d.extras);
+      bwl.noBalls += d.extras;
+      bwl.runs += d.extras;
+      ovObj.runsConceded += d.extras;
+      ovObj.tokens.push('N');
+    } else {
+      bat.balls += 1;
+      bwl.legalBalls += 1;
+
+      if (d.extraType === 'Bye') {
+        sundries.byes.push(d.extras);
+        bat.events.push(0);
+        ovObj.tokens.push('.');
+      } else if (d.extraType === 'LegBye') {
+        sundries.legByes.push(d.extras);
+        bat.events.push(0);
+        ovObj.tokens.push('.');
+      } else if (d.isWicket) {
+        totalWickets += 1;
+        bat.events.push(0);
+        bat.howOut = d.dismissalType;
+        bat.bowlerOut = d.bowler;
+        bwl.wickets += 1;
+        ovObj.wicketsTaken += 1;
+        ovObj.tokens.push('W');
+
+        const activeBatters = batterOrder.filter(n => batters[n].howOut === 'Not out' && n !== d.batter);
+        const notOutName = activeBatters.length > 0 ? activeBatters[activeBatters.length - 1] : '';
+        const notOutScore = notOutName ? batters[notOutName].runs : 0;
+        const shortPartner = notOutName ? `${notOutName.split(' ')[0][0]} ${notOutName.split(' ').slice(1).join(' ')} (${notOutScore})` : '';
+
+        fowList.push({
+          wicketNum: totalWickets,
+          score: totalScore,
+          batterOut: d.batter,
+          partnerText: shortPartner
+        });
+      } else if (d.batterRuns > 0) {
+        bat.runs += d.batterRuns;
+        bat.events.push(d.batterRuns);
+        bwl.runs += d.batterRuns;
+        ovObj.runsConceded += d.batterRuns;
+        ovObj.tokens.push(String(d.batterRuns));
+      } else {
+        bat.events.push(0);
+        ovObj.tokens.push('.');
+      }
+    }
+  });
+
+  // Finalize bowler spells with column overflow splitting when an over exceeds column width
+  const MAX_CHARS_PER_CELL = 6; // e.g., 6 standard symbols fit cleanly in 24.8px column; 7+ overflows to next column
+  bowlerOrder.forEach(name => {
+    const bwl = bowlers[name];
+    let cumW = 0;
+    let cumR = 0;
+    bwl.cells = []; // flattened array of column cells for this bowler
+
+    Object.keys(bwl.oversMap).map(Number).sort((a, b) => a - b).forEach(ovNum => {
+      const o = bwl.oversMap[ovNum];
+      if (o.runsConceded === 0) bwl.maidens += 1;
+      cumW += o.wicketsTaken;
+      cumR += o.runsConceded;
+      const cumStr = `${cumW}/${cumR}`;
+      const tokens = o.tokens;
+
+      if (tokens.length <= MAX_CHARS_PER_CELL) {
+        bwl.cells.push({
+          balls: tokens.join(''),
+          cum: cumStr,
+          isOverflow: false
+        });
+      } else {
+        // Split long over across consecutive columns, pushing subsequent overs right by 1+ columns
+        for (let idx = 0; idx < tokens.length; idx += MAX_CHARS_PER_CELL) {
+          const chunk = tokens.slice(idx, idx + MAX_CHARS_PER_CELL).join('');
+          const isLastChunk = (idx + MAX_CHARS_PER_CELL) >= tokens.length;
+          bwl.cells.push({
+            balls: chunk,
+            cum: isLastChunk ? cumStr : '→',
+            isOverflow: idx > 0
+          });
+        }
+      }
+    });
+
+    const fullOv = Math.floor(bwl.legalBalls / 6);
+    const remBalls = bwl.legalBalls % 6;
+    bwl.oversDisplay = remBalls === 0 ? `${fullOv}` : `${fullOv}.${remBalls}`;
+  });
+
+  const byOver = {};
+  deliveries.forEach(d => {
+    if (!byOver[d.over]) byOver[d.over] = [];
+    byOver[d.over].push(d);
+  });
+  let runningR = 0;
+  let runningW = 0;
+  Object.keys(byOver).map(Number).sort((a, b) => a - b).forEach(ovNum => {
+    const grp = byOver[ovNum];
+    const bwlName = grp[0].bowler;
+    grp.forEach(d => {
+      runningR += d.batterRuns + d.extras;
+      if (d.isWicket) runningW += 1;
+    });
+    const finalScore = grp[grp.length - 1].score || `${runningW}/${runningR}`;
+    overSummary.push({
+      over: ovNum,
+      bowlerIdx: bowlers[bwlName].index,
+      score: finalScore
+    });
+  });
+
+  const sumArr = arr => arr.reduce((a, b) => a + b, 0);
+  const byesTotal = sumArr(sundries.byes);
+  const lbTotal = sumArr(sundries.legByes);
+  const widesTotal = sumArr(sundries.wides);
+  const nbTotal = sumArr(sundries.noBalls);
+
+  return {
+    batters: batterOrder.map(n => batters[n]),
+    bowlers: bowlerOrder.map(n => bowlers[n]),
+    fowList,
+    overSummary,
+    sundries,
+    byesTotal,
+    lbTotal,
+    widesTotal,
+    nbTotal,
+    totalSundries: byesTotal + lbTotal + widesTotal + nbTotal,
+    totalScore,
+    totalWickets,
+    totalOvers: overSummary.length
+  };
+}
+
+// Format batsman ball sequence with NO commas (space-separated for clean readability)
+function formatBatterEvents(events, mode) {
+  if (mode === 'scoring_only') {
+    return events.filter(r => r > 0).join(' ');
+  }
+  if (mode === 'individual') {
+    return events.map(r => (r > 0 ? String(r) : '.')).join(' ');
+  }
+  const tokens = [];
+  let streak = 0;
+  events.forEach(r => {
+    if (r > 0) {
+      if (streak > 0) {
+        tokens.push(streak > 1 ? `${streak}d` : '.');
+        streak = 0;
+      }
+      tokens.push(String(r));
+    } else {
+      streak += 1;
+    }
+  });
+  if (streak > 0) {
+    tokens.push(streak > 1 ? `${streak}d` : '.');
+  }
+  return tokens.join(' ');
+}
+
+function svgEl(tag, attrs = {}, textContent = null) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    el.setAttribute(k, v);
+  }
+  if (textContent !== null) {
+    el.textContent = textContent;
+  }
+  return el;
+}
+
+function renderScorebook() {
+  const st = inningsStore[activeInnings];
+  const data = st.parsed || emptyScorebookModel();
+  const svg = document.getElementById('scorebook');
+  svg.innerHTML = '';
+
+  const ink = '#1b2a4a';
+  const sans = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+  const serif = 'Georgia, "Times New Roman", serif';
+  const dotMode = st.dotFormat;
+
+  const addText = (x, y, txt, opts = {}) => {
+    const attrs = {
+      x,
+      y,
+      'font-family': opts.hand ? serif : sans,
+      'font-size': opts.size || 8,
+      'font-weight': opts.bold ? 'bold' : 'normal',
+      'font-style': opts.hand ? 'italic' : 'normal',
+      'fill': opts.hand ? ink : (opts.color || '#000'),
+      'text-anchor': opts.anchor || 'start',
+      'dominant-baseline': opts.baseline || 'central'
+    };
+    if (opts.rotate) {
+      attrs.transform = `rotate(${opts.rotate} ${x} ${y})`;
+    }
+    svg.appendChild(svgEl('text', attrs, String(txt)));
+  };
+
+  const addLine = (x1, y1, x2, y2, w = 0.7, dash = null) => {
+    const attrs = { x1, y1, x2, y2, stroke: '#000', 'stroke-width': w };
+    if (dash) attrs['stroke-dasharray'] = dash;
+    svg.appendChild(svgEl('line', attrs));
+  };
+
+  const addRect = (x, y, w, h, opts = {}) => {
+    svg.appendChild(svgEl('rect', {
+      x, y, width: w, height: h,
+      fill: opts.fill || 'none',
+      stroke: opts.stroke || '#000',
+      'stroke-width': opts.w || 1
+    }));
+  };
+
+  // Outer Frame & Left Margin
+  addRect(20, 20, 960, 710, { w: 1.8 });
+  addRect(20, 20, 62, 710, { w: 1.0 });
+
+  addText(32, 360, 'PLAY INTERRUPTED ..............................................................', { size: 6.5, anchor: 'middle', rotate: -90 });
+  addText(55, 330, '2ND NEW BALL (Over) ............ (Time) ............ (Score) ............', { size: 6.5, anchor: 'middle', rotate: -90 });
+
+  [
+    { y: 484, label: 'STUMPS' },
+    { y: 599, label: 'TEA' },
+    { y: 714, label: 'LUNCH' }
+  ].forEach(b => {
+    addRect(20, b.y, 62, 16, { fill: '#000', w: 1 });
+    addText(51, b.y + 8, b.label, { size: 7.5, bold: true, color: '#fff', anchor: 'middle' });
+  });
+
+  addText(32, 665, 'TIME/MINS', { size: 6, anchor: 'middle', rotate: -90 });
+  addText(46, 665, 'SCORE/OVERS', { size: 6, anchor: 'middle', rotate: -90 });
+  addText(60, 665, 'RESUME', { size: 6, anchor: 'middle', rotate: -90 });
+
+  // Shield Emblem
+  svg.appendChild(svgEl('polygon', {
+    points: '110,28 134,28 134,54 122,64 110,54',
+    fill: 'none', stroke: '#000', 'stroke-width': 1.3
+  }));
+  addLine(122, 28, 122, 64, 0.9);
+  addLine(110, 42, 134, 42, 0.9);
+  addText(122, 73, 'SYDNEY CRICKET', { size: 6.2, bold: true, anchor: 'middle' });
+  addText(122, 81, 'ASSOCIATION', { size: 6.2, bold: true, anchor: 'middle' });
+
+  // Header Title & Fields
+  addText(470, 38, 'SYDNEY CRICKET ASSOCIATION SCORE BOOK', { size: 15, bold: true, anchor: 'middle' });
+
+  addText(165, 60, 'COMPETITION', { size: 7.5, bold: true });
+  addText(245, 59, sharedMeta.comp, { size: 9.5, hand: true });
+  addLine(240, 64, 415, 64, 0.8, '1.5,1.5');
+
+  addText(165, 78, 'MATCH AGAINST', { size: 7.5, bold: true });
+  addText(245, 77, sharedMeta.against, { size: 9.5, hand: true });
+  addLine(245, 82, 415, 82, 0.8, '1.5,1.5');
+
+  addText(165, 96, 'TOSS WON BY', { size: 7.5, bold: true });
+  addText(245, 95, sharedMeta.toss, { size: 9.5, hand: true });
+  addLine(240, 100, 415, 100, 0.8, '1.5,1.5');
+
+  addText(425, 60, 'CLUB', { size: 7.5, bold: true });
+  addText(460, 59, sharedMeta.club, { size: 9, hand: true });
+  addLine(455, 64, 660, 64, 0.8, '1.5,1.5');
+
+  addText(425, 78, 'PLAYED AT', { size: 7.5, bold: true });
+  addText(482, 77, sharedMeta.venue, { size: 9, hand: true });
+  addLine(480, 82, 660, 82, 0.8, '1.5,1.5');
+
+  addText(425, 96, `${st.label} INNINGS OF`, { size: 7.5, bold: true });
+  addText(508, 95, st.team, { size: 9, hand: true });
+  addLine(503, 100, 660, 100, 0.8, '1.5,1.5');
+
+  addText(670, 60, 'GRADE', { size: 7.5, bold: true });
+  addText(715, 59, sharedMeta.grade, { size: 9.5, hand: true });
+  addLine(710, 64, 825, 64, 0.8, '1.5,1.5');
+
+  addText(670, 78, 'ROUND No', { size: 7.5, bold: true });
+  addText(730, 77, sharedMeta.round, { size: 9.5, hand: true });
+  addLine(725, 82, 825, 82, 0.8, '1.5,1.5');
+
+  addText(670, 96, 'DATE', { size: 7.5, bold: true });
+  addText(715, 95, sharedMeta.date, { size: 9.5, hand: true });
+  addLine(705, 100, 825, 100, 0.8, '1.5,1.5');
+
+  // Right-Hand Over-by-Over Progression Table (x: 832..980, y: 20..505)
+  addRect(832, 20, 148, 485, { w: 1.2 });
+  const colW = 148 / 3;
+  for (let c = 0; c < 3; c++) {
+    const x0 = 832 + c * colW;
+    addLine(x0, 20, x0, 505, 1.0);
+    addLine(x0 + 13, 20, x0 + 13, 505, 0.6);
+    addLine(x0 + 26, 20, x0 + 26, 505, 0.6);
+    addText(x0 + 6.5, 27, 'OVS', { size: 5.2, bold: true, anchor: 'middle' });
+    addText(x0 + 19.5, 27, 'BLR', { size: 5.2, bold: true, anchor: 'middle' });
+    addText(x0 + 37.5, 27, 'RUNS', { size: 5.2, bold: true, anchor: 'middle' });
+  }
+  addLine(832, 34, 980, 34, 0.9);
+
+  const overLookup = {};
+  data.overSummary.forEach(o => { overLookup[o.over] = o; });
+
+  const rowHOv = (505 - 34) / 40;
+  for (let r = 0; r < 40; r++) {
+    const yTop = 34 + r * rowHOv;
+    const yMid = yTop + rowHOv / 2;
+    addLine(832, yTop, 980, yTop, 0.45);
+    for (let c = 0; c < 3; c++) {
+      const ovNum = c * 40 + r + 1;
+      const x0 = 832 + c * colW;
+      addText(x0 + 6.5, yMid, ovNum, { size: 5.2, anchor: 'middle' });
+      if (overLookup[ovNum]) {
+        addText(x0 + 19.5, yMid, overLookup[ovNum].bowlerIdx, { size: 7.5, hand: true, anchor: 'middle' });
+        addText(x0 + 37.5, yMid, overLookup[ovNum].score, { size: 7.5, hand: true, anchor: 'middle' });
+      }
+    }
+  }
+
+  // Batting Table (x: 82..832, y: 108..368)
+  addRect(82, 108, 750, 260, { w: 1.2 });
+  addLine(82, 132, 832, 132, 1.0);
+  [82, 114, 146, 184, 305, 635, 712, 792, 832].forEach(xc => addLine(xc, 108, xc, 368, 0.8));
+
+  [
+    { x: 98, t1: 'TIME', t2: 'IN' },
+    { x: 130, t1: 'TIME', t2: 'OUT' },
+    { x: 165, t1: 'MINS', t2: 'BALLS' }
+  ].forEach(h => {
+    addText(h.x, 116, h.t1, { size: 6.2, bold: true, anchor: 'middle' });
+    addText(h.x, 124, h.t2, { size: 6.2, bold: true, anchor: 'middle' });
+  });
+
+  addText(244.5, 120, 'BATSMEN', { size: 6.5, bold: true, anchor: 'middle' });
+  addText(470, 120, 'RUNS AS SCORED', { size: 6.5, bold: true, anchor: 'middle' });
+  addText(673.5, 120, 'HOW OUT', { size: 6.5, bold: true, anchor: 'middle' });
+  addText(752, 120, 'BOWLER', { size: 6.5, bold: true, anchor: 'middle' });
+  addText(812, 120, 'TOTALS', { size: 6.5, bold: true, anchor: 'middle' });
+
+  const batRowH = (368 - 132) / 11;
+  for (let i = 0; i < 11; i++) {
+    const yTop = 132 + i * batRowH;
+    const yBot = yTop + batRowH;
+    const yMid = (yTop + yBot) / 2;
+    addLine(82, yBot, 832, yBot, 0.7);
+    addLine(146, yBot, 184, yTop, 0.5);
+    addRect(174, yTop, 10, 8, { w: 0.5 });
+    addText(179, yTop + 4, i + 1, { size: 5, anchor: 'middle' });
+    addLine(310, yMid + 3, 630, yMid + 3, 0.6, '1.2,1.2');
+
+    if (i < data.batters.length) {
+      const b = data.batters[i];
+      const seqStr = formatBatterEvents(b.events, dotMode);
+      const fontSize = dotMode === 'individual' && b.events.length > 35 ? 6.8 : 8.2;
+
+      addText(168, yBot - 5.5, b.balls, { size: 7.5, hand: true, anchor: 'middle' });
+      addText(189, yMid, b.name, { size: 9.5, hand: true });
+      addText(312, yMid - 1, seqStr, { size: fontSize, hand: true });
+      addText(673.5, yMid, b.howOut, { size: 9, hand: true, anchor: 'middle' });
+      if (b.bowlerOut) {
+        addText(752, yMid, b.bowlerOut, { size: 8.5, hand: true, anchor: 'middle' });
+      }
+      addText(812, yMid, b.runs, { size: 10.5, hand: true, anchor: 'middle' });
+    }
+  }
+
+  // Progressive Score Grid & Sundries (y: 368..450)
+  addRect(82, 368, 750, 82, { w: 1.2 });
+  const progW = 450 / 4;
+  const cellW = (progW - 16) / 10;
+  const cellH = 82 / 11;
+
+  for (let blk = 0; blk < 4; blk++) {
+    const bx0 = 82 + blk * progW;
+    addLine(bx0, 368, bx0, 450, 0.9);
+    for (let c = 0; c < 10; c++) {
+      const cx = bx0 + c * cellW;
+      addLine(cx, 368, cx, 450, 0.4);
+      addText(cx + cellW / 2, 368 + cellH / 2, (c + 1) % 10, { size: 5, anchor: 'middle' });
+    }
+    for (let r = 0; r < 11; r++) {
+      const ry = 368 + r * cellH;
+      addLine(bx0, ry, bx0 + progW, ry, 0.4);
+      if (r > 0) {
+        addText(bx0 + progW - 8, ry + cellH / 2, blk * 100 + r * 10, { size: 4.8, anchor: 'middle' });
+      }
+    }
+  }
+
+  const cappedScore = Math.min(data.totalScore, 400);
+  for (let runIdx = 1; runIdx <= cappedScore; runIdx++) {
+    const blk = Math.floor((runIdx - 1) / 100);
+    const rem = (runIdx - 1) % 100;
+    const rowIdx = Math.floor(rem / 10) + 1;
+    const colIdx = rem % 10;
+    const bx0 = 82 + blk * progW;
+    const cx = bx0 + colIdx * cellW;
+    const cy = 368 + (rowIdx + 0.5) * cellH;
+    svg.appendChild(svgEl('line', {
+      x1: cx + 1, y1: cy, x2: cx + cellW - 1, y2: cy,
+      stroke: ink, 'stroke-width': 1.2
+    }));
+  }
+
+  // Middle MINS & TOTAL OVERS Box
+  addRect(532, 368, 60, 82, { w: 0.9 });
+  addLine(562, 368, 562, 450, 0.6);
+  addText(547, 373, 'MINS.', { size: 4.8, bold: true, anchor: 'middle' });
+  addText(577, 373, 'MINS.', { size: 4.8, bold: true, anchor: 'middle' });
+  addLine(532, 378, 592, 378, 0.5);
+
+  [50, 100, 150, 200, 250].forEach((mVal, idx) => {
+    const yTop = 378 + idx * 11.2;
+    const yMid = yTop + 5.6;
+    addLine(532, yTop + 11.2, 592, yTop + 11.2, 0.4);
+    addText(537, yMid, mVal, { size: 4.6, anchor: 'middle' });
+    addText(567, yMid, mVal + 300, { size: 4.6, anchor: 'middle' });
+  });
+  addText(537, 442, '300', { size: 4.6, anchor: 'middle' });
+  addText(577, 437, 'TOTAL OVERS', { size: 3.8, bold: true, anchor: 'middle' });
+  addText(577, 444.5, data.totalOvers > 0 ? data.totalOvers : '', { size: 8.5, hand: true, anchor: 'middle' });
+
+  // Sundries & Summary Totals
+  addRect(592, 368, 240, 82, { w: 1.0 });
+  addLine(722, 368, 722, 450, 0.8);
+  addLine(756, 368, 756, 450, 0.8);
+  addLine(796, 368, 796, 450, 0.8);
+
+  const sRowH = 82 / 4;
+  [
+    { lbl: 'BYES', list: data.sundries.byes, val: data.byesTotal },
+    { lbl: 'LEG BYES', list: data.sundries.legByes, val: data.lbTotal },
+    { lbl: 'WIDES', list: data.sundries.wides, val: data.widesTotal },
+    { lbl: 'NO-BALLS', list: data.sundries.noBalls, val: data.nbTotal }
+  ].forEach((s, idx) => {
+    const yTop = 368 + idx * sRowH;
+    const yMid = yTop + sRowH / 2;
+    addLine(592, yTop, 756, yTop, 0.6);
+    addText(596, yMid, s.lbl, { size: 6, bold: true });
+    addLine(638, yMid + 2, 718, yMid + 2, 0.6, '1.2,1.2');
+    if (s.list.length > 0) {
+      addText(645, yMid - 1, s.list.join(', '), { size: 7.5, hand: true });
+    }
+    if (data.totalOvers > 0 || s.val > 0) {
+      addText(739, yMid, s.val, { size: 9, hand: true, anchor: 'middle' });
+    }
+  });
+
+  [
+    { t1: 'TOTAL', t2: 'SUNDRIES', val: data.totalSundries },
+    { t1: 'TOTAL', t2: 'SCORE', val: data.totalScore },
+    { t1: 'PENALTY', t2: 'EXTRAS', val: 0 },
+    { t1: 'AMENDED', t2: 'SCORE', val: data.totalScore }
+  ].forEach((r, idx) => {
+    const yTop = 368 + idx * sRowH;
+    const yMid = yTop + sRowH / 2;
+    addLine(756, yTop, 832, yTop, 0.8);
+    addText(776, yMid - 3.5, r.t1, { size: 5.5, bold: true, anchor: 'middle' });
+    addText(776, yMid + 3.5, r.t2, { size: 5.5, bold: true, anchor: 'middle' });
+    if (data.totalOvers > 0 || r.val > 0) {
+      addText(814, yMid, r.val, { size: 11, bold: true, hand: true, anchor: 'middle' });
+    }
+  });
+
+  // Fall of Wickets & Result Section
+  addRect(82, 450, 750, 75, { w: 1.2 });
+  [450, 467.4, 484.7, 502].forEach(yf => addLine(82, yf, 832, yf, 0.7));
+
+  addText(86, 458.7, 'SCORE AT EACH F.O.W. (SUN)', { size: 5.8, bold: true });
+  addText(86, 476.0, 'BATSMAN OUT', { size: 5.8, bold: true });
+  addText(86, 493.4, 'NOT OUT BATSMAN & HIS SCORE', { size: 5.8, bold: true });
+
+  const fowX0 = 195;
+  const fowW = (832 - 195) / 10;
+  for (let w = 0; w < 10; w++) {
+    const wx = fowX0 + w * fowW;
+    addLine(wx, 450, wx, 502, 0.7);
+    addText(wx + 4, 455, w + 1, { size: 5.5 });
+    if (w < data.fowList.length) {
+      const f = data.fowList[w];
+      addText(wx + fowW / 2, 460, f.score, { size: 9.5, hand: true, anchor: 'middle' });
+      addText(wx + fowW / 2, 477, f.batterOut, { size: 7.5, hand: true, anchor: 'middle' });
+      addText(wx + fowW / 2, 494, f.partnerText, { size: 6.8, hand: true, anchor: 'middle' });
+    }
+  }
+
+  addText(86, 513.5, 'RESULT', { size: 7.5, bold: true });
+  addText(135, 513.5, sharedMeta.result, { size: 9, hand: true });
+  addLine(295, 502, 295, 525, 0.7);
+  addText(299, 510, 'SCORERS', { size: 5.5, bold: true });
+  addText(299, 517, 'NAMES', { size: 5.5, bold: true });
+  addText(355, 513.5, sharedMeta.scorers, { size: 8.5, hand: true });
+  addLine(445, 502, 445, 525, 0.7);
+  addText(449, 510, 'UMPIRES', { size: 5.5, bold: true });
+  addText(449, 517, 'NAMES', { size: 5.5, bold: true });
+  addLine(605, 502, 605, 525, 0.7);
+  addText(609, 510, 'UMPIRES', { size: 5.5, bold: true });
+  addText(609, 517, 'SIGNATURES', { size: 5.5, bold: true });
+
+  // Bowling Analysis Section (with overflow column shifting)
+  addRect(82, 525, 898, 205, { w: 1.2 });
+  addLine(82, 547, 980, 547, 1.0);
+  addText(125, 536, 'BOWLER', { size: 7.5, bold: true, anchor: 'middle' });
+  addText(505, 531, 'BOWLING ANALYSIS', { size: 6.5, bold: true, anchor: 'middle' });
+
+  const ovGridX0 = 195;
+  const ovColW = 620 / 25;
+  for (let c = 0; c < 25; c++) {
+    const cx = ovGridX0 + c * ovColW;
+    addLine(cx, 537, cx, 730, 0.6);
+    addText(cx + ovColW / 2, 542, c + 1, { size: 6, anchor: 'middle' });
+  }
+
+  const bSumX0 = 815;
+  const bSumW = 165 / 6;
+  ['OVERS', 'MAIDENS', 'WIDES', 'NO BALLS', 'WICKETS', 'RUNS'].forEach((sh, idx) => {
+    const sx = bSumX0 + idx * bSumW;
+    addLine(sx, 525, sx, 730, 0.8);
+    addText(sx + bSumW / 2, 536, sh, { size: 5.5, bold: true, anchor: 'middle' });
+  });
+
+  const bowlRowH = (730 - 547) / 9;
+  for (let b = 0; b < 9; b++) {
+    const yTop = 547 + b * bowlRowH;
+    const yBot = yTop + bowlRowH;
+    const yMid = (yTop + yBot) / 2;
+    addLine(82, yBot, 980, yBot, 0.8);
+    addLine(ovGridX0, yMid, bSumX0, yMid, 0.45, '2,2');
+    addText(87, yMid - 1, `${b + 1}.`, { size: 6.5 });
+
+    if (b < data.bowlers.length) {
+      const bw = data.bowlers[b];
+      addText(98, yMid, bw.name, { size: 9, hand: true });
+
+      bw.cells.forEach((cell, cellIdx) => {
+        if (cellIdx >= 25) return;
+        const cxMid = ovGridX0 + (cellIdx + 0.5) * ovColW;
+        // Subtle tint on overflow cells so it's visually clear the over spilled into the next box
+        if (cell.isOverflow) {
+          svg.appendChild(svgEl('rect', {
+            x: ovGridX0 + cellIdx * ovColW + 0.5,
+            y: yTop + 0.5,
+            width: ovColW - 1,
+            height: bowlRowH - 1,
+            fill: '#f1f5f9'
+          }));
+        }
+        addText(cxMid, yTop + bowlRowH * 0.26, cell.balls, { size: 7.4, hand: true, anchor: 'middle' });
+        addText(cxMid, yBot - bowlRowH * 0.24, cell.cum, { size: 6.2, hand: true, anchor: 'middle' });
+      });
+
+      [bw.oversDisplay, bw.maidens, bw.wides, bw.noBalls, bw.wickets, bw.runs].forEach((val, vIdx) => {
+        const vxMid = bSumX0 + (vIdx + 0.5) * bSumW;
+        addText(vxMid, yMid, val, { size: 9.5, hand: true, anchor: 'middle' });
+      });
+    }
+  }
+}
+
+function exportPNG() {
+  const svg = document.getElementById('scorebook');
+  const serializer = new XMLSerializer();
+  const svgStr = serializer.serializeToString(svg);
+  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 4000;
+    canvas.height = 3000;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+
+    const link = document.createElement('a');
+    link.download = `sca-scorebook-${inningsStore[activeInnings].label.toLowerCase()}-innings.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+  img.src = url;
+}
+
+window.addEventListener('DOMContentLoaded', loadSampleData);
+</script>
+</body>
+</html>
