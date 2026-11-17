@@ -881,31 +881,86 @@ function loadSampleData() {
   }
 }
 
+function cleanPlayerName(name) {
+  const trimmed = name.trim();
+  if (trimmed === trimmed.toUpperCase() || trimmed === trimmed.toLowerCase()) {
+    return trimmed.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  }
+  return trimmed.split(/\s+/).map(part => {
+    if (part === part.toLowerCase()) {
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    }
+    return part;
+  }).join(' ');
+}
+
 function parsePlayHQ(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Over '));
   const items = [];
-  for (let i = 0; i + 3 < lines.length; i += 4) {
-    const ball = lines[i];
-    const badge = lines[i + 1];
-    const matchup = lines[i + 2];
-    const desc = lines[i + 3];
-    if (!matchup.includes(' to ')) continue;
-    const [bowler, batter] = matchup.split(' to ').map(s => s.trim());
-    items.push({ ball, badge, bowler, batter, desc });
+  let i = 0;
+  while (i < lines.length) {
+    if (/^\d+\.\d+$/.test(lines[i])) {
+      const ball = lines[i];
+      // 3-line PlayHQ format: ball, badge+matchup ("6Vivaan Bhati to Benji Rich"), desc
+      if (i + 2 < lines.length && lines[i + 1].includes(' to ')) {
+        const bm = lines[i + 1];
+        const desc = lines[i + 2];
+        const m = bm.match(/^(WD|NB|LB|B|W|●|\d+)\s*(.+?)\s+to\s+(.+)$/i);
+        let badge = '', bowler = '', batter = '';
+        if (m) {
+          badge = m[1].trim();
+          bowler = cleanPlayerName(m[2]);
+          batter = cleanPlayerName(m[3]);
+        } else {
+          const parts = bm.split(' to ');
+          bowler = cleanPlayerName(parts[0]);
+          batter = cleanPlayerName(parts.slice(1).join(' to '));
+        }
+        items.push({ ball, badge, bowler, batter, desc });
+        i += 3;
+        continue;
+      }
+      // 4-line PlayHQ format: ball, badge, matchup, desc
+      if (i + 3 < lines.length && lines[i + 2].includes(' to ')) {
+        const badge = lines[i + 1];
+        const parts = lines[i + 2].split(' to ');
+        const bowler = cleanPlayerName(parts[0]);
+        const batter = cleanPlayerName(parts.slice(1).join(' to '));
+        const desc = lines[i + 3];
+        items.push({ ball, badge, bowler, batter, desc });
+        i += 4;
+        continue;
+      }
+    }
+    i += 1;
   }
   return items;
 }
 
 function splitCSVLine(line) {
-  const res = []; let cur = ''; let inQ = false;
+  const res = [];
+  let cur = '';
+  let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
-    if (ch === '"') { inQ = !inQ; }
-    else if (ch === ',' && !inQ) { res.push(cur); cur = ''; }
-    else { cur += ch; }
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      res.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
   }
-  res.push(cur); return res;
+  res.push(cur);
+  return res;
 }
+
 function parseCSV(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
   if (lines.length < 2) return [];
@@ -949,16 +1004,64 @@ function parseAndRender() {
 
   let deliveries = [];
 
-  if (csvRows.length > 0 && phqRows.length === csvRows.length) {
+  if (csvRows.length > 0 && phqRows.length > 0) {
+    const nameLookup = {};
+    phqRows.forEach(p => {
+      const bParts = p.bowler.split(/\s+/);
+      const batParts = p.batter.split(/\s+/);
+      if (bParts.length >= 2) {
+        nameLookup[`${bParts[0][0].toLowerCase()}_${bParts[bParts.length - 1].toLowerCase()}`] = p.bowler;
+      }
+      if (batParts.length >= 2) {
+        nameLookup[`${batParts[0][0].toLowerCase()}_${batParts[batParts.length - 1].toLowerCase()}`] = p.batter;
+      }
+    });
+
+    const resolveName = (abbr) => {
+      const parts = abbr.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        const key = `${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`;
+        if (nameLookup[key]) return nameLookup[key];
+      }
+      return cleanPlayerName(abbr);
+    };
+
+    const usedPhq = new Set();
     for (let i = csvRows.length - 1; i >= 0; i--) {
       const c = csvRows[i];
-      const p = phqRows[i];
-      deliveries.push(normalizeDelivery(p.ball, c.score, p.bowler, p.batter, c.event, p.badge, p.desc));
+      const cOver = c.ball.split('.')[0];
+      const cBowlerLast = c.bowler.trim().split(/\s+/).pop().toLowerCase();
+      const cBatterLast = c.batter.trim().split(/\s+/).pop().toLowerCase();
+      const evL = c.event.toLowerCase();
+
+      let matchedPhq = null;
+      for (let j = phqRows.length - 1; j >= 0; j--) {
+        if (usedPhq.has(j)) continue;
+        const p = phqRows[j];
+        const pOver = p.ball.split('.')[0];
+        const pBowlerLast = p.bowler.split(/\s+/).pop().toLowerCase();
+        const pBatterLast = p.batter.split(/\s+/).pop().toLowerCase();
+        if (pOver === cOver && pBowlerLast === cBowlerLast && pBatterLast === cBatterLast) {
+          const bdgU = (p.badge || '').toUpperCase();
+          if (evL.includes('dismissed') !== (bdgU === 'W')) continue;
+          if (evL.includes('wd') !== (bdgU === 'WD')) continue;
+          if (evL.includes('nb') !== (bdgU === 'NB')) continue;
+          usedPhq.add(j);
+          matchedPhq = p;
+          break;
+        }
+      }
+
+      const fullBowler = matchedPhq ? matchedPhq.bowler : resolveName(c.bowler);
+      const fullBatter = matchedPhq ? matchedPhq.batter : resolveName(c.batter);
+      const desc = matchedPhq ? matchedPhq.desc : '';
+      const badge = matchedPhq ? matchedPhq.badge : '';
+      deliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event, badge, desc));
     }
   } else if (csvRows.length > 0) {
     for (let i = csvRows.length - 1; i >= 0; i--) {
       const c = csvRows[i];
-      deliveries.push(normalizeDelivery(c.ball, c.score, c.bowler, c.batter, c.event, '', ''));
+      deliveries.push(normalizeDelivery(c.ball, c.score, cleanPlayerName(c.bowler), cleanPlayerName(c.batter), c.event, '', ''));
     }
   } else if (phqRows.length > 0) {
     let cumRuns = 0;
@@ -996,33 +1099,36 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, badge, d
   const ev = (csvEvent || '').toLowerCase();
   const bdg = (badge || '').toUpperCase();
 
+  if (/^\d+$/.test(bdg)) {
+    batterRuns = parseInt(bdg, 10);
+  } else if (!ev.includes('no run')) {
+    const mRun = ev.match(/(\d+)\s*runs?/);
+    if (mRun) batterRuns = parseInt(mRun[1], 10);
+  }
+
   if (bdg === 'WD' || ev.includes('wd') || ev.includes('wide')) {
-    const m = ev.match(/(\d+)\s*wd/) || desc.match(/(\d+)\s*wide/);
+    const m = ev.match(/(\d+)\s*wd/) || (desc || '').match(/(\d+)\s*wide/);
     extras = m ? parseInt(m[1], 10) : 1;
     extraType = 'Wide';
     isLegal = false;
   } else if (bdg === 'NB' || ev.includes('nb') || ev.includes('no ball')) {
-    const m = ev.match(/(\d+)\s*nb/);
+    const m = ev.match(/(\d+)\s*nb/) || (desc || '').match(/(\d+)\s*no ball/);
     extras = m ? parseInt(m[1], 10) : 1;
     extraType = 'NoBall';
     isLegal = false;
-  } else if (bdg === 'LB' || ev.includes('lb')) {
-    const m = ev.match(/(\d+)\s*lb/) || desc.match(/(\d+)\s*leg bye/);
+  } else if (bdg === 'LB' || /\b\d*lb\b/.test(ev)) {
+    const m = ev.match(/(\d+)\s*lb/) || (desc || '').match(/(\d+)\s*leg bye/);
     extras = m ? parseInt(m[1], 10) : 1;
     extraType = 'LegBye';
-  } else if (bdg === 'B' || ev.match(/^\d+b$/)) {
-    const m = ev.match(/(\d+)b/) || desc.match(/(\d+)\s*bye/);
+  } else if (bdg === 'B' || /\b\d+b\b/.test(ev)) {
+    const m = ev.match(/(\d+)b/) || (desc || '').match(/(\d+)\s*bye/);
     extras = m ? parseInt(m[1], 10) : 1;
     extraType = 'Bye';
-  } else if (bdg === 'W' || ev.includes('dismissed') || ev.includes('out')) {
+  }
+
+  if (bdg === 'W' || ev.includes('dismissed') || ev.includes('out')) {
     isWicket = true;
     dismissalType = desc ? parseDismissal(desc) : 'out';
-  }
-  if (/^\d+$/.test(bdg)) {
-    batterRuns = parseInt(bdg, 10);
-  } else if (!ev.includes('no run')) {
-    const m = ev.match(/(\d+)\s*runs?/);
-    if (m) batterRuns = parseInt(m[1], 10);
   }
 
   return {
@@ -1128,7 +1234,7 @@ function buildScorebookModel(deliveries) {
         totalWickets += 1;
         bat.events.push(0);
         bat.howOut = d.dismissalType;
-        bat.bowlerOut = d.bowler;
+        bat.bowlerOut = d.dismissalType === 'run out' ? '' : d.bowler;
         bwl.wickets += 1;
         ovObj.wicketsTaken += 1;
         ovObj.tokens.push('W');
@@ -1157,13 +1263,12 @@ function buildScorebookModel(deliveries) {
     }
   });
 
-  // Finalize bowler spells with column overflow splitting when an over exceeds column width
-  const MAX_CHARS_PER_CELL = 6; // e.g., 6 standard symbols fit cleanly in 24.8px column; 7+ overflows to next column
+  const MAX_CHARS_PER_CELL = 6;
   bowlerOrder.forEach(name => {
     const bwl = bowlers[name];
     let cumW = 0;
     let cumR = 0;
-    bwl.cells = []; // flattened array of column cells for this bowler
+    bwl.cells = [];
 
     Object.keys(bwl.oversMap).map(Number).sort((a, b) => a - b).forEach(ovNum => {
       const o = bwl.oversMap[ovNum];
@@ -1180,7 +1285,6 @@ function buildScorebookModel(deliveries) {
           isOverflow: false
         });
       } else {
-        // Split long over across consecutive columns, pushing subsequent overs right by 1+ columns
         for (let idx = 0; idx < tokens.length; idx += MAX_CHARS_PER_CELL) {
           const chunk = tokens.slice(idx, idx + MAX_CHARS_PER_CELL).join('');
           const isLastChunk = (idx + MAX_CHARS_PER_CELL) >= tokens.length;
@@ -1243,7 +1347,6 @@ function buildScorebookModel(deliveries) {
   };
 }
 
-// Format batsman ball sequence with NO commas (space-separated for clean readability)
 function formatBatterEvents(events, mode) {
   if (mode === 'scoring_only') {
     return events.filter(r => r > 0).join(' ');
@@ -1325,7 +1428,6 @@ function renderScorebook() {
     }));
   };
 
-  // Outer Frame & Left Margin
   addRect(20, 20, 960, 710, { w: 1.8 });
   addRect(20, 20, 62, 710, { w: 1.0 });
 
@@ -1345,7 +1447,6 @@ function renderScorebook() {
   addText(46, 665, 'SCORE/OVERS', { size: 6, anchor: 'middle', rotate: -90 });
   addText(60, 665, 'RESUME', { size: 6, anchor: 'middle', rotate: -90 });
 
-  // Shield Emblem
   svg.appendChild(svgEl('polygon', {
     points: '110,28 134,28 134,54 122,64 110,54',
     fill: 'none', stroke: '#000', 'stroke-width': 1.3
@@ -1355,7 +1456,6 @@ function renderScorebook() {
   addText(122, 73, 'SYDNEY CRICKET', { size: 6.2, bold: true, anchor: 'middle' });
   addText(122, 81, 'ASSOCIATION', { size: 6.2, bold: true, anchor: 'middle' });
 
-  // Header Title & Fields
   addText(470, 38, 'SYDNEY CRICKET ASSOCIATION SCORE BOOK', { size: 15, bold: true, anchor: 'middle' });
 
   addText(165, 60, 'COMPETITION', { size: 7.5, bold: true });
@@ -1394,7 +1494,6 @@ function renderScorebook() {
   addText(715, 95, sharedMeta.date, { size: 9.5, hand: true });
   addLine(705, 100, 825, 100, 0.8, '1.5,1.5');
 
-  // Right-Hand Over-by-Over Progression Table (x: 832..980, y: 20..505)
   addRect(832, 20, 148, 485, { w: 1.2 });
   const colW = 148 / 3;
   for (let c = 0; c < 3; c++) {
@@ -1427,7 +1526,6 @@ function renderScorebook() {
     }
   }
 
-  // Batting Table (x: 82..832, y: 108..368)
   addRect(82, 108, 750, 260, { w: 1.2 });
   addLine(82, 132, 832, 132, 1.0);
   [82, 114, 146, 184, 305, 635, 712, 792, 832].forEach(xc => addLine(xc, 108, xc, 368, 0.8));
@@ -1474,7 +1572,6 @@ function renderScorebook() {
     }
   }
 
-  // Progressive Score Grid & Sundries (y: 368..450)
   addRect(82, 368, 750, 82, { w: 1.2 });
   const progW = 450 / 4;
   const cellW = (progW - 16) / 10;
@@ -1512,7 +1609,6 @@ function renderScorebook() {
     }));
   }
 
-  // Middle MINS & TOTAL OVERS Box
   addRect(532, 368, 60, 82, { w: 0.9 });
   addLine(562, 368, 562, 450, 0.6);
   addText(547, 373, 'MINS.', { size: 4.8, bold: true, anchor: 'middle' });
@@ -1530,7 +1626,6 @@ function renderScorebook() {
   addText(577, 437, 'TOTAL OVERS', { size: 3.8, bold: true, anchor: 'middle' });
   addText(577, 444.5, data.totalOvers > 0 ? data.totalOvers : '', { size: 8.5, hand: true, anchor: 'middle' });
 
-  // Sundries & Summary Totals
   addRect(592, 368, 240, 82, { w: 1.0 });
   addLine(722, 368, 722, 450, 0.8);
   addLine(756, 368, 756, 450, 0.8);
@@ -1572,7 +1667,6 @@ function renderScorebook() {
     }
   });
 
-  // Fall of Wickets & Result Section
   addRect(82, 450, 750, 75, { w: 1.2 });
   [450, 467.4, 484.7, 502].forEach(yf => addLine(82, yf, 832, yf, 0.7));
 
@@ -1607,7 +1701,6 @@ function renderScorebook() {
   addText(609, 510, 'UMPIRES', { size: 5.5, bold: true });
   addText(609, 517, 'SIGNATURES', { size: 5.5, bold: true });
 
-  // Bowling Analysis Section (with overflow column shifting)
   addRect(82, 525, 898, 205, { w: 1.2 });
   addLine(82, 547, 980, 547, 1.0);
   addText(125, 536, 'BOWLER', { size: 7.5, bold: true, anchor: 'middle' });
@@ -1632,68 +1725,4 @@ function renderScorebook() {
   const bowlRowH = (730 - 547) / 9;
   for (let b = 0; b < 9; b++) {
     const yTop = 547 + b * bowlRowH;
-    const yBot = yTop + bowlRowH;
-    const yMid = (yTop + yBot) / 2;
-    addLine(82, yBot, 980, yBot, 0.8);
-    addLine(ovGridX0, yMid, bSumX0, yMid, 0.45, '2,2');
-    addText(87, yMid - 1, `${b + 1}.`, { size: 6.5 });
-
-    if (b < data.bowlers.length) {
-      const bw = data.bowlers[b];
-      addText(98, yMid, bw.name, { size: 9, hand: true });
-
-      bw.cells.forEach((cell, cellIdx) => {
-        if (cellIdx >= 25) return;
-        const cxMid = ovGridX0 + (cellIdx + 0.5) * ovColW;
-        // Subtle tint on overflow cells so it's visually clear the over spilled into the next box
-        if (cell.isOverflow) {
-          svg.appendChild(svgEl('rect', {
-            x: ovGridX0 + cellIdx * ovColW + 0.5,
-            y: yTop + 0.5,
-            width: ovColW - 1,
-            height: bowlRowH - 1,
-            fill: '#f1f5f9'
-          }));
-        }
-        addText(cxMid, yTop + bowlRowH * 0.26, cell.balls, { size: 7.4, hand: true, anchor: 'middle' });
-        addText(cxMid, yBot - bowlRowH * 0.24, cell.cum, { size: 6.2, hand: true, anchor: 'middle' });
-      });
-
-      [bw.oversDisplay, bw.maidens, bw.wides, bw.noBalls, bw.wickets, bw.runs].forEach((val, vIdx) => {
-        const vxMid = bSumX0 + (vIdx + 0.5) * bSumW;
-        addText(vxMid, yMid, val, { size: 9.5, hand: true, anchor: 'middle' });
-      });
-    }
-  }
-}
-
-function exportPNG() {
-  const svg = document.getElementById('scorebook');
-  const serializer = new XMLSerializer();
-  const svgStr = serializer.serializeToString(svg);
-  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-
-  const img = new Image();
-  img.onload = function() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 4000;
-    canvas.height = 3000;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    URL.revokeObjectURL(url);
-
-    const link = document.createElement('a');
-    link.download = `sca-scorebook-${inningsStore[activeInnings].label.toLowerCase()}-innings.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  };
-  img.src = url;
-}
-
-window.addEventListener('DOMContentLoaded', loadSampleData);
-</script>
-</body>
-</html>
+    const yBot = yTop
