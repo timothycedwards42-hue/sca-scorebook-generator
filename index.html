@@ -157,14 +157,16 @@
   }
 
   .file-drop {
+    display: block;
     border: 1.5px dashed #9ca3af;
     border-radius: 6px;
-    padding: 9px;
+    padding: 10px;
     text-align: center;
     font-size: 11.5px;
     color: var(--muted);
     background: #f9fafb;
     cursor: pointer;
+    user-select: none;
   }
 
   .file-drop:hover {
@@ -246,12 +248,37 @@
   <div class="sidebar">
     <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
 
-        <div class="field-group">
+    <div class="field-group">
       <label>Upload CSV File (Ball, Score, Outcome, Innings)</label>
-      <label id="csvDropZone" for="csvFile" class="file-drop" style="display:block; cursor:pointer;">
+      <label id="csvDropZone" for="csvFile" class="file-drop">
         Click here or drag &amp; drop CSV file for <span id="dropInningsLabel">1st Innings</span>
       </label>
       <input type="file" id="csvFile" style="position:fixed; left:-9999px; opacity:0;">
+    </div>
+
+    <div class="field-group">
+      <label>CSV Content (Optional if PlayHQ feed pasted)</label>
+      <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;11.7,1--61,T Brownie to E Tencate : 1 run,1st Innings..."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label>PlayHQ / Live Feed Text (Enriches Full Names &amp; Dismissals)</label>
+      <textarea id="playhqInput" placeholder="Over 29&#10;28.6&#10;6Vivaan Bhati to Benji Rich&#10;Benji Rich made 6 runs..."></textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field-group">
+        <label>Dot Ball Format</label>
+        <select id="dotFormat" onchange="saveCurrentInputs(); renderScorebook()">
+          <option value="grouped" selected>Grouped (10d 1 6d)</option>
+          <option value="individual">Individual (. . . 1)</option>
+          <option value="scoring_only">Scoring Shots Only (1 4 2)</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Innings Label</label>
+        <input type="text" id="metaInnings" value="1st" oninput="saveCurrentInputs(); renderScorebook()">
+      </div>
     </div>
 
     <button class="btn-primary" style="width:100%" onclick="parseAndRender()">Generate / Update Scorebook</button>
@@ -826,7 +853,15 @@ function clearCurrentInnings() {
   renderScorebook();
 }
 
-
+function loadCSVFileObject(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    document.getElementById('csvInput').value = evt.target.result;
+    parseAndRender();
+  };
+  reader.readAsText(file);
+}
 
 function loadSampleData() {
   inningsStore[1].csv = SAMPLE_CSV;
@@ -864,7 +899,6 @@ function parsePlayHQ(text) {
   while (i < lines.length) {
     if (/^\d+\.\d+$/.test(lines[i])) {
       const ball = lines[i];
-      // 3-line PlayHQ format: ball, badge+matchup ("6Vivaan Bhati to Benji Rich"), desc
       if (i + 2 < lines.length && lines[i + 1].includes(' to ')) {
         const bm = lines[i + 1];
         const desc = lines[i + 2];
@@ -883,7 +917,6 @@ function parsePlayHQ(text) {
         i += 3;
         continue;
       }
-      // 4-line PlayHQ format: ball, badge, matchup, desc
       if (i + 3 < lines.length && lines[i + 2].includes(' to ')) {
         const badge = lines[i + 1];
         const parts = lines[i + 2].split(' to ');
@@ -1688,4 +1721,103 @@ function renderScorebook() {
   const bowlRowH = (730 - 547) / 9;
   for (let b = 0; b < 9; b++) {
     const yTop = 547 + b * bowlRowH;
-    const yBot = yTop
+    const yBot = yTop + bowlRowH;
+    const yMid = (yTop + yBot) / 2;
+    addLine(82, yBot, 980, yBot, 0.8);
+    addLine(ovGridX0, yMid, bSumX0, yMid, 0.45, '2,2');
+    addText(87, yMid - 1, `${b + 1}.`, { size: 6.5 });
+
+    if (b < data.bowlers.length) {
+      const bw = data.bowlers[b];
+      addText(98, yMid, bw.name, { size: 9, hand: true });
+
+      bw.cells.forEach((cell, cellIdx) => {
+        if (cellIdx >= 25) return;
+        const cxMid = ovGridX0 + (cellIdx + 0.5) * ovColW;
+        if (cell.isOverflow) {
+          svg.appendChild(svgEl('rect', {
+            x: ovGridX0 + cellIdx * ovColW + 0.5,
+            y: yTop + 0.5,
+            width: ovColW - 1,
+            height: bowlRowH - 1,
+            fill: '#f1f5f9'
+          }));
+        }
+        addText(cxMid, yTop + bowlRowH * 0.26, cell.balls, { size: 7.4, hand: true, anchor: 'middle' });
+        addText(cxMid, yBot - bowlRowH * 0.24, cell.cum, { size: 6.2, hand: true, anchor: 'middle' });
+      });
+
+      [bw.oversDisplay, bw.maidens, bw.wides, bw.noBalls, bw.wickets, bw.runs].forEach((val, vIdx) => {
+        const vxMid = bSumX0 + (vIdx + 0.5) * bSumW;
+        addText(vxMid, yMid, val, { size: 9.5, hand: true, anchor: 'middle' });
+      });
+    }
+  }
+}
+
+function exportPNG() {
+  const svg = document.getElementById('scorebook');
+  const serializer = new XMLSerializer();
+  const svgStr = serializer.serializeToString(svg);
+  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 4000;
+    canvas.height = 3000;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+
+    const link = document.createElement('a');
+    link.download = `sca-scorebook-${inningsStore[activeInnings].label.toLowerCase()}-innings.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+  img.src = url;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const fileInput = document.getElementById('csvFile');
+  const dropZone = document.getElementById('csvDropZone');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        loadCSVFileObject(e.target.files[0]);
+        e.target.value = '';
+      }
+    });
+  }
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
+    window.addEventListener(evtName, (e) => e.preventDefault(), false);
+  });
+
+  if (dropZone) {
+    dropZone.addEventListener('dragover', () => {
+      dropZone.style.borderColor = '#2563eb';
+      dropZone.style.background = '#eff6ff';
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = '#9ca3af';
+      dropZone.style.background = '#f9fafb';
+    });
+    dropZone.addEventListener('drop', (e) => {
+      dropZone.style.borderColor = '#9ca3af';
+      dropZone.style.background = '#f9fafb';
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        loadCSVFileObject(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  loadSampleData();
+});
+</script>
+</body>
+</html>
