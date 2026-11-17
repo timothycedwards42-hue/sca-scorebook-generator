@@ -248,12 +248,13 @@
   <div class="sidebar">
     <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
 
-    <div class="field-group">
+        <div class="field-group">
       <label>Upload CSV File (Ball, Score, Outcome, Innings)</label>
-      <label id="csvDropZone" for="csvFile" class="file-drop">
-        Click here or drag &amp; drop CSV file for <span id="dropInningsLabel">1st Innings</span>
-      </label>
-      <input type="file" id="csvFile" style="position:fixed; left:-9999px; opacity:0;">
+      <div id="csvDropZone" class="file-drop" style="position:relative; overflow:hidden;">
+        <span>Click here or drag &amp; drop CSV file for <span id="dropInningsLabel">1st Innings</span></span>
+        <input type="file" id="csvFile" title="Select CSV file"
+               style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+      </div>
     </div>
 
     <div class="field-group">
@@ -865,10 +866,14 @@ function clearCurrentInnings() {
 
 function loadCSVFileObject(file) {
   if (!file) return;
+  document.getElementById('statusMsg').textContent = 'Reading ' + file.name + '...';
   const reader = new FileReader();
   reader.onload = function(evt) {
     document.getElementById('csvInput').value = evt.target.result;
     parseAndRender();
+  };
+  reader.onerror = function() {
+    document.getElementById('statusMsg').textContent = 'Error reading file: ' + file.name;
   };
   reader.readAsText(file);
 }
