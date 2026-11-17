@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v4.4)</title>
+<title>SCA Cricket Scorebook Generator (v4.5)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -243,7 +243,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v4.4</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v4.5</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">1st Innings</button>
     <button id="tab2" class="tab-btn" type="button">2nd Innings</button>
@@ -272,7 +272,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v4.4...</div>
+    <div id="statusMsg" class="status-bar">Initializing v4.5...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source)</label>
@@ -984,7 +984,7 @@ const inningsStore = {
   }
 };
 
-function setStatus(text, isError = false) {
+function setStatus(text, isError) {
   const el = document.getElementById('statusMsg');
   if (!el) return;
   el.style.color = isError ? '#b91c1c' : '#047857';
@@ -1072,7 +1072,7 @@ function switchInnings(num) {
   document.getElementById('tab2').classList.toggle('active', num === 2);
 
   const ord = num === 1 ? '1st Innings' : '2nd Innings';
-  document.getElementById('sidebarInningsTitle').textContent = `${ord} — Ball-by-Ball Input`;
+  document.getElementById('sidebarInningsTitle').textContent = ord + ' — Ball-by-Ball Input';
   document.getElementById('dropInningsLabel').textContent = ord;
 
   const st = inningsStore[num];
@@ -1089,11 +1089,11 @@ function switchInnings(num) {
       parseAndRender();
     } else {
       st.parsed = emptyScorebookModel();
-      setStatus(`${ord}: blank sheet ready — select CSV & paste scorecard.`);
+      setStatus(ord + ': blank sheet ready — select CSV & paste scorecard.', false);
       renderScorebook();
     }
   } else {
-    setStatus(`${ord}: ${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}.`);
+    setStatus(ord + ': ' + st.parsed.totalOvers + ' overs, ' + st.parsed.totalWickets + '/' + st.parsed.totalScore + '.', false);
     renderScorebook();
   }
 }
@@ -1106,7 +1106,7 @@ function clearCurrentInnings() {
   document.getElementById('csvInput').value = '';
   document.getElementById('scorecardInput').value = '';
   document.getElementById('csvFile').value = '';
-  setStatus(`${activeInnings === 1 ? '1st' : '2nd'} Innings cleared.`);
+  setStatus((activeInnings === 1 ? '1st' : '2nd') + ' Innings cleared.', false);
   renderScorebook();
 }
 
@@ -1114,6 +1114,7 @@ function loadSampleData() {
   inningsStore[1].csv = SAMPLE_CSV;
   inningsStore[1].scorecard = SAMPLE_SCORECARD;
   inningsStore[1].matchFormat = 'auto';
+  inningsStore[1].overRule = 'auto';
   inningsStore[1].label = '1st';
   inningsStore[1].team = 'North Shore U13 Gee';
   sharedMeta.comp = 'SEJCA U13 Boys Gee Shield';
@@ -1130,6 +1131,7 @@ function loadSampleData() {
     document.getElementById('csvInput').value = SAMPLE_CSV;
     document.getElementById('scorecardInput').value = SAMPLE_SCORECARD;
     document.getElementById('matchFormat').value = 'auto';
+    document.getElementById('overRule').value = 'auto';
     document.getElementById('metaInnings').value = '1st';
     document.getElementById('metaTeam').value = 'North Shore U13 Gee';
     parseAndRender();
@@ -1140,6 +1142,7 @@ function loadStage1Sample() {
   inningsStore[1].csv = '';
   inningsStore[1].scorecard = STAGE1_SCORECARD;
   inningsStore[1].matchFormat = 'auto';
+  inningsStore[1].overRule = 'auto';
   inningsStore[1].label = '1st';
   inningsStore[1].team = 'Mosman U10 Boland';
   sharedMeta.comp = 'NSJCA U10 Stage 1';
@@ -1156,6 +1159,7 @@ function loadStage1Sample() {
     document.getElementById('csvInput').value = '';
     document.getElementById('scorecardInput').value = STAGE1_SCORECARD;
     document.getElementById('matchFormat').value = 'auto';
+    document.getElementById('overRule').value = 'auto';
     document.getElementById('metaInnings').value = '1st';
     document.getElementById('metaTeam').value = 'Mosman U10 Boland';
     parseAndRender();
@@ -1370,7 +1374,8 @@ function parseScorecardView(text) {
   return result;
 }
 
-function splitCSVLine(line, delim = ',') {
+function splitCSVLine(line, delim) {
+  const d = delim || ',';
   const res = [];
   let cur = '';
   let inQuotes = false;
@@ -1383,7 +1388,7 @@ function splitCSVLine(line, delim = ',') {
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (ch === delim && !inQuotes) {
+    } else if (ch === d && !inQuotes) {
       res.push(cur);
       cur = '';
     } else {
@@ -1467,7 +1472,7 @@ function parseAndRender() {
   const csvRows = parseCSV(rawCsv);
   const scData = parseScorecardView(st.scorecard.trim());
   const isStage1 = detectStage1(st.matchFormat, csvRows, scData);
-  const rawRule = st.overRule || document.getElementById('overRule')?.value || 'auto';
+  const rawRule = st.overRule || document.getElementById('overRule').value || 'auto';
   const resolvedOverRule = (rawRule !== 'auto') ? rawRule : (isStage1 ? 'max6' : 'normal');
 
   if (scData.battingTeam) {
@@ -1497,16 +1502,24 @@ function parseAndRender() {
       deliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event));
     }
     st.parsed = buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule);
-    setStatus(`${isStage1 ? '[Stage 1] ' : ''}Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`);
+    setStatus(
+      (isStage1 ? '[Stage 1] ' : '') +
+      'Parsed ' + deliveries.length + ' deliveries (' + st.parsed.totalOvers + ' overs, ' + st.parsed.totalWickets + '/' + st.parsed.totalScore + ').',
+      false
+    );
   } else if (scData.batters.length > 0) {
     st.parsed = buildModelFromScorecardOnly(scData, isStage1);
-    setStatus(`${isStage1 ? '[Stage 1] ' : ''}Loaded Scorecard View (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`);
+    setStatus(
+      (isStage1 ? '[Stage 1] ' : '') +
+      'Loaded Scorecard View (' + st.parsed.totalOvers + ' overs, ' + st.parsed.totalWickets + '/' + st.parsed.totalScore + ').',
+      false
+    );
   } else {
     st.parsed = emptyScorebookModel();
     const lineCount = rawCsv ? rawCsv.split(/\r?\n/).length : 0;
     setStatus(
       lineCount > 0
-        ? `Loaded ${lineCount} lines, but 0 matched "Bowler to Batter : Outcome" format.`
+        ? 'Loaded ' + lineCount + ' lines, but 0 matched "Bowler to Batter : Outcome" format.'
         : 'No CSV or Scorecard data loaded.',
       lineCount > 0
     );
@@ -1584,7 +1597,7 @@ function buildModelFromScorecardOnly(scData, isStage1) {
     return {
       name,
       index: idx + 1,
-      oversDisplay: s.overs,
+      oversDisplay: s.overs || '0',
       maidens: s.maidens,
       wides: s.wides,
       noBalls: s.noBalls,
@@ -1623,7 +1636,8 @@ function buildModelFromScorecardOnly(scData, isStage1) {
   };
 }
 
-function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
+function buildScorebookModel(deliveries, scData, isStage1, overRule) {
+  const rule = overRule || 'normal';
   const batters = {};
   const batterOrder = [];
   const bowlers = {};
@@ -1636,7 +1650,7 @@ function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
   let penaltyTotal = 0;
   let totalWickets = 0;
 
-  const ensureBatter = (name, isDNB = false) => {
+  const ensureBatter = (name, isDNB) => {
     if (!batters[name]) {
       const scInfo = scData && scData.batterDetails ? scData.batterDetails[name] : null;
       batters[name] = {
@@ -1646,7 +1660,7 @@ function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
         events: [],
         howOut: scInfo ? scInfo.howOut : (isDNB ? '' : 'Not out'),
         bowlerOut: scInfo ? scInfo.bowlerOut : '',
-        isDNB: isDNB
+        isDNB: Boolean(isDNB)
       };
       batterOrder.push(name);
     }
@@ -1779,13 +1793,16 @@ function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
   }
 
   const MAX_CHARS_PER_CELL = 6;
+  const maxInningsOver = deliveries.length > 0 ? Math.max(...deliveries.map(x => x.over)) : 0;
+
   bowlerOrder.forEach(name => {
     const bwl = bowlers[name];
     let cumW = 0;
     let cumR = 0;
     bwl.cells = [];
+    const ovKeys = Object.keys(bwl.oversMap).map(Number).sort((a, b) => a - b);
 
-    Object.keys(bwl.oversMap).map(Number).sort((a, b) => a - b).forEach(ovNum => {
+    ovKeys.forEach(ovNum => {
       const o = bwl.oversMap[ovNum];
       if (o.runsConceded === 0) bwl.maidens += 1;
       cumW += o.wicketsTaken;
@@ -1812,14 +1829,7 @@ function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
       }
     });
 
-    const maxInningsOver = deliveries.length > 0 ? Math.max(...deliveries.map(x => x.over)) : 0;
-    const ovKeys = Object.keys(bwl.oversMap).map(Number).sort((a, b) => a - b);
-    if (overRule === 'normal') {
-      const fullOv = Math.floor(bwl.legalBalls / 6);
-      const remBalls = bwl.legalBalls % 6;
-      bwl.oversDisplay = remBalls === 0 ? `${fullOv}` : `${fullOv}.${remBalls}`;
-    } else if (overRule === 'max6') {
-      // Every delivery (including wides/no-balls) counts as 1 of the 6 balls in the over
+    if (rule === 'max6') {
       let completedOv = 0;
       let remBalls = 0;
       ovKeys.forEach(ovNum => {
@@ -1833,12 +1843,7 @@ function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
       completedOv += Math.floor(remBalls / 6);
       remBalls = remBalls % 6;
       bwl.oversDisplay = remBalls === 0 ? `${completedOv}` : `${completedOv}.${remBalls}`;
-    } else {
-      const fullOv = Math.floor(bwl.legalBalls / 6);
-      const remBalls = bwl.legalBalls % 6;
-      bwl.oversDisplay = remBalls === 0 ? `${fullOv}` : `${fullOv}.${remBalls}`;
-    } else if (overRule === 'max8') {
-      // Over is complete at 6 legal balls OR 8 total balls (except final over which requires 6 legal balls)
+    } else if (rule === 'max8') {
       let completedOv = 0;
       let remBalls = 0;
       ovKeys.forEach(ovNum => {
@@ -1856,6 +1861,10 @@ function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
       completedOv += Math.floor(remBalls / 6);
       remBalls = remBalls % 6;
       bwl.oversDisplay = remBalls === 0 ? `${completedOv}` : `${completedOv}.${remBalls}`;
+    } else {
+      const fullOv = Math.floor(bwl.legalBalls / 6);
+      const remBalls = bwl.legalBalls % 6;
+      bwl.oversDisplay = remBalls === 0 ? `${fullOv}` : `${fullOv}.${remBalls}`;
     }
   });
 
@@ -1938,12 +1947,14 @@ function formatBatterEvents(events, mode) {
   return tokens.join(' ');
 }
 
-function svgEl(tag, attrs = {}, textContent = null) {
+function svgEl(tag, attrs, textContent) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    el.setAttribute(k, v);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      el.setAttribute(k, v);
+    }
   }
-  if (textContent !== null) {
+  if (textContent !== undefined && textContent !== null) {
     el.textContent = textContent;
   }
   return el;
@@ -1960,36 +1971,38 @@ function renderScorebook() {
   const serif = 'Georgia, "Times New Roman", serif';
   const dotMode = st.dotFormat;
 
-  const addText = (x, y, txt, opts = {}) => {
+  const addText = (x, y, txt, opts) => {
+    const o = opts || {};
     const attrs = {
-      x,
-      y,
-      'font-family': opts.hand ? serif : sans,
-      'font-size': opts.size || 8,
-      'font-weight': opts.bold ? 'bold' : 'normal',
-      'font-style': opts.hand ? 'italic' : 'normal',
-      'fill': opts.hand ? ink : (opts.color || '#000'),
-      'text-anchor': opts.anchor || 'start',
-      'dominant-baseline': opts.baseline || 'central'
+      x: x,
+      y: y,
+      'font-family': o.hand ? serif : sans,
+      'font-size': o.size || 8,
+      'font-weight': o.bold ? 'bold' : 'normal',
+      'font-style': o.hand ? 'italic' : 'normal',
+      'fill': o.hand ? ink : (o.color || '#000'),
+      'text-anchor': o.anchor || 'start',
+      'dominant-baseline': o.baseline || 'central'
     };
-    if (opts.rotate) {
-      attrs.transform = `rotate(${opts.rotate} ${x} ${y})`;
+    if (o.rotate) {
+      attrs.transform = `rotate(${o.rotate} ${x} ${y})`;
     }
     svg.appendChild(svgEl('text', attrs, String(txt)));
   };
 
-  const addLine = (x1, y1, x2, y2, w = 0.7, dash = null) => {
-    const attrs = { x1, y1, x2, y2, stroke: '#000', 'stroke-width': w };
+  const addLine = (x1, y1, x2, y2, w, dash) => {
+    const attrs = { x1: x1, y1: y1, x2: x2, y2: y2, stroke: '#000', 'stroke-width': w || 0.7 };
     if (dash) attrs['stroke-dasharray'] = dash;
     svg.appendChild(svgEl('line', attrs));
   };
 
-  const addRect = (x, y, w, h, opts = {}) => {
+  const addRect = (x, y, w, h, opts) => {
+    const o = opts || {};
     svg.appendChild(svgEl('rect', {
-      x, y, width: w, height: h,
-      fill: opts.fill || 'none',
-      stroke: opts.stroke || '#000',
-      'stroke-width': opts.w || 1
+      x: x, y: y, width: w, height: h,
+      fill: o.fill || 'none',
+      stroke: o.stroke || '#000',
+      'stroke-width': o.w || 1
     }));
   };
 
