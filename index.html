@@ -1010,7 +1010,11 @@ function saveSharedMeta() {
 function saveCurrentInputs() {
   const st = inningsStore[activeInnings];
   if (!st) return;
-  st.csv = document.getElementById('csvInput').value;
+  const newCsv = document.getElementById('csvInput').value;
+  if (newCsv !== st.csv) {
+    st.preSplit = false;
+  }
+  st.csv = newCsv;
   const rawSc = document.getElementById('scorecardInput').value;
   const splitSc = trySplitCombinedScorecard(rawSc);
   if (splitSc) {
@@ -1551,7 +1555,8 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granular
 
 function compileInningsModel(sideNum) {
   const st = inningsStore[sideNum];
-  const oppSt = inningsStore[sideNum === 1 ? 2 : 1];
+  const oppSideNum = sideNum === 1 ? 2 : 1;
+  const oppSt = inningsStore[oppSideNum];
   const rawCsv = (st.csv || '').trim();
 
   if (!st.preSplit && rawCsv) {
@@ -1621,7 +1626,13 @@ function compileInningsModel(sideNum) {
       });
       byOv[ovNum].forEach(d => deliveries.push(d));
     });
-    const oppDismissals = oppSt ? (oppSt.dismissalCount || 0) : 0;
+    let oppDismissals = 0;
+    if (oppSt) {
+      if ((oppSt.csv || '').trim()) {
+        oppSt.dismissalCount = parseCSV(oppSt.csv, oppSideNum).filter(r => /dismissed|\bout\b/i.test(r.event)).length;
+      }
+      oppDismissals = oppSt.dismissalCount || 0;
+    }
     st.parsed = buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule, oppDismissals, Object.keys(granularMap).length > 0);
   } else if (scData.batters.length > 0) {
     st.parsed = buildModelFromScorecardOnly(scData, isStage1);
