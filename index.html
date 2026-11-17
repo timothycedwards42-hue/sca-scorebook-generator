@@ -257,13 +257,13 @@
     </div>
 
     <div class="field-group">
-      <label>CSV Content (Optional if PlayHQ feed pasted)</label>
-      <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;11.7,1--61,T Brownie to E Tencate : 1 run,1st Innings..."></textarea>
+      <label>CSV Content (Ball-by-Ball Source)</label>
+      <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;28.6,6--142,V Bhati to B Rich : 6 runs,1st Innings..."></textarea>
     </div>
 
     <div class="field-group">
-      <label>PlayHQ / Live Feed Text (Enriches Full Names &amp; Dismissals)</label>
-      <textarea id="playhqInput" placeholder="Over 29&#10;28.6&#10;6Vivaan Bhati to Benji Rich&#10;Benji Rich made 6 runs..."></textarea>
+      <label>PlayHQ Scorecard View (Enriches Full Names, Batting Order &amp; Fielders)</label>
+      <textarea id="scorecardInput" placeholder="North Shore U13 Gee Batting&#10;Batters&#10;R&#10;B&#10;4S&#10;6s&#10;SR&#10;Jock Pearson&#10;b: Jedidiah Tong..."></textarea>
     </div>
 
     <div class="field-row">
@@ -302,7 +302,7 @@
     <div class="field-row">
       <div class="field-group">
         <label>Match Against (Shared)</label>
-        <input type="text" id="metaAgainst" value="" placeholder="e.g. St George" oninput="saveSharedMeta(); renderScorebook()">
+        <input type="text" id="metaAgainst" value="Northern District U13/1" placeholder="e.g. Northern District U13/1" oninput="saveSharedMeta(); renderScorebook()">
       </div>
       <div class="field-group">
         <label>Played At (Shared)</label>
@@ -312,7 +312,7 @@
     <div class="field-row">
       <div class="field-group">
         <label>Innings Of (This Innings)</label>
-        <input type="text" id="metaTeam" value="North Shore U13 Gee Shield" oninput="saveCurrentInputs(); renderScorebook()">
+        <input type="text" id="metaTeam" value="North Shore U13 Gee" oninput="saveCurrentInputs(); renderScorebook()">
       </div>
       <div class="field-group">
         <label>Toss Won By (Shared)</label>
@@ -350,389 +350,399 @@
 
 <script>
 const SAMPLE_CSV = `Ball,Score,Outcome,Innings
-11.7,1--61,T Brownie to E Tencate : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-11.6,1--60,T Brownie to E Tencate : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-11.5,1--60,T Brownie to E Tencate : 1wd,1st Innings - SEJCA U13 Boys Gee Shield
-11.4,1--59,T Brownie to E Tencate : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
-11.3,1--55,T Brownie to E Tencate : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-11.2,1--55,T Brownie to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-11.1,1--54,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-10.6,1--54,R Edwards to E Tencate : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-10.5,1--54,R Edwards to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-10.4,1--53,R Edwards to E Tencate : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-10.3,1--52,R Edwards to E Tencate : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
-10.2,1--48,R Edwards to E Tencate : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-10.1,1--48,R Edwards to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-9.6,1--47,T Brownie to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-9.5,1--46,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-9.4,1--46,T Brownie to J Markezic : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
-9.3,1--42,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-9.2,1--42,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-9.1,1--42,T Brownie to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-8.6,1--42,R Edwards to R Cregg : R Cregg dismissed,1st Innings - SEJCA U13 Boys Gee Shield
-8.5,0--42,R Edwards to R Cregg : 2 runs,1st Innings - SEJCA U13 Boys Gee Shield
-8.4,0--40,R Edwards to R Cregg : 2 runs,1st Innings - SEJCA U13 Boys Gee Shield
-8.3,0--38,R Edwards to R Cregg : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
-8.2,0--34,R Edwards to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-8.1,0--34,R Edwards to R Cregg : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
-7.6,0--30,T Brownie to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-7.5,0--29,T Brownie to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-7.4,0--29,T Brownie to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-7.3,0--29,T Brownie to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-7.2,0--28,T Brownie to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-7.1,0--27,T Brownie to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-6.6,0--27,R Edwards to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-6.5,0--27,R Edwards to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-6.4,0--26,R Edwards to R Cregg : 2 runs,1st Innings - SEJCA U13 Boys Gee Shield
-6.3,0--24,R Edwards to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-6.2,0--24,R Edwards to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-6.1,0--23,R Edwards to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-5.6,0--23,S Elliott to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-5.5,0--22,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-5.4,0--22,S Elliott to J Markezic : 2 runs,1st Innings - SEJCA U13 Boys Gee Shield
-5.3,0--20,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-5.2,0--20,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-5.1,0--20,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-4.7,0--20,H Atkinson to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-4.6,0--19,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-4.5,0--19,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-4.4,0--19,H Atkinson to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-4.3,0--18,H Atkinson to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-4.2,0--18,H Atkinson to R Cregg : 1wd,1st Innings - SEJCA U13 Boys Gee Shield
-4.1,0--17,H Atkinson to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-3.6,0--17,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-3.5,0--17,S Elliott to J Markezic : 4b,1st Innings - SEJCA U13 Boys Gee Shield
-3.4,0--13,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-3.3,0--13,S Elliott to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-3.2,0--12,S Elliott to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-3.1,0--12,S Elliott to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-2.6,0--12,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-2.5,0--12,H Atkinson to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-2.4,0--11,H Atkinson to J Markezic : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-2.3,0--10,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-2.2,0--10,H Atkinson to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-2.1,0--9,H Atkinson to R Cregg : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
-1.6,0--5,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-1.5,0--5,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-1.4,0--5,S Elliott to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-1.3,0--5,S Elliott to R Cregg : 1 run,1st Innings - SEJCA U13 Boys Gee Shield
-1.2,0--4,S Elliott to R Cregg : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-1.1,0--4,S Elliott to R Cregg : 4 runs,1st Innings - SEJCA U13 Boys Gee Shield
-0.6,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-0.5,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-0.4,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-0.3,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-0.2,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield
-0.1,0--0,H Atkinson to J Markezic : No Run,1st Innings - SEJCA U13 Boys Gee Shield`;
+28.6,6--142,V Bhati to B Rich : 6 runs,1st Innings - North Shore U13 Gee
+28.5,6--136,V Bhati to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
+28.4,6--135,V Bhati to B Rich : 1 run,1st Innings - North Shore U13 Gee
+28.3,6--134,V Bhati to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
+28.2,6--133,V Bhati to B Rich : 1 run,1st Innings - North Shore U13 Gee
+28.1,6--132,V Bhati to B Rich : 4 runs,1st Innings - North Shore U13 Gee
+27.6,6--128,A Srikantha to R Bhandari : 4 runs,1st Innings - North Shore U13 Gee
+27.5,6--124,A Srikantha to R Bhandari : No Run,1st Innings - North Shore U13 Gee
+27.4,6--124,A Srikantha to B Rich : 1 run,1st Innings - North Shore U13 Gee
+27.3,6--123,A Srikantha to B Rich : No Run,1st Innings - North Shore U13 Gee
+27.2,6--123,A Srikantha to B Rich : 4 runs,1st Innings - North Shore U13 Gee
+27.1,6--119,A Srikantha to B Rich : No Run,1st Innings - North Shore U13 Gee
+26.6,6--119,M RAJ to R Bhandari : No Run,1st Innings - North Shore U13 Gee
+26.5,6--119,M RAJ to B Rich : 1 run,1st Innings - North Shore U13 Gee
+26.4,6--118,M RAJ to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
+26.3,6--117,M RAJ to B Rich : 1 run,1st Innings - North Shore U13 Gee
+26.2,6--116,M RAJ to B Rich : No Run,1st Innings - North Shore U13 Gee
+26.1,6--116,M RAJ to B Rich : No Run,1st Innings - North Shore U13 Gee
+25.6,6--116,A Srikantha to B Rich : 1 run,1st Innings - North Shore U13 Gee
+25.5,6--115,A Srikantha to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
+25.4,6--114,A Srikantha to R Bhandari : 4 runs,1st Innings - North Shore U13 Gee
+25.3,6--110,A Srikantha to B Rich : 1 run,1st Innings - North Shore U13 Gee
+25.2,6--109,A Srikantha to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
+25.1,6--108,A Srikantha to R Bhandari : No Run,1st Innings - North Shore U13 Gee
+24.6,6--108,J Tong to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
+24.5,6--107,J Tong to R Bhandari : No Run,1st Innings - North Shore U13 Gee
+24.4,6--107,J Tong to R Bhandari : No Run,1st Innings - North Shore U13 Gee
+24.3,6--107,J Tong to R Bhandari : 4 runs,1st Innings - North Shore U13 Gee
+24.2,6--103,J Tong to H Atkinson : H Atkinson dismissed,1st Innings - North Shore U13 Gee
+24.1,5--103,J Tong to H Atkinson : No Run,1st Innings - North Shore U13 Gee
+23.6,5--103,V YADAV to H Atkinson : 1 run,1st Innings - North Shore U13 Gee
+23.5,5--102,V YADAV to H Atkinson : No Run,1st Innings - North Shore U13 Gee
+23.5,5--102,V YADAV to B Rich : 1 run,1st Innings - North Shore U13 Gee
+23.4,5--101,V YADAV to H Atkinson : 2wd,1st Innings - North Shore U13 Gee
+23.3,5--99,V YADAV to B Rich : 1 run,1st Innings - North Shore U13 Gee
+23.2,5--98,V YADAV to B Rich : 4 runs,1st Innings - North Shore U13 Gee
+23.1,5--94,V YADAV to B Rich : No Run,1st Innings - North Shore U13 Gee
+22.6,5--94,J Tong to C McColl : C McColl dismissed,1st Innings - North Shore U13 Gee
+22.5,4--94,J Tong to C McColl : No Run,1st Innings - North Shore U13 Gee
+22.4,4--94,J Tong to C McColl : No Run,1st Innings - North Shore U13 Gee
+22.3,4--94,J Tong to C McColl : No Run,1st Innings - North Shore U13 Gee
+22.2,4--94,J Tong to C McColl : 4 runs,1st Innings - North Shore U13 Gee
+22.1,4--90,J Tong to C McColl : 2 runs,1st Innings - North Shore U13 Gee
+21.7,4--88,V YADAV to B Rich : 4 runs,1st Innings - North Shore U13 Gee
+21.7,4--84,V YADAV to B Rich : 1wd,1st Innings - North Shore U13 Gee
+21.6,4--83,"V YADAV to C McColl : 1 run, 1nb",1st Innings - North Shore U13 Gee
+21.5,4--81,V YADAV to B Rich : No Run,1st Innings - North Shore U13 Gee
+21.4,4--81,V YADAV to C McColl : No Run,1st Innings - North Shore U13 Gee
+21.3,4--81,V YADAV to B Rich : 1 run,1st Innings - North Shore U13 Gee
+21.2,4--80,V YADAV to B Rich : No Run,1st Innings - North Shore U13 Gee
+21.1,4--80,V YADAV to C McColl : 1 run,1st Innings - North Shore U13 Gee
+20.6,4--79,J Tong to R Edwards : R Edwards dismissed,1st Innings - North Shore U13 Gee
+20.5,3--79,J Tong to R Edwards : 4 runs,1st Innings - North Shore U13 Gee
+20.4,3--75,J Tong to R Edwards : No Run,1st Innings - North Shore U13 Gee
+20.3,3--75,J Tong to R Edwards : No Run,1st Innings - North Shore U13 Gee
+20.2,3--75,J Tong to R Edwards : No Run,1st Innings - North Shore U13 Gee
+20.1,3--75,J Tong to R Edwards : No Run,1st Innings - North Shore U13 Gee
+19.7,3--75,M RAJ to C McColl : No Run,1st Innings - North Shore U13 Gee
+19.6,3--75,M RAJ to C McColl : No Run,1st Innings - North Shore U13 Gee
+19.5,3--75,M RAJ to C McColl : 2 runs,1st Innings - North Shore U13 Gee
+19.4,3--73,M RAJ to C McColl : No Run,1st Innings - North Shore U13 Gee
+19.3,3--73,M RAJ to C McColl : 1wd,1st Innings - North Shore U13 Gee
+19.2,3--72,M RAJ to C McColl : No Run,1st Innings - North Shore U13 Gee
+19.1,3--72,M RAJ to R Edwards : 1 run,1st Innings - North Shore U13 Gee
+18.8,3--71,K Acharya to R Edwards : 1 run,1st Innings - North Shore U13 Gee
+18.7,3--70,K Acharya to R Edwards : 4 runs,1st Innings - North Shore U13 Gee
+18.6,3--66,K Acharya to R Edwards : 1nb,1st Innings - North Shore U13 Gee
+18.5,3--65,K Acharya to R Edwards : No Run,1st Innings - North Shore U13 Gee
+18.4,3--65,K Acharya to R Edwards : 4 runs,1st Innings - North Shore U13 Gee
+18.3,3--61,"K Acharya to R Edwards : 2 runs, 1nb",1st Innings - North Shore U13 Gee
+18.2,3--58,K Acharya to R Edwards : No Run,1st Innings - North Shore U13 Gee
+18.1,3--58,K Acharya to R Edwards : 2 runs,1st Innings - North Shore U13 Gee
+17.6,3--56,M RAJ to C McColl : No Run,1st Innings - North Shore U13 Gee
+17.5,3--56,M RAJ to C McColl : No Run,1st Innings - North Shore U13 Gee
+17.4,3--56,M RAJ to C McColl : No Run,1st Innings - North Shore U13 Gee
+17.3,3--56,M RAJ to C McColl : 4 runs,1st Innings - North Shore U13 Gee
+17.2,3--52,M RAJ to C McColl : No Run,1st Innings - North Shore U13 Gee
+17.1,3--52,M RAJ to R Edwards : 1 run,1st Innings - North Shore U13 Gee
+16.6,3--51,A Gupta to C McColl : No Run,1st Innings - North Shore U13 Gee
+16.5,3--51,A Gupta to C McColl : No Run,1st Innings - North Shore U13 Gee
+16.4,3--51,A Gupta to C McColl : 4 runs,1st Innings - North Shore U13 Gee
+16.3,3--47,A Gupta to C McColl : No Run,1st Innings - North Shore U13 Gee
+16.2,3--47,A Gupta to C McColl : 2 runs,1st Innings - North Shore U13 Gee
+16.1,3--45,A Gupta to C McColl : No Run,1st Innings - North Shore U13 Gee
+15.6,3--45,A Srikantha to R Edwards : No Run,1st Innings - North Shore U13 Gee
+15.5,3--45,A Srikantha to R Edwards : 4 runs,1st Innings - North Shore U13 Gee
+15.4,3--41,A Srikantha to R Edwards : No Run,1st Innings - North Shore U13 Gee
+15.3,3--41,A Srikantha to R Edwards : 2 runs,1st Innings - North Shore U13 Gee
+15.2,3--39,A Srikantha to R Edwards : No Run,1st Innings - North Shore U13 Gee
+15.1,3--39,A Srikantha to R Edwards : No Run,1st Innings - North Shore U13 Gee
+14.7,3--39,A Gupta to C McColl : 2 runs,1st Innings - North Shore U13 Gee
+14.6,3--37,A Gupta to C McColl : No Run,1st Innings - North Shore U13 Gee
+14.5,3--37,A Gupta to R Edwards : 2wd,1st Innings - North Shore U13 Gee
+14.4,3--35,A Gupta to R Edwards : No Run,1st Innings - North Shore U13 Gee
+14.3,3--35,A Gupta to R Edwards : No Run,1st Innings - North Shore U13 Gee
+14.2,3--35,A Gupta to R Edwards : No Run,1st Innings - North Shore U13 Gee
+14.1,3--35,A Gupta to R Edwards : No Run,1st Innings - North Shore U13 Gee
+13.6,3--35,A Srikantha to C McColl : No Run,1st Innings - North Shore U13 Gee
+13.5,3--35,A Srikantha to C McColl : No Run,1st Innings - North Shore U13 Gee
+13.4,3--35,A Srikantha to C McColl : No Run,1st Innings - North Shore U13 Gee
+13.3,3--35,A Srikantha to C McColl : No Run,1st Innings - North Shore U13 Gee
+13.2,3--35,A Srikantha to C McColl : No Run,1st Innings - North Shore U13 Gee
+13.1,3--35,A Srikantha to C McColl : No Run,1st Innings - North Shore U13 Gee
+12.6,3--35,A navray to R Edwards : 4 runs,1st Innings - North Shore U13 Gee
+12.5,3--31,A navray to R Edwards : 2 runs,1st Innings - North Shore U13 Gee
+12.4,3--29,A navray to R Edwards : No Run,1st Innings - North Shore U13 Gee
+12.3,3--29,A navray to C McColl : 1b,1st Innings - North Shore U13 Gee
+12.2,3--28,A navray to C McColl : No Run,1st Innings - North Shore U13 Gee
+12.1,3--28,A navray to R Edwards : 1 run,1st Innings - North Shore U13 Gee
+11.6,3--27,A Srikantha to C McColl : 4 runs,1st Innings - North Shore U13 Gee
+11.5,3--23,A Srikantha to Y Bhandari : Y Bhandari dismissed,1st Innings - North Shore U13 Gee
+11.4,2--23,A Srikantha to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+11.3,2--23,A Srikantha to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+11.2,2--23,A Srikantha to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+11.1,2--23,A Srikantha to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+10.6,2--23,A navray to R Edwards : No Run,1st Innings - North Shore U13 Gee
+10.5,2--23,A navray to R Edwards : No Run,1st Innings - North Shore U13 Gee
+10.4,2--23,A navray to R Edwards : No Run,1st Innings - North Shore U13 Gee
+10.3,2--23,A navray to R Edwards : No Run,1st Innings - North Shore U13 Gee
+10.2,2--23,A navray to R Edwards : No Run,1st Innings - North Shore U13 Gee
+10.1,2--23,A navray to Y Bhandari : 1 run,1st Innings - North Shore U13 Gee
+9.6,2--22,A Srikantha to R Edwards : No Run,1st Innings - North Shore U13 Gee
+9.5,2--22,A Srikantha to R Edwards : No Run,1st Innings - North Shore U13 Gee
+9.4,2--22,A Srikantha to R Edwards : No Run,1st Innings - North Shore U13 Gee
+9.3,2--22,A Srikantha to B Ferrier : B Ferrier dismissed,1st Innings - North Shore U13 Gee
+9.2,1--22,A Srikantha to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+9.1,1--22,A Srikantha to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+8.7,1--22,A navray to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+8.6,1--22,A navray to B Ferrier : 1 run,1st Innings - North Shore U13 Gee
+8.5,1--21,A navray to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+8.4,1--21,A navray to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+8.3,1--21,A navray to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+8.2,1--21,A navray to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+8.1,1--21,A navray to B Ferrier : 1wd,1st Innings - North Shore U13 Gee
+7.7,1--20,V YADAV to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+7.6,1--20,V YADAV to B Ferrier : 1 run,1st Innings - North Shore U13 Gee
+7.5,1--19,V YADAV to B Ferrier : 1nb,1st Innings - North Shore U13 Gee
+7.4,1--18,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+7.3,1--18,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+7.2,1--18,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+7.1,1--18,V YADAV to Y Bhandari : 1 run,1st Innings - North Shore U13 Gee
+6.6,1--17,J Tong to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+6.5,1--17,J Tong to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+6.4,1--17,J Tong to Y Bhandari : 1 run,1st Innings - North Shore U13 Gee
+6.3,1--16,J Tong to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+6.2,1--16,J Tong to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+6.1,1--16,J Tong to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+5.6,1--16,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+5.5,1--16,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+5.4,1--16,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+5.3,1--16,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+5.2,1--16,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+5.1,1--16,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+4.6,1--16,J Tong to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+4.5,1--16,J Tong to Y Bhandari : No Run,1st Innings - North Shore U13 Gee
+4.4,1--16,J Tong to Y Bhandari : 4 runs,1st Innings - North Shore U13 Gee
+4.3,1--12,J Tong to J Pearson : J Pearson dismissed,1st Innings - North Shore U13 Gee
+4.2,0--12,J Tong to J Pearson : No Run,1st Innings - North Shore U13 Gee
+4.1,0--12,J Tong to B Ferrier : 1b,1st Innings - North Shore U13 Gee
+3.6,0--11,V YADAV to J Pearson : No Run,1st Innings - North Shore U13 Gee
+3.5,0--11,V YADAV to J Pearson : No Run,1st Innings - North Shore U13 Gee
+3.4,0--11,V YADAV to B Ferrier : 1 run,1st Innings - North Shore U13 Gee
+3.3,0--10,V YADAV to J Pearson : 1b,1st Innings - North Shore U13 Gee
+3.2,0--9,V YADAV to J Pearson : No Run,1st Innings - North Shore U13 Gee
+3.1,0--9,V YADAV to J Pearson : No Run,1st Innings - North Shore U13 Gee
+2.6,0--9,J Tong to J Pearson : 1lb,1st Innings - North Shore U13 Gee
+2.5,0--8,J Tong to J Pearson : No Run,1st Innings - North Shore U13 Gee
+2.4,0--8,J Tong to J Pearson : No Run,1st Innings - North Shore U13 Gee
+2.3,0--8,J Tong to J Pearson : No Run,1st Innings - North Shore U13 Gee
+2.2,0--8,J Tong to J Pearson : No Run,1st Innings - North Shore U13 Gee
+2.1,0--8,J Tong to J Pearson : No Run,1st Innings - North Shore U13 Gee
+1.6,0--8,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+1.5,0--8,V YADAV to B Ferrier : 4 runs,1st Innings - North Shore U13 Gee
+1.4,0--4,V YADAV to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+1.3,0--4,V YADAV to J Pearson : 1 run,1st Innings - North Shore U13 Gee
+1.2,0--3,V YADAV to J Pearson : No Run,1st Innings - North Shore U13 Gee
+1.1,0--3,V YADAV to B Ferrier : 1 run,1st Innings - North Shore U13 Gee
+0.6,0--2,J Tong to J Pearson : No Run,1st Innings - North Shore U13 Gee
+0.5,0--2,J Tong to J Pearson : No Run,1st Innings - North Shore U13 Gee
+0.4,0--2,J Tong to B Ferrier : 1 run,1st Innings - North Shore U13 Gee
+0.3,0--1,J Tong to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+0.2,0--1,J Tong to B Ferrier : No Run,1st Innings - North Shore U13 Gee
+0.1,0--1,J Tong to J Pearson : 1b,1st Innings - North Shore U13 Gee`;
 
-const SAMPLE_PLAYHQ = `Over 12
-11.6
-1
-Thomas Brownie to Ernest Tencate
-Ernest Tencate made 1 run
-11.5
-●
-Thomas Brownie to Ernest Tencate
-Dot ball
-11.5
-WD
-Thomas Brownie to Ernest Tencate
-Thomas Brownie bowled 1 wide
-11.4
-4
-Thomas Brownie to Ernest Tencate
-Ernest Tencate made 4 runs
-11.3
-●
-Thomas Brownie to Ernest Tencate
-Dot ball
-11.2
-1
-Thomas Brownie to James Markezic
-James Markezic made 1 run
-11.1
-●
-Thomas Brownie to James Markezic
-Dot ball
-Over 11
-10.6
-●
-Roman Edwards to Ernest Tencate
-Dot ball
-10.5
-1
-Roman Edwards to James Markezic
-James Markezic made 1 run
-10.4
-1
-Roman Edwards to Ernest Tencate
-Ernest Tencate made 1 run
-10.3
-4
-Roman Edwards to Ernest Tencate
-Ernest Tencate made 4 runs
-10.2
-●
-Roman Edwards to Ernest Tencate
-Dot ball
-10.1
-1
-Roman Edwards to James Markezic
-James Markezic made 1 run
-Over 10
-9.6
-1
-Thomas Brownie to James Markezic
-James Markezic made 1 run
-9.5
-●
-Thomas Brownie to James Markezic
-Dot ball
-9.4
-4
-Thomas Brownie to James Markezic
-James Markezic made 4 runs
-9.3
-●
-Thomas Brownie to James Markezic
-Dot ball
-9.2
-●
-Thomas Brownie to James Markezic
-Dot ball
-9.1
-●
-Thomas Brownie to James Markezic
-Dot ball
-Over 9
-8.6
-W
-Roman Edwards to Ryan Cregg
-Ryan Cregg was out leg before wicket
-8.5
-2
-Roman Edwards to Ryan Cregg
-Ryan Cregg made 2 runs
-8.4
-2
-Roman Edwards to Ryan Cregg
-Ryan Cregg made 2 runs
-8.3
-4
-Roman Edwards to Ryan Cregg
-Ryan Cregg made 4 runs
-8.2
-●
-Roman Edwards to Ryan Cregg
-Dot ball
-8.1
-4
-Roman Edwards to Ryan Cregg
-Ryan Cregg made 4 runs
-Over 8
-7.6
-1
-Thomas Brownie to Ryan Cregg
-Ryan Cregg made 1 run
-7.5
-●
-Thomas Brownie to Ryan Cregg
-Dot ball
-7.4
-●
-Thomas Brownie to Ryan Cregg
-Dot ball
-7.3
-1
-Thomas Brownie to James Markezic
-James Markezic made 1 run
-7.2
-1
-Thomas Brownie to Ryan Cregg
-Ryan Cregg made 1 run
-7.1
-●
-Thomas Brownie to Ryan Cregg
-Dot ball
-Over 7
-6.6
-●
-Roman Edwards to James Markezic
-Dot ball
-6.5
-1
-Roman Edwards to Ryan Cregg
-Ryan Cregg made 1 run
-6.4
-2
-Roman Edwards to Ryan Cregg
-Ryan Cregg made 2 runs
-6.3
-●
-Roman Edwards to Ryan Cregg
-Dot ball
-6.2
-1
-Roman Edwards to James Markezic
-James Markezic made 1 run
-6.1
-●
-Roman Edwards to James Markezic
-Dot ball
-Over 6
-5.6
-1
-Stirling Elliott to James Markezic
-James Markezic made 1 run
-5.5
-●
-Stirling Elliott to James Markezic
-Dot ball
-5.4
-2
-Stirling Elliott to James Markezic
-James Markezic made 2 runs
-5.3
-●
-Stirling Elliott to James Markezic
-Dot ball
-5.2
-●
-Stirling Elliott to James Markezic
-Dot ball
-5.1
-●
-Stirling Elliott to James Markezic
-Dot ball
-Over 5
-4.6
-1
-Harvey Atkinson to James Markezic
-James Markezic made 1 run
-4.5
-●
-Harvey Atkinson to James Markezic
-Dot ball
-4.4
-●
-Harvey Atkinson to James Markezic
-Dot ball
-4.3
-1
-Harvey Atkinson to Ryan Cregg
-Ryan Cregg made 1 run
-4.2
-●
-Harvey Atkinson to Ryan Cregg
-Dot ball
-4.2
-WD
-Harvey Atkinson to Ryan Cregg
-Harvey Atkinson bowled 1 wide
-4.1
-●
-Harvey Atkinson to Ryan Cregg
-Dot ball
-Over 4
-3.6
-●
-Stirling Elliott to James Markezic
-Dot ball
-3.5
+const SAMPLE_SCORECARD = `North Shore U13 Gee Batting
+Batters
+R
 B
-Stirling Elliott to James Markezic
-4 byes
-3.4
-●
-Stirling Elliott to James Markezic
-Dot ball
-3.3
+4S
+6s
+SR
+Jock Pearson
+b: Jedidiah Tong
 1
-Stirling Elliott to Ryan Cregg
-Ryan Cregg made 1 run
-3.2
-●
-Stirling Elliott to Ryan Cregg
-Dot ball
-3.1
-●
-Stirling Elliott to Ryan Cregg
-Dot ball
-Over 3
-2.6
-●
-Harvey Atkinson to James Markezic
-Dot ball
-2.5
+18
+0
+0
+5.55
+Benjamin Ferrier
+run out: Jedidiah Tong, Will Halliday
+9
+31
 1
-Harvey Atkinson to Ryan Cregg
-Ryan Cregg made 1 run
-2.4
+0
+29.03
+Yuvaan Bhandari
+c: MANUJ RAJ
+b: Ashwin Srikantha
+7
+15
 1
-Harvey Atkinson to James Markezic
-James Markezic made 1 run
-2.3
-●
-Harvey Atkinson to James Markezic
-Dot ball
-2.2
-1
-Harvey Atkinson to Ryan Cregg
-Ryan Cregg made 1 run
-2.1
+0
+46.66
+Roman Edwards
+b: Jedidiah Tong
+32
+38
+5
+0
+84.21
+Conor McColl
+run out: Aayush Gupta
+26
+37
 4
-Harvey Atkinson to Ryan Cregg
-Ryan Cregg made 4 runs
-Over 2
-1.6
-●
-Stirling Elliott to James Markezic
-Dot ball
-1.5
-●
-Stirling Elliott to James Markezic
-Dot ball
-1.4
-●
-Stirling Elliott to James Markezic
-Dot ball
-1.3
-1
-Stirling Elliott to Ryan Cregg
-Ryan Cregg made 1 run
-1.2
-●
-Stirling Elliott to Ryan Cregg
-Dot ball
-1.1
+0
+70.27
+Benji Rich
+not out
+32*
+21
 4
-Stirling Elliott to Ryan Cregg
-Ryan Cregg made 4 runs
-Over 1
-0.6
-●
-Harvey Atkinson to James Markezic
-Dot ball
-0.5
-●
-Harvey Atkinson to James Markezic
-Dot ball
-0.4
-●
-Harvey Atkinson to James Markezic
-Dot ball
-0.3
-●
-Harvey Atkinson to James Markezic
-Dot ball
-0.2
-●
-Harvey Atkinson to James Markezic
-Dot ball
-0.1
-●
-Harvey Atkinson to James Markezic
-Dot ball`;
+1
+152.38
+Harvey Atkinson
+c&b: Jedidiah Tong
+1
+4
+0
+0
+25.00
+Rayaan Bhandari
+not out
+18*
+14
+3
+0
+128.57
+Raymond Bowes
+did not bat
+-
+-
+-
+-
+-
+Thomas Brownie
+did not bat
+-
+-
+-
+-
+-
+Stirling Elliott
+did not bat
+-
+-
+-
+-
+-
+Extras
+16
+7WD
+4NB
+1LB
+4B
+0P
+Total
+6 / 142
+(29 Overs)
+Fall of Wickets
+1-12 Jock Pearson, 2-22 Benjamin Ferrier, 3-23 Yuvaan Bhandari, 4-79 Roman Edwards, 5-94 Conor McColl, 6-103 Harvey Atkinson
+Northern District U13/1 Bowling
+Bowlers
+O
+M
+R
+W
+HT
+E
+WD
+NB
+Jedidiah Tong
+7
+1
+21
+3
+0
+3.00
+0
+0
+VIHAAN YADAV
+6
+1
+28
+0
+0
+4.66
+3
+2
+Advik navray
+3
+0
+10
+0
+0
+3.33
+1
+0
+Ashwin Srikantha
+6
+2
+27
+1
+0
+4.50
+0
+0
+Aayush Gupta
+2
+0
+10
+0
+0
+5.00
+2
+0
+MANUJ RAJ
+3
+0
+12
+0
+0
+4.00
+1
+0
+Kiran Acharya
+1
+0
+15
+0
+0
+15.00
+0
+2
+Vivaan Bhati
+1
+0
+14
+0
+0
+14.00
+0
+0
+Fielders
+CF
+CWK
+ROU
+ROA
+S
+Will Halliday (c)
+0
+0
+0
+1
+0
+Jedidiah Tong
+1
+0
+0
+1
+0
+Aayush Gupta
+0
+0
+1
+0
+0
+MANUJ RAJ
+1
+0
+0
+0
+0`;
 
 let activeInnings = 1;
 
@@ -740,7 +750,7 @@ const sharedMeta = {
   comp: 'SEJCA U13 Boys Gee Shield',
   club: 'North Shore Junior Cricket Association',
   grade: 'U13 Boys Gee Shield',
-  against: '',
+  against: 'Northern District U13/1',
   venue: '',
   toss: '',
   round: '',
@@ -752,9 +762,9 @@ const sharedMeta = {
 const inningsStore = {
   1: {
     label: '1st',
-    team: 'North Shore U13 Gee Shield',
+    team: 'North Shore U13 Gee',
     csv: '',
-    playhq: '',
+    scorecard: '',
     dotFormat: 'grouped',
     parsed: null
   },
@@ -762,7 +772,7 @@ const inningsStore = {
     label: '2nd',
     team: '',
     csv: '',
-    playhq: '',
+    scorecard: '',
     dotFormat: 'grouped',
     parsed: null
   }
@@ -802,7 +812,7 @@ function saveSharedMeta() {
 function saveCurrentInputs() {
   const st = inningsStore[activeInnings];
   st.csv = document.getElementById('csvInput').value;
-  st.playhq = document.getElementById('playhqInput').value;
+  st.scorecard = document.getElementById('scorecardInput').value;
   st.dotFormat = document.getElementById('dotFormat').value;
   st.label = document.getElementById('metaInnings').value;
   st.team = document.getElementById('metaTeam').value;
@@ -822,17 +832,17 @@ function switchInnings(num) {
 
   const st = inningsStore[num];
   document.getElementById('csvInput').value = st.csv;
-  document.getElementById('playhqInput').value = st.playhq;
+  document.getElementById('scorecardInput').value = st.scorecard;
   document.getElementById('dotFormat').value = st.dotFormat;
   document.getElementById('metaInnings').value = st.label;
   document.getElementById('metaTeam').value = st.team;
 
   if (!st.parsed) {
-    if (st.csv.trim() || st.playhq.trim()) {
+    if (st.csv.trim() || st.scorecard.trim()) {
       parseAndRender();
     } else {
       st.parsed = emptyScorebookModel();
-      document.getElementById('statusMsg').textContent = `${ord}: blank sheet ready — paste CSV or PlayHQ feed.`;
+      document.getElementById('statusMsg').textContent = `${ord}: blank sheet ready — upload CSV & paste scorecard.`;
       renderScorebook();
     }
   } else {
@@ -845,10 +855,10 @@ function switchInnings(num) {
 function clearCurrentInnings() {
   const st = inningsStore[activeInnings];
   st.csv = '';
-  st.playhq = '';
+  st.scorecard = '';
   st.parsed = emptyScorebookModel();
   document.getElementById('csvInput').value = '';
-  document.getElementById('playhqInput').value = '';
+  document.getElementById('scorecardInput').value = '';
   document.getElementById('statusMsg').textContent = `${activeInnings === 1 ? '1st' : '2nd'} Innings cleared.`;
   renderScorebook();
 }
@@ -865,22 +875,23 @@ function loadCSVFileObject(file) {
 
 function loadSampleData() {
   inningsStore[1].csv = SAMPLE_CSV;
-  inningsStore[1].playhq = SAMPLE_PLAYHQ;
+  inningsStore[1].scorecard = SAMPLE_SCORECARD;
   inningsStore[1].label = '1st';
-  inningsStore[1].team = 'North Shore U13 Gee Shield';
+  inningsStore[1].team = 'North Shore U13 Gee';
   if (activeInnings !== 1) {
     switchInnings(1);
   } else {
     document.getElementById('csvInput').value = SAMPLE_CSV;
-    document.getElementById('playhqInput').value = SAMPLE_PLAYHQ;
+    document.getElementById('scorecardInput').value = SAMPLE_SCORECARD;
     document.getElementById('metaInnings').value = '1st';
-    document.getElementById('metaTeam').value = 'North Shore U13 Gee Shield';
+    document.getElementById('metaTeam').value = 'North Shore U13 Gee';
     parseAndRender();
   }
 }
 
 function cleanPlayerName(name) {
-  const trimmed = name.trim();
+  const trimmed = name.replace(/\s*\((?:c|wk|vc)\)\s*/gi, '').trim();
+  if (!trimmed) return '';
   if (trimmed === trimmed.toUpperCase() || trimmed === trimmed.toLowerCase()) {
     return trimmed.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
   }
@@ -892,45 +903,128 @@ function cleanPlayerName(name) {
   }).join(' ');
 }
 
-function parsePlayHQ(text) {
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Over '));
-  const items = [];
+function getSurname(fullName) {
+  const cleaned = cleanPlayerName(fullName);
+  const parts = cleaned.split(/\s+/);
+  return parts.length > 0 ? parts[parts.length - 1] : '';
+}
+
+function parseScorecardView(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  const result = {
+    battingTeam: '',
+    bowlingTeam: '',
+    batters: [],
+    bowlers: [],
+    nameLookup: {},
+    batterDetails: {}
+  };
+  if (lines.length === 0) return result;
+
+  let mode = null;
   let i = 0;
   while (i < lines.length) {
-    if (/^\d+\.\d+$/.test(lines[i])) {
-      const ball = lines[i];
-      if (i + 2 < lines.length && lines[i + 1].includes(' to ')) {
-        const bm = lines[i + 1];
-        const desc = lines[i + 2];
-        const m = bm.match(/^(WD|NB|LB|B|W|●|\d+)\s*(.+?)\s+to\s+(.+)$/i);
-        let badge = '', bowler = '', batter = '';
-        if (m) {
-          badge = m[1].trim();
-          bowler = cleanPlayerName(m[2]);
-          batter = cleanPlayerName(m[3]);
-        } else {
-          const parts = bm.split(' to ');
-          bowler = cleanPlayerName(parts[0]);
-          batter = cleanPlayerName(parts.slice(1).join(' to '));
-        }
-        items.push({ ball, badge, bowler, batter, desc });
-        i += 3;
-        continue;
-      }
-      if (i + 3 < lines.length && lines[i + 2].includes(' to ')) {
-        const badge = lines[i + 1];
-        const parts = lines[i + 2].split(' to ');
-        const bowler = cleanPlayerName(parts[0]);
-        const batter = cleanPlayerName(parts.slice(1).join(' to '));
-        const desc = lines[i + 3];
-        items.push({ ball, badge, bowler, batter, desc });
-        i += 4;
-        continue;
-      }
+    const line = lines[i];
+    if (line.endsWith(' Batting') && i + 1 < lines.length && lines[i + 1] === 'Batters') {
+      result.battingTeam = line.slice(0, -8).trim();
+      mode = 'batting';
+      i += 7;
+      continue;
     }
+    if (line.endsWith(' Bowling') && i + 1 < lines.length && lines[i + 1] === 'Bowlers') {
+      result.bowlingTeam = line.slice(0, -8).trim();
+      mode = 'bowling';
+      i += 10;
+      continue;
+    }
+    if (line === 'Extras' || line === 'Fall of Wickets' || line === 'Fielders') {
+      mode = null;
+      i += 1;
+      continue;
+    }
+
+    if (mode === 'batting') {
+      const fullName = cleanPlayerName(line);
+      i += 1;
+      const dismissalLines = [];
+      while (i < lines.length && !/^(\d+\*?|-)$/.test(lines[i])) {
+        dismissalLines.push(lines[i]);
+        i += 1;
+      }
+      i += 5;
+
+      const rawD = dismissalLines.join(' ');
+      const dLow = rawD.toLowerCase();
+      let howOut = 'Not out';
+      let bowlerOut = '';
+      let isDNB = false;
+
+      if (dLow.includes('did not bat')) {
+        howOut = '';
+        isDNB = true;
+      } else if (dLow.includes('not out')) {
+        howOut = 'Not out';
+      } else if (dLow.startsWith('c&b:')) {
+        const bName = cleanPlayerName(rawD.split(':').slice(1).join(':'));
+        howOut = `caught(${getSurname(bName)})`;
+        bowlerOut = bName;
+      } else if (dLow.includes('c:') && dLow.includes('b:')) {
+        const mC = rawD.match(/c:\s*(.+?)\s+b:\s*(.+)$/i);
+        if (mC) {
+          const catcher = cleanPlayerName(mC[1]);
+          const bName = cleanPlayerName(mC[2]);
+          howOut = `caught(${getSurname(catcher)})`;
+          bowlerOut = bName;
+        }
+      } else if (dLow.startsWith('b:')) {
+        const bName = cleanPlayerName(rawD.split(':').slice(1).join(':'));
+        howOut = 'bowled';
+        bowlerOut = bName;
+      } else if (dLow.startsWith('lbw:')) {
+        const bName = cleanPlayerName(rawD.split(':').slice(1).join(':'));
+        howOut = 'LBW';
+        bowlerOut = bName;
+      } else if (dLow.startsWith('run out:')) {
+        const fielders = rawD.split(':').slice(1).join(':').split(',').map(s => cleanPlayerName(s)).filter(Boolean);
+        const surnames = fielders.map(f => getSurname(f)).join('/');
+        howOut = surnames ? `run out(${surnames})` : 'run out';
+        bowlerOut = '';
+      } else if (dLow.startsWith('st:') && dLow.includes('b:')) {
+        const mS = rawD.match(/st:\s*(.+?)\s+b:\s*(.+)$/i);
+        if (mS) {
+          const keeper = cleanPlayerName(mS[1]);
+          const bName = cleanPlayerName(mS[2]);
+          howOut = `stumped(${getSurname(keeper)})`;
+          bowlerOut = bName;
+        }
+      }
+
+      const bObj = { name: fullName, howOut, bowlerOut, isDNB };
+      result.batters.push(bObj);
+      result.batterDetails[fullName] = bObj;
+
+      const parts = fullName.split(/\s+/);
+      if (parts.length >= 2) {
+        result.nameLookup[`${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`] = fullName;
+      }
+      continue;
+    }
+
+    if (mode === 'bowling') {
+      const fullName = cleanPlayerName(line);
+      result.bowlers.push(fullName);
+      const parts = fullName.split(/\s+/);
+      if (parts.length >= 2) {
+        result.nameLookup[`${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`] = fullName;
+      }
+      i += 9;
+      continue;
+    }
+
     i += 1;
   }
-  return items;
+
+  return result;
 }
 
 function splitCSVLine(line) {
@@ -982,149 +1076,88 @@ function parseCSV(text) {
   return rows;
 }
 
-function parseDismissal(desc) {
-  const d = desc.toLowerCase();
-  if (d.includes('leg before wicket') || d.includes('lbw')) return 'LBW';
-  if (d.includes('bowled')) return 'bowled';
-  if (d.includes('caught')) return 'caught';
-  if (d.includes('run out')) return 'run out';
-  if (d.includes('stumped')) return 'stumped';
-  return 'out';
-}
-
 function parseAndRender() {
   saveCurrentInputs();
   const st = inningsStore[activeInnings];
   const csvRows = parseCSV(st.csv.trim());
-  const phqRows = parsePlayHQ(st.playhq.trim());
+  const scData = parseScorecardView(st.scorecard.trim());
+
+  if (scData.battingTeam && (!st.team || st.team === 'North Shore U13 Gee Shield')) {
+    st.team = scData.battingTeam;
+    document.getElementById('metaTeam').value = scData.battingTeam;
+  }
+  if (scData.bowlingTeam && !sharedMeta.against) {
+    sharedMeta.against = scData.bowlingTeam;
+    document.getElementById('metaAgainst').value = scData.bowlingTeam;
+  }
+
+  const resolveName = (abbr) => {
+    const parts = abbr.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      const key = `${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`;
+      if (scData.nameLookup[key]) return scData.nameLookup[key];
+    }
+    return cleanPlayerName(abbr);
+  };
 
   let deliveries = [];
-
-  if (csvRows.length > 0 && phqRows.length > 0) {
-    const nameLookup = {};
-    phqRows.forEach(p => {
-      const bParts = p.bowler.split(/\s+/);
-      const batParts = p.batter.split(/\s+/);
-      if (bParts.length >= 2) {
-        nameLookup[`${bParts[0][0].toLowerCase()}_${bParts[bParts.length - 1].toLowerCase()}`] = p.bowler;
-      }
-      if (batParts.length >= 2) {
-        nameLookup[`${batParts[0][0].toLowerCase()}_${batParts[batParts.length - 1].toLowerCase()}`] = p.batter;
-      }
-    });
-
-    const resolveName = (abbr) => {
-      const parts = abbr.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        const key = `${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`;
-        if (nameLookup[key]) return nameLookup[key];
-      }
-      return cleanPlayerName(abbr);
-    };
-
-    const usedPhq = new Set();
+  if (csvRows.length > 0) {
     for (let i = csvRows.length - 1; i >= 0; i--) {
       const c = csvRows[i];
-      const cOver = c.ball.split('.')[0];
-      const cBowlerLast = c.bowler.trim().split(/\s+/).pop().toLowerCase();
-      const cBatterLast = c.batter.trim().split(/\s+/).pop().toLowerCase();
-      const evL = c.event.toLowerCase();
-
-      let matchedPhq = null;
-      for (let j = phqRows.length - 1; j >= 0; j--) {
-        if (usedPhq.has(j)) continue;
-        const p = phqRows[j];
-        const pOver = p.ball.split('.')[0];
-        const pBowlerLast = p.bowler.split(/\s+/).pop().toLowerCase();
-        const pBatterLast = p.batter.split(/\s+/).pop().toLowerCase();
-        if (pOver === cOver && pBowlerLast === cBowlerLast && pBatterLast === cBatterLast) {
-          const bdgU = (p.badge || '').toUpperCase();
-          if (evL.includes('dismissed') !== (bdgU === 'W')) continue;
-          if (evL.includes('wd') !== (bdgU === 'WD')) continue;
-          if (evL.includes('nb') !== (bdgU === 'NB')) continue;
-          usedPhq.add(j);
-          matchedPhq = p;
-          break;
-        }
-      }
-
-      const fullBowler = matchedPhq ? matchedPhq.bowler : resolveName(c.bowler);
-      const fullBatter = matchedPhq ? matchedPhq.batter : resolveName(c.batter);
-      const desc = matchedPhq ? matchedPhq.desc : '';
-      const badge = matchedPhq ? matchedPhq.badge : '';
-      deliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event, '', desc));
-    }
-  } else if (csvRows.length > 0) {
-    for (let i = csvRows.length - 1; i >= 0; i--) {
-      const c = csvRows[i];
-      deliveries.push(normalizeDelivery(c.ball, c.score, cleanPlayerName(c.bowler), cleanPlayerName(c.batter), c.event, '', ''));
-    }
-  } else if (phqRows.length > 0) {
-    let cumRuns = 0;
-    let cumWkts = 0;
-    for (let i = phqRows.length - 1; i >= 0; i--) {
-      const p = phqRows[i];
-      const d = normalizeDelivery(p.ball, '', p.bowler, p.batter, '', p.badge, p.desc);
-      cumRuns += d.batterRuns + d.extras;
-      if (d.isWicket) cumWkts += 1;
-      d.score = `${cumWkts}/${cumRuns}`;
-      deliveries.push(d);
+      const fullBowler = resolveName(c.bowler);
+      const fullBatter = resolveName(c.batter);
+      deliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event));
     }
   } else {
     st.parsed = emptyScorebookModel();
-    document.getElementById('statusMsg').textContent = 'No valid ball-by-ball rows found — showing blank sheet.';
+    document.getElementById('statusMsg').textContent = 'No valid CSV rows found — please upload or paste CSV.';
     renderScorebook();
     return;
   }
 
-  st.parsed = buildScorebookModel(deliveries);
+  st.parsed = buildScorebookModel(deliveries, scData);
   document.getElementById('statusMsg').textContent =
     `Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`;
   renderScorebook();
 }
 
-function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, badge, desc) {
+function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent) {
   const overNum = parseInt(ballStr.split('.')[0], 10) + 1;
   let batterRuns = 0;
   let extras = 0;
   let extraType = '';
   let isLegal = true;
   let isWicket = false;
-  let dismissalType = '';
 
   const ev = (csvEvent || '').toLowerCase();
-  const bdg = (badge || '').toUpperCase();
 
-  if (/^\d+$/.test(bdg)) {
-    batterRuns = parseInt(bdg, 10);
-  } else if (!ev.includes('no run')) {
+  if (!ev.includes('no run')) {
     const mRun = ev.match(/(\d+)\s*runs?/);
     if (mRun) batterRuns = parseInt(mRun[1], 10);
   }
 
-  if (bdg === 'WD' || ev.includes('wd') || ev.includes('wide')) {
-    const m = ev.match(/(\d+)\s*wd/) || (desc || '').match(/(\d+)\s*wide/);
+  if (ev.includes('wd') || ev.includes('wide')) {
+    const m = ev.match(/(\d+)\s*wd/);
     extras = m ? parseInt(m[1], 10) : 1;
     extraType = 'Wide';
     isLegal = false;
-  } else if (bdg === 'NB' || ev.includes('nb') || ev.includes('no ball')) {
-    const m = ev.match(/(\d+)\s*nb/) || (desc || '').match(/(\d+)\s*no ball/);
+  } else if (ev.includes('nb') || ev.includes('no ball')) {
+    const m = ev.match(/(\d+)\s*nb/);
     extras = m ? parseInt(m[1], 10) : 1;
     extraType = 'NoBall';
     isLegal = false;
-  } else if (bdg === 'LB' || /\b\d*lb\b/.test(ev)) {
-    const m = ev.match(/(\d+)\s*lb/) || (desc || '').match(/(\d+)\s*leg bye/);
+  } else if (/\b\d*lb\b/.test(ev)) {
+    const m = ev.match(/(\d+)\s*lb/);
     extras = m ? parseInt(m[1], 10) : 1;
     extraType = 'LegBye';
-  } else if (bdg === 'B' || /\b\d+b\b/.test(ev)) {
-    const m = ev.match(/(\d+)b/) || (desc || '').match(/(\d+)\s*bye/);
+  } else if (/\b\d+b\b/.test(ev)) {
+    const m = ev.match(/(\d+)b/);
     extras = m ? parseInt(m[1], 10) : 1;
     extraType = 'Bye';
   }
 
-  if (bdg === 'W' || ev.includes('dismissed') || ev.includes('out')) {
+  if (ev.includes('dismissed') || ev.includes('out')) {
     isWicket = true;
-    dismissalType = desc ? parseDismissal(desc) : 'out';
   }
 
   return {
@@ -1137,12 +1170,11 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, badge, d
     extras,
     extraType,
     isLegal,
-    isWicket,
-    dismissalType
+    isWicket
   };
 }
 
-function buildScorebookModel(deliveries) {
+function buildScorebookModel(deliveries, scData) {
   const batters = {};
   const batterOrder = [];
   const bowlers = {};
@@ -1154,19 +1186,25 @@ function buildScorebookModel(deliveries) {
   let totalScore = 0;
   let totalWickets = 0;
 
-  const ensureBatter = (name) => {
+  const ensureBatter = (name, isDNB = false) => {
     if (!batters[name]) {
+      const scInfo = scData && scData.batterDetails ? scData.batterDetails[name] : null;
       batters[name] = {
         name,
         balls: 0,
         runs: 0,
         events: [],
-        howOut: 'Not out',
-        bowlerOut: ''
+        howOut: scInfo ? scInfo.howOut : (isDNB ? '' : 'Not out'),
+        bowlerOut: scInfo ? scInfo.bowlerOut : '',
+        isDNB: isDNB
       };
       batterOrder.push(name);
     }
   };
+
+  if (scData && scData.batters && scData.batters.length > 0) {
+    scData.batters.forEach(b => ensureBatter(b.name, b.isDNB));
+  }
 
   const ensureBowler = (name) => {
     if (!bowlers[name]) {
@@ -1186,10 +1224,11 @@ function buildScorebookModel(deliveries) {
   };
 
   deliveries.forEach(d => {
-    ensureBatter(d.batter);
+    ensureBatter(d.batter, false);
     ensureBowler(d.bowler);
 
     const bat = batters[d.batter];
+    bat.isDNB = false;
     const bwl = bowlers[d.bowler];
 
     if (!bwl.oversMap[d.over]) {
@@ -1229,13 +1268,21 @@ function buildScorebookModel(deliveries) {
       } else if (d.isWicket) {
         totalWickets += 1;
         bat.events.push(0);
-        bat.howOut = d.dismissalType;
-        bat.bowlerOut = d.dismissalType === 'run out' ? '' : d.bowler;
+
+        const scInfo = scData && scData.batterDetails ? scData.batterDetails[d.batter] : null;
+        if (scInfo && scInfo.howOut && scInfo.howOut !== 'Not out') {
+          bat.howOut = scInfo.howOut;
+          bat.bowlerOut = scInfo.bowlerOut;
+        } else {
+          bat.howOut = 'out';
+          bat.bowlerOut = d.bowler;
+        }
+
         bwl.wickets += 1;
         ovObj.wicketsTaken += 1;
         ovObj.tokens.push('W');
 
-        const activeBatters = batterOrder.filter(n => batters[n].howOut === 'Not out' && n !== d.batter);
+        const activeBatters = batterOrder.filter(n => !batters[n].isDNB && batters[n].howOut === 'Not out' && n !== d.batter && batters[n].balls > 0);
         const notOutName = activeBatters.length > 0 ? activeBatters[activeBatters.length - 1] : '';
         const notOutScore = notOutName ? batters[notOutName].runs : 0;
         const shortPartner = notOutName ? `${notOutName.split(' ')[0][0]} ${notOutName.split(' ').slice(1).join(' ')} (${notOutScore})` : '';
@@ -1554,17 +1601,21 @@ function renderScorebook() {
 
     if (i < data.batters.length) {
       const b = data.batters[i];
-      const seqStr = formatBatterEvents(b.events, dotMode);
-      const fontSize = dotMode === 'individual' && b.events.length > 35 ? 6.8 : 8.2;
-
-      addText(168, yBot - 5.5, b.balls, { size: 7.5, hand: true, anchor: 'middle' });
       addText(189, yMid, b.name, { size: 9.5, hand: true });
-      addText(312, yMid - 1, seqStr, { size: fontSize, hand: true });
-      addText(673.5, yMid, b.howOut, { size: 9, hand: true, anchor: 'middle' });
-      if (b.bowlerOut) {
-        addText(752, yMid, b.bowlerOut, { size: 8.5, hand: true, anchor: 'middle' });
+
+      if (!b.isDNB) {
+        const seqStr = formatBatterEvents(b.events, dotMode);
+        const fontSize = dotMode === 'individual' && b.events.length > 35 ? 6.8 : 8.2;
+        const howOutSize = b.howOut.length > 14 ? 7.2 : 8.8;
+
+        addText(168, yBot - 5.5, b.balls, { size: 7.5, hand: true, anchor: 'middle' });
+        addText(312, yMid - 1, seqStr, { size: fontSize, hand: true });
+        addText(673.5, yMid, b.howOut, { size: howOutSize, hand: true, anchor: 'middle' });
+        if (b.bowlerOut) {
+          addText(752, yMid, b.bowlerOut, { size: 8.5, hand: true, anchor: 'middle' });
+        }
+        addText(812, yMid, b.runs, { size: 10.5, hand: true, anchor: 'middle' });
       }
-      addText(812, yMid, b.runs, { size: 10.5, hand: true, anchor: 'middle' });
     }
   }
 
@@ -1636,188 +1687,4 @@ function renderScorebook() {
   ].forEach((s, idx) => {
     const yTop = 368 + idx * sRowH;
     const yMid = yTop + sRowH / 2;
-    addLine(592, yTop, 756, yTop, 0.6);
-    addText(596, yMid, s.lbl, { size: 6, bold: true });
-    addLine(638, yMid + 2, 718, yMid + 2, 0.6, '1.2,1.2');
-    if (s.list.length > 0) {
-      addText(645, yMid - 1, s.list.join(', '), { size: 7.5, hand: true });
-    }
-    if (data.totalOvers > 0 || s.val > 0) {
-      addText(739, yMid, s.val, { size: 9, hand: true, anchor: 'middle' });
-    }
-  });
-
-  [
-    { t1: 'TOTAL', t2: 'SUNDRIES', val: data.totalSundries },
-    { t1: 'TOTAL', t2: 'SCORE', val: data.totalScore },
-    { t1: 'PENALTY', t2: 'EXTRAS', val: 0 },
-    { t1: 'AMENDED', t2: 'SCORE', val: data.totalScore }
-  ].forEach((r, idx) => {
-    const yTop = 368 + idx * sRowH;
-    const yMid = yTop + sRowH / 2;
-    addLine(756, yTop, 832, yTop, 0.8);
-    addText(776, yMid - 3.5, r.t1, { size: 5.5, bold: true, anchor: 'middle' });
-    addText(776, yMid + 3.5, r.t2, { size: 5.5, bold: true, anchor: 'middle' });
-    if (data.totalOvers > 0 || r.val > 0) {
-      addText(814, yMid, r.val, { size: 11, bold: true, hand: true, anchor: 'middle' });
-    }
-  });
-
-  addRect(82, 450, 750, 75, { w: 1.2 });
-  [450, 467.4, 484.7, 502].forEach(yf => addLine(82, yf, 832, yf, 0.7));
-
-  addText(86, 458.7, 'SCORE AT EACH F.O.W. (SUN)', { size: 5.8, bold: true });
-  addText(86, 476.0, 'BATSMAN OUT', { size: 5.8, bold: true });
-  addText(86, 493.4, 'NOT OUT BATSMAN & HIS SCORE', { size: 5.8, bold: true });
-
-  const fowX0 = 195;
-  const fowW = (832 - 195) / 10;
-  for (let w = 0; w < 10; w++) {
-    const wx = fowX0 + w * fowW;
-    addLine(wx, 450, wx, 502, 0.7);
-    addText(wx + 4, 455, w + 1, { size: 5.5 });
-    if (w < data.fowList.length) {
-      const f = data.fowList[w];
-      addText(wx + fowW / 2, 460, f.score, { size: 9.5, hand: true, anchor: 'middle' });
-      addText(wx + fowW / 2, 477, f.batterOut, { size: 7.5, hand: true, anchor: 'middle' });
-      addText(wx + fowW / 2, 494, f.partnerText, { size: 6.8, hand: true, anchor: 'middle' });
-    }
-  }
-
-  addText(86, 513.5, 'RESULT', { size: 7.5, bold: true });
-  addText(135, 513.5, sharedMeta.result, { size: 9, hand: true });
-  addLine(295, 502, 295, 525, 0.7);
-  addText(299, 510, 'SCORERS', { size: 5.5, bold: true });
-  addText(299, 517, 'NAMES', { size: 5.5, bold: true });
-  addText(355, 513.5, sharedMeta.scorers, { size: 8.5, hand: true });
-  addLine(445, 502, 445, 525, 0.7);
-  addText(449, 510, 'UMPIRES', { size: 5.5, bold: true });
-  addText(449, 517, 'NAMES', { size: 5.5, bold: true });
-  addLine(605, 502, 605, 525, 0.7);
-  addText(609, 510, 'UMPIRES', { size: 5.5, bold: true });
-  addText(609, 517, 'SIGNATURES', { size: 5.5, bold: true });
-
-  addRect(82, 525, 898, 205, { w: 1.2 });
-  addLine(82, 547, 980, 547, 1.0);
-  addText(125, 536, 'BOWLER', { size: 7.5, bold: true, anchor: 'middle' });
-  addText(505, 531, 'BOWLING ANALYSIS', { size: 6.5, bold: true, anchor: 'middle' });
-
-  const ovGridX0 = 195;
-  const ovColW = 620 / 25;
-  for (let c = 0; c < 25; c++) {
-    const cx = ovGridX0 + c * ovColW;
-    addLine(cx, 537, cx, 730, 0.6);
-    addText(cx + ovColW / 2, 542, c + 1, { size: 6, anchor: 'middle' });
-  }
-
-  const bSumX0 = 815;
-  const bSumW = 165 / 6;
-  ['OVERS', 'MAIDENS', 'WIDES', 'NO BALLS', 'WICKETS', 'RUNS'].forEach((sh, idx) => {
-    const sx = bSumX0 + idx * bSumW;
-    addLine(sx, 525, sx, 730, 0.8);
-    addText(sx + bSumW / 2, 536, sh, { size: 5.5, bold: true, anchor: 'middle' });
-  });
-
-  const bowlRowH = (730 - 547) / 9;
-  for (let b = 0; b < 9; b++) {
-    const yTop = 547 + b * bowlRowH;
-    const yBot = yTop + bowlRowH;
-    const yMid = (yTop + yBot) / 2;
-    addLine(82, yBot, 980, yBot, 0.8);
-    addLine(ovGridX0, yMid, bSumX0, yMid, 0.45, '2,2');
-    addText(87, yMid - 1, `${b + 1}.`, { size: 6.5 });
-
-    if (b < data.bowlers.length) {
-      const bw = data.bowlers[b];
-      addText(98, yMid, bw.name, { size: 9, hand: true });
-
-      bw.cells.forEach((cell, cellIdx) => {
-        if (cellIdx >= 25) return;
-        const cxMid = ovGridX0 + (cellIdx + 0.5) * ovColW;
-        if (cell.isOverflow) {
-          svg.appendChild(svgEl('rect', {
-            x: ovGridX0 + cellIdx * ovColW + 0.5,
-            y: yTop + 0.5,
-            width: ovColW - 1,
-            height: bowlRowH - 1,
-            fill: '#f1f5f9'
-          }));
-        }
-        addText(cxMid, yTop + bowlRowH * 0.26, cell.balls, { size: 7.4, hand: true, anchor: 'middle' });
-        addText(cxMid, yBot - bowlRowH * 0.24, cell.cum, { size: 6.2, hand: true, anchor: 'middle' });
-      });
-
-      [bw.oversDisplay, bw.maidens, bw.wides, bw.noBalls, bw.wickets, bw.runs].forEach((val, vIdx) => {
-        const vxMid = bSumX0 + (vIdx + 0.5) * bSumW;
-        addText(vxMid, yMid, val, { size: 9.5, hand: true, anchor: 'middle' });
-      });
-    }
-  }
-}
-
-function exportPNG() {
-  const svg = document.getElementById('scorebook');
-  const serializer = new XMLSerializer();
-  const svgStr = serializer.serializeToString(svg);
-  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-
-  const img = new Image();
-  img.onload = function() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 4000;
-    canvas.height = 3000;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    URL.revokeObjectURL(url);
-
-    const link = document.createElement('a');
-    link.download = `sca-scorebook-${inningsStore[activeInnings].label.toLowerCase()}-innings.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  };
-  img.src = url;
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  const fileInput = document.getElementById('csvFile');
-  const dropZone = document.getElementById('csvDropZone');
-
-  if (fileInput) {
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files.length > 0) {
-        loadCSVFileObject(e.target.files[0]);
-        e.target.value = '';
-      }
-    });
-  }
-
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
-    window.addEventListener(evtName, (e) => e.preventDefault(), false);
-  });
-
-  if (dropZone) {
-    dropZone.addEventListener('dragover', () => {
-      dropZone.style.borderColor = '#2563eb';
-      dropZone.style.background = '#eff6ff';
-    });
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.style.borderColor = '#9ca3af';
-      dropZone.style.background = '#f9fafb';
-    });
-    dropZone.addEventListener('drop', (e) => {
-      dropZone.style.borderColor = '#9ca3af';
-      dropZone.style.background = '#f9fafb';
-      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        loadCSVFileObject(e.dataTransfer.files[0]);
-      }
-    });
-  }
-
-  loadSampleData();
-});
-</script>
-</body>
-</html>
+    addLine(592, yTop,
