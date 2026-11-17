@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v6.5)</title>
+<title>SCA Cricket Scorebook Generator (v6.6)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -263,7 +263,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v6.5</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v6.6</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">Team 1</button>
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
@@ -294,7 +294,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v6.5...</div>
+    <div id="statusMsg" class="status-bar">Initializing v6.6...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source for <span id="lblCsvSide">Side 1</span>)</label>
@@ -342,7 +342,7 @@
       </div>
       <div class="field-group">
         <label for="metaInnings">Side Label</label>
-        <input type="text" id="metaInnings" value="Mosman U10 Boland">
+        <input type="text" id="metaInnings" value="" placeholder="Auto-filled from CSV">
       </div>
     </div>
 
@@ -351,22 +351,22 @@
     <h2>Match &amp; Header Details</h2>
     <div class="field-group">
       <label for="metaComp">Competition (Shared)</label>
-      <input type="text" id="metaComp" value="NSJCA U10 Stage 1">
+      <input type="text" id="metaComp" value="" placeholder="e.g. NSJCA U10 / SEJCA Gee Shield">
     </div>
     <div class="field-row">
       <div class="field-group">
         <label for="metaClub">Club (Shared)</label>
-        <input type="text" id="metaClub" value="Mosman Cricket Club">
+        <input type="text" id="metaClub" value="" placeholder="e.g. Mosman Cricket Club">
       </div>
       <div class="field-group">
         <label for="metaGrade">Grade (Shared)</label>
-        <input type="text" id="metaGrade" value="U10 Stage 1">
+        <input type="text" id="metaGrade" value="" placeholder="e.g. U10 Stage 1 / U13 Gee">
       </div>
     </div>
     <div class="field-row">
       <div class="field-group">
         <label for="metaAgainst">Match Against (Bowling Side)</label>
-        <input type="text" id="metaAgainst" value="Mosman U10 McCabe">
+        <input type="text" id="metaAgainst" value="" placeholder="Auto-filled from CSV">
       </div>
       <div class="field-group">
         <label for="metaVenue">Played At (Shared)</label>
@@ -376,7 +376,7 @@
     <div class="field-row">
       <div class="field-group">
         <label for="metaTeam">Batting Side Name</label>
-        <input type="text" id="metaTeam" value="Mosman U10 Boland">
+        <input type="text" id="metaTeam" value="" placeholder="Auto-filled from CSV">
       </div>
       <div class="field-group">
         <label for="metaToss">Toss Won By (Shared)</label>
@@ -390,7 +390,7 @@
       </div>
       <div class="field-group">
         <label for="metaDate">Date (Shared)</label>
-        <input type="text" id="metaDate" value="16/11/2026">
+        <input type="text" id="metaDate" value="" placeholder="DD/MM/YYYY">
       </div>
     </div>
     <div class="field-row">
@@ -400,7 +400,7 @@
       </div>
       <div class="field-group">
         <label for="metaScorers">Scorers (Shared)</label>
-        <input type="text" id="metaScorers" value="electronic scored">
+        <input type="text" id="metaScorers" value="" placeholder="e.g. electronic scored">
       </div>
     </div>
   </div>
@@ -762,24 +762,24 @@ Gustaaf Rots
 let activeInnings = 1;
 
 const sharedMeta = {
-  comp: 'NSJCA U10 Stage 1',
-  club: 'Mosman Cricket Club',
-  grade: 'U10 Stage 1',
+  comp: '',
+  club: '',
+  grade: '',
   venue: '',
   toss: '',
   round: '',
-  date: '16/11/2026',
+  date: '',
   result: '',
-  scorers: 'electronic scored'
+  scorers: ''
 };
 
 const inningsStore = {
   1: {
-    label: 'Mosman U10 Boland',
-    team: 'Mosman U10 Boland',
-    against: 'Mosman U10 McCabe',
+    label: '',
+    team: 'Team 1',
+    against: '',
     csv: '',
-    scorecard: STAGE1_SCORECARD_1,
+    scorecard: '',
     playhqText: '',
     matchFormat: 'auto',
     overRule: 'auto',
@@ -789,11 +789,11 @@ const inningsStore = {
     parsed: null
   },
   2: {
-    label: 'Mosman U10 McCabe',
-    team: 'Mosman U10 McCabe',
-    against: 'Mosman U10 Boland',
+    label: '',
+    team: 'Team 2',
+    against: '',
     csv: '',
-    scorecard: STAGE1_SCORECARD_2,
+    scorecard: '',
     playhqText: '',
     matchFormat: 'auto',
     overRule: 'auto',
@@ -1030,7 +1030,9 @@ function saveCurrentInputs() {
 
 function syncUIFromStore(num) {
   const st = inningsStore[num];
-  const sideName = st.team || (num === 1 ? 'Team 1' : 'Team 2');
+  const defaultTabName = num === 1 ? 'Team 1' : 'Team 2';
+  const sideName = (st.team && st.team !== 'Team 1' && st.team !== 'Team 2') ? st.team : defaultTabName;
+  const isUnnamed = (sideName === 'Team 1' || sideName === 'Team 2') && !st.csv && !st.scorecard;
 
   document.getElementById('tab1').classList.toggle('active', num === 1);
   document.getElementById('tab2').classList.toggle('active', num === 2);
@@ -1047,8 +1049,8 @@ function syncUIFromStore(num) {
   document.getElementById('matchFormat').value = st.matchFormat || 'auto';
   document.getElementById('overRule').value = st.overRule || 'auto';
   document.getElementById('dotFormat').value = st.dotFormat || 'grouped';
-  document.getElementById('metaInnings').value = st.label || sideName;
-  document.getElementById('metaTeam').value = sideName;
+  document.getElementById('metaInnings').value = isUnnamed ? '' : (st.label || sideName);
+  document.getElementById('metaTeam').value = isUnnamed ? '' : sideName;
   document.getElementById('metaAgainst').value = st.against || '';
 }
 
@@ -2172,8 +2174,9 @@ function renderScorebook() {
   addText(482, 77, sharedMeta.venue, { size: 9, hand: true });
   addLine(480, 82, 660, 82, 0.8, '1.5,1.5');
 
+  const displayTeam = ((st.team === 'Team 1' || st.team === 'Team 2') && !st.csv && !st.scorecard) ? '' : (st.team || st.label);
   addText(425, 96, 'INNINGS OF', { size: 7.5, bold: true });
-  addText(492, 95, st.team || st.label, { size: 9.5, hand: true });
+  addText(492, 95, displayTeam, { size: 9.5, hand: true });
   addLine(488, 100, 660, 100, 0.8, '1.5,1.5');
 
   addText(670, 60, 'GRADE', { size: 7.5, bold: true });
@@ -2578,7 +2581,11 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById(id).addEventListener('input', () => { saveSharedMeta(); renderScorebook(); });
   });
 
-  loadStage1Sample();
+  inningsStore[1].parsed = emptyScorebookModel();
+  inningsStore[2].parsed = emptyScorebookModel();
+  syncUIFromStore(1);
+  renderScorebook();
+  setStatus('Ready — select or drop a CSV file to populate teams and generate the scorebook.', false);
 });
 </script>
 </body>
