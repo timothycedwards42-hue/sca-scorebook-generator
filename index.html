@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v6.2)</title>
+<title>SCA Cricket Scorebook Generator (v6.3)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -263,7 +263,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v6.2</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v6.3</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">Team 1</button>
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
@@ -294,7 +294,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v6.2...</div>
+    <div id="statusMsg" class="status-bar">Initializing v6.3...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source for <span id="lblCsvSide">Side 1</span>)</label>
@@ -1434,13 +1434,13 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granular
     if (mRun) batterRuns = parseInt(mRun[1], 10);
   }
 
-  if (ev.includes('wd') || ev.includes('wide')) {
-    const m = ev.match(/(\d+)\s*wd/);
+  if (/\b\d*\s*wd\b|\bwide\b/.test(ev)) {
+    const m = ev.match(/\b(\d+)\s*wd\b/);
     wideRuns = m ? parseInt(m[1], 10) : 1;
     isLegal = false;
   }
-  if (ev.includes('nb') || ev.includes('no ball')) {
-    const m = ev.match(/(\d+)\s*nb/);
+  if (/\b\d*\s*nb\b|\bno\s*ball\b/.test(ev)) {
+    const m = ev.match(/\b(\d+)\s*nb\b/);
     nbRuns = m ? parseInt(m[1], 10) : 1;
     isLegal = false;
   }
