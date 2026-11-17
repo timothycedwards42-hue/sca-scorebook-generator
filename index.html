@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v5.1)</title>
+<title>SCA Cricket Scorebook Generator (v5.2)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -75,6 +75,10 @@
     cursor: pointer;
     border: none;
     transition: background 0.15s;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .tab-btn.active {
@@ -246,10 +250,10 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.1</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.2</span></h1>
   <div class="innings-tabs">
-    <button id="tab1" class="tab-btn active" type="button">1st Innings</button>
-    <button id="tab2" class="tab-btn" type="button">2nd Innings</button>
+    <button id="tab1" class="tab-btn active" type="button">Team 1</button>
+    <button id="tab2" class="tab-btn" type="button">Team 2</button>
   </div>
   <div class="actions">
     <button id="btnStdSample" class="btn-secondary" type="button">Load Standard Sample</button>
@@ -262,10 +266,10 @@
 
 <div class="workspace">
   <div class="sidebar">
-    <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
+    <h2 id="sidebarInningsTitle">Team 1 — Batting Input</h2>
 
     <div class="field-group">
-      <label for="csvFile">1. Select or Drop Combined CSV (Aggressive Auto-Separation)</label>
+      <label for="csvFile">1. Select or Drop Combined CSV (Auto-separates Team 1 &amp; Team 2)</label>
       <div id="csvDropZone" class="file-drop">
         <div style="display:flex; gap:6px; align-items:center; width:100%; justify-content:center;">
           <input type="file" id="csvFile" style="font-size:11.5px; max-width:230px;">
@@ -275,10 +279,10 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v5.1...</div>
+    <div id="statusMsg" class="status-bar">Initializing v5.2...</div>
 
     <div class="field-group">
-      <label for="csvInput">CSV Content (Ball-by-Ball Source for this Innings)</label>
+      <label for="csvInput">CSV Content (Ball-by-Ball Source for this Side)</label>
       <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;19.6,0--202,A Carroll to H Engelbrecht : 1 run,1st Innings..."></textarea>
     </div>
 
@@ -317,8 +321,8 @@
         </select>
       </div>
       <div class="field-group">
-        <label for="metaInnings">Innings Label</label>
-        <input type="text" id="metaInnings" value="1st">
+        <label for="metaInnings">Innings / Side Label</label>
+        <input type="text" id="metaInnings" value="Team 1">
       </div>
     </div>
 
@@ -351,8 +355,8 @@
     </div>
     <div class="field-row">
       <div class="field-group">
-        <label for="metaTeam">Innings Of (This Innings)</label>
-        <input type="text" id="metaTeam" value="North Shore U13 Gee">
+        <label for="metaTeam">Batting Side Name</label>
+        <input type="text" id="metaTeam" value="Team 1">
       </div>
       <div class="field-group">
         <label for="metaToss">Toss Won By (Shared)</label>
@@ -1147,8 +1151,8 @@ const sharedMeta = {
 
 const inningsStore = {
   1: {
-    label: '1st',
-    team: 'North Shore U13 Gee',
+    label: 'Team 1',
+    team: 'Team 1',
     csv: '',
     scorecard: '',
     matchFormat: 'auto',
@@ -1157,8 +1161,8 @@ const inningsStore = {
     parsed: null
   },
   2: {
-    label: '2nd',
-    team: '',
+    label: 'Team 2',
+    team: 'Team 2',
     csv: '',
     scorecard: '',
     matchFormat: 'auto',
@@ -1194,40 +1198,41 @@ function distributeCombinedCSV(content) {
   const inn1Lines = [firstLine];
   const inn2Lines = [firstLine];
 
-  // Aggressive separation: collect unique team names found in innings column or outcome
-  const uniqueInnStrs = new Set();
+  // Collect unique innings descriptors (e.g. '1st Innings - Mosman U10 Boland', '1st Innings - Mosman U10 McCabe')
+  const inningsMap = {};
   for (let i = 1; i < lines.length; i++) {
     const parts = splitCSVLine(lines[i], delim);
     const innVal = (parts[inningsIdx] || '').trim();
-    if (innVal) uniqueInnStrs.add(innVal);
-  }
-  const innList = Array.from(uniqueInnStrs);
-  
-  // If we have 2 distinct innings strings, use them as boundaries
-  const primaryInnStr = innList[0] || '';
-  const secondaryInnStr = innList[1] || '';
-
-  for (let i = 1; i < lines.length; i++) {
-    const rowLine = lines[i];
-    const parts = splitCSVLine(rowLine, delim);
-    const innVal = (parts[inningsIdx] || '').trim();
-
-    if (secondaryInnStr && innVal === secondaryInnStr) {
-      inn2Lines.push(rowLine);
-    } else if (primaryInnStr && innVal === primaryInnStr) {
-      inn1Lines.push(rowLine);
-    } else {
-      // Fallback: split by halves if innings column is identical or missing
-      if (i < lines.length / 2) {
-        inn1Lines.push(rowLine);
-      } else {
-        inn2Lines.push(rowLine);
-      }
+    if (innVal) {
+      if (!inningsMap[innVal]) inningsMap[innVal] = [];
+      inningsMap[innVal].push(lines[i]);
     }
   }
 
-  if (inn1Lines.length > 1) inningsStore[1].csv = inn1Lines.join('\n');
-  if (inn2Lines.length > 1) inningsStore[2].csv = inn2Lines.join('\n');
+  const keys = Object.keys(inningsMap);
+  if (keys.length >= 2) {
+    // Assign first unique key to Team 1, second unique key to Team 2
+    inningsStore[1].csv = [firstLine, ...inningsMap[keys[0]]].join('\n');
+    inningsStore[2].csv = [firstLine, ...inningsMap[keys[1]]].join('\n');
+    
+    // Extract team names from keys if possible
+    const m1 = keys[0].match(/-\s*(.+)$/);
+    const m2 = keys[1].match(/-\s*(.+)$/);
+    if (m1) inningsStore[1].team = m1[1].trim();
+    if (m2) inningsStore[2].team = m2[1].trim();
+  } else {
+    // Fallback: split rows in half
+    const mid = Math.floor((lines.length - 1) / 2);
+    inningsStore[1].csv = [firstLine, ...lines.slice(1, mid + 1)].join('\n');
+    inningsStore[2].csv = [firstLine, ...lines.slice(mid + 1)].join('\n');
+  }
+
+  inningsStore[1].label = inningsStore[1].team || 'Team 1';
+  inningsStore[2].label = inningsStore[2].team || 'Team 2';
+
+  document.getElementById('tab1').textContent = inningsStore[1].label;
+  document.getElementById('tab2').textContent = inningsStore[2].label;
+
   return true;
 }
 
@@ -1248,11 +1253,11 @@ function readSelectedFile(file) {
     const success = distributeCombinedCSV(content);
     if (success) {
       document.getElementById('csvInput').value = inningsStore[activeInnings].csv;
-      setStatus('Successfully separated 1st and 2nd innings from ' + file.name + '!', false);
+      setStatus('Successfully separated Team 1 & Team 2 from ' + file.name + '!', false);
       parseAndRender();
     } else {
       document.getElementById('csvInput').value = content;
-      setStatus('Loaded ' + file.name + ' into current innings.', false);
+      setStatus('Loaded ' + file.name + ' into current side.', false);
       parseAndRender();
     }
   };
@@ -1315,11 +1320,11 @@ function switchInnings(num) {
   document.getElementById('tab1').classList.toggle('active', num === 1);
   document.getElementById('tab2').classList.toggle('active', num === 2);
 
-  const ord = num === 1 ? '1st Innings' : '2nd Innings';
-  document.getElementById('sidebarInningsTitle').textContent = ord + ' — Ball-by-Ball Input';
-  document.getElementById('dropInningsLabel').textContent = ord;
-
   const st = inningsStore[num];
+  const sideName = st.team || (num === 1 ? 'Team 1' : 'Team 2');
+  document.getElementById('sidebarInningsTitle').textContent = sideName + ' — Batting Input';
+  document.getElementById('dropInningsLabel').textContent = sideName;
+
   document.getElementById('csvInput').value = st.csv;
   document.getElementById('scorecardInput').value = st.scorecard;
   document.getElementById('matchFormat').value = st.matchFormat;
@@ -1333,11 +1338,11 @@ function switchInnings(num) {
       parseAndRender();
     } else {
       st.parsed = emptyScorebookModel();
-      setStatus(ord + ': blank sheet ready — select CSV & paste scorecard.', false);
+      setStatus(sideName + ': blank sheet ready — select CSV & paste scorecard.', false);
       renderScorebook();
     }
   } else {
-    setStatus(ord + ': ' + st.parsed.totalOvers + ' overs, ' + st.parsed.totalWickets + '/' + st.parsed.totalScore + '.', false);
+    setStatus(sideName + ': ' + st.parsed.totalOvers + ' overs, ' + st.parsed.totalWickets + '/' + st.parsed.totalScore + '.', false);
     renderScorebook();
   }
 }
@@ -1350,7 +1355,7 @@ function clearCurrentInnings() {
   document.getElementById('csvInput').value = '';
   document.getElementById('scorecardInput').value = '';
   document.getElementById('csvFile').value = '';
-  setStatus((activeInnings === 1 ? '1st' : '2nd') + ' Innings cleared.', false);
+  setStatus((st.team || (activeInnings === 1 ? 'Team 1' : 'Team 2')) + ' cleared.', false);
   renderScorebook();
 }
 
@@ -1359,8 +1364,17 @@ function loadSampleData() {
   inningsStore[1].scorecard = SAMPLE_SCORECARD;
   inningsStore[1].matchFormat = 'auto';
   inningsStore[1].overRule = 'auto';
-  inningsStore[1].label = '1st';
+  inningsStore[1].label = 'North Shore U13 Gee';
   inningsStore[1].team = 'North Shore U13 Gee';
+  
+  inningsStore[2].csv = '';
+  inningsStore[2].scorecard = '';
+  inningsStore[2].label = 'Team 2';
+  inningsStore[2].team = 'Team 2';
+
+  document.getElementById('tab1').textContent = inningsStore[1].team;
+  document.getElementById('tab2').textContent = inningsStore[2].team;
+
   sharedMeta.comp = 'SEJCA U13 Boys Gee Shield';
   sharedMeta.club = 'North Shore Junior Cricket Association';
   sharedMeta.grade = 'U13 Boys Gee Shield';
@@ -1376,24 +1390,29 @@ function loadSampleData() {
     document.getElementById('scorecardInput').value = SAMPLE_SCORECARD;
     document.getElementById('matchFormat').value = 'auto';
     document.getElementById('overRule').value = 'auto';
-    document.getElementById('metaInnings').value = '1st';
-    document.getElementById('metaTeam').value = 'North Shore U13 Gee';
+    document.getElementById('metaInnings').value = inningsStore[1].team;
+    document.getElementById('metaTeam').value = inningsStore[1].team;
     parseAndRender();
   }
 }
 
 function loadStage1Sample() {
+  inningsStore[1].csv = '';
   inningsStore[1].scorecard = STAGE1_SCORECARD;
   inningsStore[1].matchFormat = 'auto';
   inningsStore[1].overRule = 'auto';
-  inningsStore[1].label = '1st';
+  inningsStore[1].label = 'Mosman U10 Boland';
   inningsStore[1].team = 'Mosman U10 Boland';
 
+  inningsStore[2].csv = '';
   inningsStore[2].scorecard = STAGE1_SCORECARD_2;
   inningsStore[2].matchFormat = 'auto';
   inningsStore[2].overRule = 'auto';
-  inningsStore[2].label = '2nd';
+  inningsStore[2].label = 'Mosman U10 McCabe';
   inningsStore[2].team = 'Mosman U10 McCabe';
+
+  document.getElementById('tab1').textContent = inningsStore[1].team;
+  document.getElementById('tab2').textContent = inningsStore[2].team;
 
   sharedMeta.comp = 'NSJCA U10 Stage 1';
   sharedMeta.club = 'Mosman Cricket Club';
@@ -1408,12 +1427,12 @@ function loadStage1Sample() {
   if (activeInnings !== 1) {
     switchInnings(1);
   } else {
-    document.getElementById('csvInput').value = inningsStore[1].csv;
+    document.getElementById('csvInput').value = '';
     document.getElementById('scorecardInput').value = STAGE1_SCORECARD;
     document.getElementById('matchFormat').value = 'auto';
     document.getElementById('overRule').value = 'auto';
-    document.getElementById('metaInnings').value = '1st';
-    document.getElementById('metaTeam').value = 'Mosman U10 Boland';
+    document.getElementById('metaInnings').value = inningsStore[1].team;
+    document.getElementById('metaTeam').value = inningsStore[1].team;
     parseAndRender();
   }
 }
@@ -1683,8 +1702,7 @@ function parseCSV(text) {
   }
 
   const rows = [];
-  const currentInningsLabel = inningsStore[activeInnings].label.toLowerCase(); // '1st' or '2nd'
-  const currentTeamName = (inningsStore[activeInnings].team || '').toLowerCase();
+  const activeTeam = (inningsStore[activeInnings].team || '').toLowerCase();
 
   for (let i = startRow; i < lines.length; i++) {
     const parts = splitCSVLine(lines[i], delim);
@@ -1694,19 +1712,20 @@ function parseCSV(text) {
     const outcome = (parts[outcomeIdx] || '').trim();
     const innings = inningsIdx >= 0 ? parts.slice(inningsIdx).join(delim).trim() : '';
     
-    // Filter rows belonging to the active innings tab
-    if (innings) {
+    // Aggressive filtering by team name in innings column
+    if (innings && activeTeam && activeTeam !== 'team 1' && activeTeam !== 'team 2') {
       const innLow = innings.toLowerCase();
-      if (activeInnings === 1) {
-        // Must be 1st innings or match team 1
-        if (innLow.includes('2nd') && !innLow.includes('1st')) continue;
-      } else {
-        // Must be 2nd innings
-        if (!innLow.includes('2nd') && !innLow.includes('McCabe') && !innLow.includes('away')) {
-          // If CSV doesn't explicitly mark 2nd innings but has two distinct team blocks, check second half
-          if (i < lines.length / 2) continue;
-        }
+      const teamWords = activeTeam.split(/\s+/);
+      const matchesTeam = teamWords.some(w => w.length > 2 && innLow.includes(w));
+      if (!matchesTeam) {
+        // If active team doesn't match this row's innings metadata, skip it
+        continue;
       }
+    } else if (!innings) {
+      // Fallback if innings column missing: split strictly in half
+      const mid = Math.floor((lines.length - 1) / 2);
+      if (activeInnings === 1 && i > mid) continue;
+      if (activeInnings === 2 && i <= mid) continue;
     }
 
     const m = outcome.match(/^(.+?)\s+to\s+(.+?)\s*:\s*(.+)$/i);
@@ -1749,6 +1768,9 @@ function parseAndRender() {
   if (scData.battingTeam) {
     st.team = scData.battingTeam;
     document.getElementById('metaTeam').value = scData.battingTeam;
+    st.label = scData.battingTeam;
+    document.getElementById('metaInnings').value = scData.battingTeam;
+    document.getElementById(`tab${activeInnings}`).textContent = scData.battingTeam;
   }
   if (scData.bowlingTeam) {
     sharedMeta.against = scData.bowlingTeam;
@@ -1790,8 +1812,8 @@ function parseAndRender() {
     const lineCount = rawCsv ? rawCsv.split(/\r?\n/).length : 0;
     setStatus(
       lineCount > 0
-        ? 'Loaded ' + lineCount + ' lines, but 0 matched "Bowler to Batter : Outcome" format.'
-        : 'No CSV or Scorecard data loaded.',
+        ? 'Loaded ' + lineCount + ' lines, but 0 matched "Bowler to Batter : Outcome" format for ' + st.team + '.'
+        : 'No CSV or Scorecard data loaded for ' + st.team + '.',
       lineCount > 0
     );
   }
@@ -2330,9 +2352,9 @@ function renderScorebook() {
   addText(482, 77, sharedMeta.venue, { size: 9, hand: true });
   addLine(480, 82, 660, 82, 0.8, '1.5,1.5');
 
-  addText(425, 96, `${st.label} INNINGS OF`, { size: 7.5, bold: true });
-  addText(508, 95, st.team, { size: 9, hand: true });
-  addLine(503, 100, 660, 100, 0.8, '1.5,1.5');
+  addText(425, 96, `${st.team || st.label} — BATTING SIDE`, { size: 7.5, bold: true });
+  addText(538, 95, st.team || st.label, { size: 9, hand: true });
+  addLine(533, 100, 660, 100, 0.8, '1.5,1.5');
 
   addText(670, 60, 'GRADE', { size: 7.5, bold: true });
   addText(715, 59, sharedMeta.grade, { size: 9.5, hand: true });
@@ -2636,7 +2658,7 @@ function exportPNG() {
     URL.revokeObjectURL(url);
 
     const link = document.createElement('a');
-    link.download = `sca-scorebook-${inningsStore[activeInnings].label.toLowerCase()}-innings.png`;
+    link.download = `sca-scorebook-${(inningsStore[activeInnings].team || 'side').toLowerCase().replace(/\s+/g, '-')}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
@@ -2698,7 +2720,14 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('overRule').addEventListener('change', () => { saveCurrentInputs(); parseAndRender(); });
   document.getElementById('dotFormat').addEventListener('change', () => { saveCurrentInputs(); renderScorebook(); });
   document.getElementById('metaInnings').addEventListener('input', () => { saveCurrentInputs(); renderScorebook(); });
-  document.getElementById('metaTeam').addEventListener('input', () => { saveCurrentInputs(); renderScorebook(); });
+  document.getElementById('metaTeam').addEventListener('input', () => {
+    const val = document.getElementById('metaTeam').value;
+    inningsStore[activeInnings].team = val;
+    inningsStore[activeInnings].label = val;
+    document.getElementById(`tab${activeInnings}`).textContent = val || `Team ${activeInnings}`;
+    saveCurrentInputs();
+    renderScorebook();
+  });
 
   ['metaComp', 'metaClub', 'metaGrade', 'metaAgainst', 'metaVenue', 'metaToss', 'metaRound', 'metaDate', 'metaResult', 'metaScorers'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => { saveSharedMeta(); renderScorebook(); });
