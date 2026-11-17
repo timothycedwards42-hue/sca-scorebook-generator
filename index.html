@@ -157,7 +157,6 @@
   }
 
   .file-drop {
-    display: block;
     border: 1.5px dashed #9ca3af;
     border-radius: 6px;
     padding: 10px;
@@ -165,14 +164,10 @@
     font-size: 11.5px;
     color: var(--muted);
     background: #f9fafb;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .file-drop:hover {
-    border-color: var(--accent);
-    background: #eff6ff;
-    color: var(--accent);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
   }
 
   .preview-container {
@@ -203,7 +198,7 @@
   .status-bar {
     font-size: 11.5px;
     color: #059669;
-    font-weight: 500;
+    font-weight: 600;
   }
 
   @media print {
@@ -248,13 +243,14 @@
   <div class="sidebar">
     <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
 
-        <div class="field-group">
+    <div class="field-group">
       <label for="csvFile">1. Select or Drop CSV File</label>
-      <div id="csvDropZone" class="file-drop" style="padding:10px; display:flex; flex-direction:column; gap:6px; align-items:center;">
-        <input type="file" id="csvFile" style="font-size:11.5px; max-width:100%;" onchange="handleDirectCSV(this)">
-        <span style="font-size:11px; color:#6b7280;">or drag &amp; drop CSV anywhere onto this box for <strong id="dropInningsLabel">1st Innings</strong></span>
+      <div id="csvDropZone" class="file-drop">
+        <input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain" style="font-size:11.5px; max-width:100%;" onchange="handleDirectCSV(this)">
+        <span style="font-size:11px; color:#6b7280;">or drag &amp; drop CSV onto this box for <strong id="dropInningsLabel">1st Innings</strong></span>
       </div>
     </div>
+
     <div class="field-group">
       <label>CSV Content (Ball-by-Ball Source)</label>
       <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;28.6,6--142,V Bhati to B Rich : 6 runs,1st Innings..."></textarea>
@@ -348,111 +344,6 @@
 </div>
 
 <script>
-window.onerror = function(msg, url, line) {
-  const el = document.getElementById('statusMsg');
-  if (el) {
-    el.style.color = '#dc2626';
-    el.textContent = 'JS Error (line ' + line + '): ' + msg;
-  }
-};
-
-function handleDirectCSV(input) {
-  const statusEl = document.getElementById('statusMsg');
-  if (!input.files || input.files.length === 0) return;
-  const file = input.files[0];
-  if (statusEl) {
-    statusEl.style.color = '#2563eb';
-    statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
-  }
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    document.getElementById('csvInput').value = evt.target.result;
-    if (typeof parseAndRender === 'function') {
-      parseAndRender();
-    } else if (statusEl) {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Error: parseAndRender() is missing due to a script syntax error.';
-    }
-  };
-  reader.onerror = function() {
-    if (statusEl) {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Could not read file: ' + file.name;
-    }
-  };
-  reader.readAsText(file);
-}
-
-window.onerror = function(msg, url, line) {
-  const el = document.getElementById('statusMsg');
-  if (el) {
-    el.style.color = '#dc2626';
-    el.textContent = 'JS Error (line ' + line + '): ' + msg;
-  }
-};
-
-function handleDirectCSV(input) {
-  const statusEl = document.getElementById('statusMsg');
-  if (!input.files || input.files.length === 0) return;
-  const file = input.files[0];
-  if (statusEl) {
-    statusEl.style.color = '#2563eb';
-    statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
-  }
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    document.getElementById('csvInput').value = evt.target.result;
-    if (typeof parseAndRender === 'function') {
-      parseAndRender();
-    } else if (statusEl) {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Error: parseAndRender() is missing due to a script syntax error.';
-    }
-  };
-  reader.onerror = function() {
-    if (statusEl) {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Could not read file: ' + file.name;
-    }
-  };
-  reader.readAsText(file);
-}
-
-window.onerror = function(msg, url, line) {
-  const el = document.getElementById('statusMsg');
-  if (el) {
-    el.style.color = '#dc2626';
-    el.textContent = 'JS Error (line ' + line + '): ' + msg;
-  }
-};
-
-function handleDirectCSV(input) {
-  const statusEl = document.getElementById('statusMsg');
-  if (!input.files || input.files.length === 0) return;
-  const file = input.files[0];
-  if (statusEl) {
-    statusEl.style.color = '#2563eb';
-    statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
-  }
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    document.getElementById('csvInput').value = evt.target.result;
-    if (typeof parseAndRender === 'function') {
-      parseAndRender();
-    } else if (statusEl) {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Error: parseAndRender() is missing due to a script syntax error.';
-    }
-  };
-  reader.onerror = function() {
-    if (statusEl) {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Could not read file: ' + file.name;
-    }
-  };
-  reader.readAsText(file);
-}
-
 const SAMPLE_CSV = `Ball,Score,Outcome,Innings
 28.6,6--142,V Bhati to B Rich : 6 runs,1st Innings - North Shore U13 Gee
 28.5,6--136,V Bhati to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
@@ -882,6 +773,25 @@ const inningsStore = {
   }
 };
 
+function handleDirectCSV(input) {
+  const statusEl = document.getElementById('statusMsg');
+  if (!input || !input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  statusEl.style.color = '#2563eb';
+  statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    document.getElementById('csvInput').value = evt.target.result;
+    parseAndRender();
+  };
+  reader.onerror = function() {
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = 'Error reading file: ' + file.name;
+  };
+  reader.readAsText(file);
+}
+
 function emptyScorebookModel() {
   return {
     batters: [],
@@ -946,10 +856,12 @@ function switchInnings(num) {
       parseAndRender();
     } else {
       st.parsed = emptyScorebookModel();
-      document.getElementById('statusMsg').textContent = `${ord}: blank sheet ready — upload CSV & paste scorecard.`;
+      document.getElementById('statusMsg').style.color = '#059669';
+      document.getElementById('statusMsg').textContent = `${ord}: blank sheet ready — select CSV & paste scorecard.`;
       renderScorebook();
     }
   } else {
+    document.getElementById('statusMsg').style.color = '#059669';
     document.getElementById('statusMsg').textContent =
       `${ord}: ${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}.`;
     renderScorebook();
@@ -963,22 +875,10 @@ function clearCurrentInnings() {
   st.parsed = emptyScorebookModel();
   document.getElementById('csvInput').value = '';
   document.getElementById('scorecardInput').value = '';
+  document.getElementById('csvFile').value = '';
+  document.getElementById('statusMsg').style.color = '#059669';
   document.getElementById('statusMsg').textContent = `${activeInnings === 1 ? '1st' : '2nd'} Innings cleared.`;
   renderScorebook();
-}
-
-function loadCSVFileObject(file) {
-  if (!file) return;
-  document.getElementById('statusMsg').textContent = 'Reading ' + file.name + '...';
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    document.getElementById('csvInput').value = evt.target.result;
-    parseAndRender();
-  };
-  reader.onerror = function() {
-    document.getElementById('statusMsg').textContent = 'Error reading file: ' + file.name;
-  };
-  reader.readAsText(file);
 }
 
 function loadSampleData() {
@@ -1170,7 +1070,6 @@ function parseCSV(text) {
 
   let startRow = 1;
   if (ballIdx === -1 || outcomeIdx === -1) {
-    // Check if first row is already data (no header)
     if (/^\d+\.\d+$/.test(headerParts[0])) {
       startRow = 0;
       ballIdx = 0;
@@ -1245,7 +1144,7 @@ function parseAndRender() {
     document.getElementById('statusMsg').style.color = '#dc2626';
     document.getElementById('statusMsg').textContent = lineCount > 0
       ? `Loaded ${lineCount} lines, but 0 matched "Bowler to Batter : Outcome" format.`
-      : 'No CSV data loaded — choose a file or paste CSV rows.';
+      : 'No CSV data loaded — select a file or paste CSV rows.';
     renderScorebook();
     return;
   }
@@ -1823,4 +1722,176 @@ function renderScorebook() {
   ].forEach((s, idx) => {
     const yTop = 368 + idx * sRowH;
     const yMid = yTop + sRowH / 2;
-    addLine(592, yTop,
+    addLine(592, yTop, 756, yTop, 0.6);
+    addText(596, yMid, s.lbl, { size: 6, bold: true });
+    addLine(638, yMid + 2, 718, yMid + 2, 0.6, '1.2,1.2');
+    if (s.list.length > 0) {
+      addText(645, yMid - 1, s.list.join(', '), { size: 7.5, hand: true });
+    }
+    if (data.totalOvers > 0 || s.val > 0) {
+      addText(739, yMid, s.val, { size: 9, hand: true, anchor: 'middle' });
+    }
+  });
+
+  [
+    { t1: 'TOTAL', t2: 'SUNDRIES', val: data.totalSundries },
+    { t1: 'TOTAL', t2: 'SCORE', val: data.totalScore },
+    { t1: 'PENALTY', t2: 'EXTRAS', val: 0 },
+    { t1: 'AMENDED', t2: 'SCORE', val: data.totalScore }
+  ].forEach((r, idx) => {
+    const yTop = 368 + idx * sRowH;
+    const yMid = yTop + sRowH / 2;
+    addLine(756, yTop, 832, yTop, 0.8);
+    addText(776, yMid - 3.5, r.t1, { size: 5.5, bold: true, anchor: 'middle' });
+    addText(776, yMid + 3.5, r.t2, { size: 5.5, bold: true, anchor: 'middle' });
+    if (data.totalOvers > 0 || r.val > 0) {
+      addText(814, yMid, r.val, { size: 11, bold: true, hand: true, anchor: 'middle' });
+    }
+  });
+
+  addRect(82, 450, 750, 75, { w: 1.2 });
+  [450, 467.4, 484.7, 502].forEach(yf => addLine(82, yf, 832, yf, 0.7));
+
+  addText(86, 458.7, 'SCORE AT EACH F.O.W. (SUN)', { size: 5.8, bold: true });
+  addText(86, 476.0, 'BATSMAN OUT', { size: 5.8, bold: true });
+  addText(86, 493.4, 'NOT OUT BATSMAN & HIS SCORE', { size: 5.8, bold: true });
+
+  const fowX0 = 195;
+  const fowW = (832 - 195) / 10;
+  for (let w = 0; w < 10; w++) {
+    const wx = fowX0 + w * fowW;
+    addLine(wx, 450, wx, 502, 0.7);
+    addText(wx + 4, 455, w + 1, { size: 5.5 });
+    if (w < data.fowList.length) {
+      const f = data.fowList[w];
+      addText(wx + fowW / 2, 460, f.score, { size: 9.5, hand: true, anchor: 'middle' });
+      addText(wx + fowW / 2, 477, f.batterOut, { size: 7.5, hand: true, anchor: 'middle' });
+      addText(wx + fowW / 2, 494, f.partnerText, { size: 6.8, hand: true, anchor: 'middle' });
+    }
+  }
+
+  addText(86, 513.5, 'RESULT', { size: 7.5, bold: true });
+  addText(135, 513.5, sharedMeta.result, { size: 9, hand: true });
+  addLine(295, 502, 295, 525, 0.7);
+  addText(299, 510, 'SCORERS', { size: 5.5, bold: true });
+  addText(299, 517, 'NAMES', { size: 5.5, bold: true });
+  addText(355, 513.5, sharedMeta.scorers, { size: 8.5, hand: true });
+  addLine(445, 502, 445, 525, 0.7);
+  addText(449, 510, 'UMPIRES', { size: 5.5, bold: true });
+  addText(449, 517, 'NAMES', { size: 5.5, bold: true });
+  addLine(605, 502, 605, 525, 0.7);
+  addText(609, 510, 'UMPIRES', { size: 5.5, bold: true });
+  addText(609, 517, 'SIGNATURES', { size: 5.5, bold: true });
+
+  addRect(82, 525, 898, 205, { w: 1.2 });
+  addLine(82, 547, 980, 547, 1.0);
+  addText(125, 536, 'BOWLER', { size: 7.5, bold: true, anchor: 'middle' });
+  addText(505, 531, 'BOWLING ANALYSIS', { size: 6.5, bold: true, anchor: 'middle' });
+
+  const ovGridX0 = 195;
+  const ovColW = 620 / 25;
+  for (let c = 0; c < 25; c++) {
+    const cx = ovGridX0 + c * ovColW;
+    addLine(cx, 537, cx, 730, 0.6);
+    addText(cx + ovColW / 2, 542, c + 1, { size: 6, anchor: 'middle' });
+  }
+
+  const bSumX0 = 815;
+  const bSumW = 165 / 6;
+  ['OVERS', 'MAIDENS', 'WIDES', 'NO BALLS', 'WICKETS', 'RUNS'].forEach((sh, idx) => {
+    const sx = bSumX0 + idx * bSumW;
+    addLine(sx, 525, sx, 730, 0.8);
+    addText(sx + bSumW / 2, 536, sh, { size: 5.5, bold: true, anchor: 'middle' });
+  });
+
+  const bowlRowH = (730 - 547) / 9;
+  for (let b = 0; b < 9; b++) {
+    const yTop = 547 + b * bowlRowH;
+    const yBot = yTop + bowlRowH;
+    const yMid = (yTop + yBot) / 2;
+    addLine(82, yBot, 980, yBot, 0.8);
+    addLine(ovGridX0, yMid, bSumX0, yMid, 0.45, '2,2');
+    addText(87, yMid - 1, `${b + 1}.`, { size: 6.5 });
+
+    if (b < data.bowlers.length) {
+      const bw = data.bowlers[b];
+      addText(98, yMid, bw.name, { size: 9, hand: true });
+
+      bw.cells.forEach((cell, cellIdx) => {
+        if (cellIdx >= 25) return;
+        const cxMid = ovGridX0 + (cellIdx + 0.5) * ovColW;
+        if (cell.isOverflow) {
+          svg.appendChild(svgEl('rect', {
+            x: ovGridX0 + cellIdx * ovColW + 0.5,
+            y: yTop + 0.5,
+            width: ovColW - 1,
+            height: bowlRowH - 1,
+            fill: '#f1f5f9'
+          }));
+        }
+        addText(cxMid, yTop + bowlRowH * 0.26, cell.balls, { size: 7.4, hand: true, anchor: 'middle' });
+        addText(cxMid, yBot - bowlRowH * 0.24, cell.cum, { size: 6.2, hand: true, anchor: 'middle' });
+      });
+
+      [bw.oversDisplay, bw.maidens, bw.wides, bw.noBalls, bw.wickets, bw.runs].forEach((val, vIdx) => {
+        const vxMid = bSumX0 + (vIdx + 0.5) * bSumW;
+        addText(vxMid, yMid, val, { size: 9.5, hand: true, anchor: 'middle' });
+      });
+    }
+  }
+}
+
+function exportPNG() {
+  const svg = document.getElementById('scorebook');
+  const serializer = new XMLSerializer();
+  const svgStr = serializer.serializeToString(svg);
+  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 4000;
+    canvas.height = 3000;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+
+    const link = document.createElement('a');
+    link.download = `sca-scorebook-${inningsStore[activeInnings].label.toLowerCase()}-innings.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+  img.src = url;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const dropZone = document.getElementById('csvDropZone');
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
+    window.addEventListener(evtName, (e) => e.preventDefault(), false);
+  });
+  if (dropZone) {
+    dropZone.addEventListener('dragover', () => {
+      dropZone.style.borderColor = '#2563eb';
+      dropZone.style.background = '#eff6ff';
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = '#9ca3af';
+      dropZone.style.background = '#f9fafb';
+    });
+    dropZone.addEventListener('drop', (e) => {
+      dropZone.style.borderColor = '#9ca3af';
+      dropZone.style.background = '#f9fafb';
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const fakeInput = { files: e.dataTransfer.files };
+        handleDirectCSV(fakeInput);
+      }
+    });
+  }
+  loadSampleData();
+});
+</script>
+</body>
+</html>
