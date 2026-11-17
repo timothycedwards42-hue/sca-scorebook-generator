@@ -953,26 +953,41 @@ const inningsStore = {
 
 function handleDirectCSV(input) {
   const statusEl = document.getElementById('statusMsg');
-  if (!input || !input.files || input.files.length === 0) return;
-  const file = input.files[0];
-  if (file.name.toLowerCase().endsWith('.numbers')) {
-    statusEl.style.color = '#dc2626';
-    statusEl.textContent = 'Apple Numbers (.numbers) file detected — please export to CSV in Numbers first (File → Export To → CSV).';
-    return;
-  }
-  statusEl.style.color = '#2563eb';
-  statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
+  try {
+    if (!input || !input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.name.toLowerCase().endsWith('.numbers')) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = 'Apple Numbers (.numbers) file detected — export to CSV in Numbers first (File → Export To → CSV).';
+      input.value = '';
+      return;
+    }
+    statusEl.style.color = '#2563eb';
+    statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
 
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    document.getElementById('csvInput').value = evt.target.result;
-    parseAndRender();
-  };
-  reader.onerror = function() {
-    statusEl.style.color = '#dc2626';
-    statusEl.textContent = 'Error reading file: ' + file.name;
-  };
-  reader.readAsText(file);
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        document.getElementById('csvInput').value = evt.target.result;
+        parseAndRender();
+      } catch (err) {
+        statusEl.style.color = '#dc2626';
+        statusEl.textContent = 'Parse error: ' + err.message;
+      }
+      input.value = '';
+    };
+    reader.onerror = function() {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = 'Error reading file: ' + file.name;
+      input.value = '';
+    };
+    reader.readAsText(file);
+  } catch (e) {
+    if (statusEl) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = 'Upload error: ' + e.message;
+    }
+  }
 }
 
 function emptyScorebookModel() {
@@ -1330,7 +1345,7 @@ function parseScorecardView(text) {
   return result;
 }
 
-function splitCSVLine(line) {
+function splitCSVLine(line, delim = ',') {
   const res = [];
   let cur = '';
   let inQuotes = false;
@@ -1343,7 +1358,7 @@ function splitCSVLine(line) {
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (ch === ',' && !inQuotes) {
+    } else if (ch === delim && !inQuotes) {
       res.push(cur);
       cur = '';
     } else {
@@ -1355,9 +1370,17 @@ function splitCSVLine(line) {
 }
 
 function parseCSV(text) {
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
-  if (lines.length < 2) return [];
-  const headerParts = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+  const cleanText = text.replace(/^\uFEFF/, '');
+  const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  if (lines.length < 1) return [];
+
+  // Auto-detect delimiter (comma, semicolon from Numbers/Excel, or tab)
+  const firstLine = lines[0];
+  let delim = ',';
+  if ((firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length) delim = ';';
+  else if ((firstLine.match(/\t/g) || []).length > (firstLine.match(/,/g) || []).length) delim = '\t';
+
+  const headerParts = splitCSVLine(firstLine, delim).map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
   let ballIdx = headerParts.findIndex(h => h === 'ball' || h === 'over');
   let scoreIdx = headerParts.findIndex(h => h === 'score' || h === 'total');
   let outcomeIdx = headerParts.findIndex(h => h === 'outcome' || h === 'commentary' || h === 'description' || h === 'event');
@@ -1380,12 +1403,12 @@ function parseCSV(text) {
 
   const rows = [];
   for (let i = startRow; i < lines.length; i++) {
-    const parts = splitCSVLine(lines[i]);
+    const parts = splitCSVLine(lines[i], delim);
     if (parts.length <= Math.max(ballIdx, outcomeIdx)) continue;
     const ball = (parts[ballIdx] || '').trim();
     const score = scoreIdx >= 0 ? (parts[scoreIdx] || '').trim() : '';
     const outcome = (parts[outcomeIdx] || '').trim();
-    const innings = inningsIdx >= 0 ? parts.slice(inningsIdx).join(',').trim() : '';
+    const innings = inningsIdx >= 0 ? parts.slice(inningsIdx).join(delim).trim() : '';
     const m = outcome.match(/^(.+?)\s+to\s+(.+?)\s*:\s*(.+)$/i);
     if (!m) continue;
     rows.push({
