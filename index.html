@@ -72,6 +72,7 @@
   header .actions {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   button {
@@ -232,7 +233,8 @@
     <button id="tab2" class="tab-btn" onclick="switchInnings(2)">2nd Innings</button>
   </div>
   <div class="actions">
-    <button class="btn-secondary" onclick="loadSampleData()">Load Sample Match</button>
+    <button class="btn-secondary" onclick="loadSampleData()">Load Standard Sample</button>
+    <button class="btn-secondary" onclick="loadStage1Sample()">Load Stage 1 Sample (U10)</button>
     <button class="btn-secondary" onclick="clearCurrentInnings()">Clear Innings</button>
     <button class="btn-secondary" onclick="exportPNG()">Export Ultra-HD PNG</button>
     <button class="btn-primary" onclick="window.print()">Print / Save PDF</button>
@@ -244,7 +246,7 @@
     <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
 
     <div class="field-group">
-      <label for="csvFile">1. Select or Drop CSV File</label>
+      <label for="csvFile">1. Select or Drop CSV File (Export Numbers to CSV first)</label>
       <div id="csvDropZone" class="file-drop">
         <input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain" style="font-size:11.5px; max-width:100%;" onchange="handleDirectCSV(this)">
         <span style="font-size:11px; color:#6b7280;">or drag &amp; drop CSV onto this box for <strong id="dropInningsLabel">1st Innings</strong></span>
@@ -253,12 +255,21 @@
 
     <div class="field-group">
       <label>CSV Content (Ball-by-Ball Source)</label>
-      <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;28.6,6--142,V Bhati to B Rich : 6 runs,1st Innings..."></textarea>
+      <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;19.6,0--202,A Carroll to H Engelbrecht : 1 run,1st Innings..."></textarea>
     </div>
 
     <div class="field-group">
       <label>PlayHQ Scorecard View (Enriches Full Names, Batting Order &amp; Fielders)</label>
-      <textarea id="scorecardInput" placeholder="North Shore U13 Gee Batting&#10;Batters&#10;R&#10;B&#10;4S&#10;6s&#10;SR&#10;Jock Pearson&#10;b: Jedidiah Tong..."></textarea>
+      <textarea id="scorecardInput" placeholder="Mosman U10 Boland Batting&#10;Batters&#10;R&#10;B&#10;4S&#10;6s&#10;SR..."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label>Match Format (Stage 1: +4 Penalty Runs on Wickets &amp; Retired Batters)</label>
+      <select id="matchFormat" onchange="saveCurrentInputs(); parseAndRender()">
+        <option value="auto" selected>Auto-Detect Format (Standard / Stage 1)</option>
+        <option value="standard">Standard Cricket</option>
+        <option value="stage1">Stage 1 Cricket (+4 Penalty / Retired)</option>
+      </select>
     </div>
 
     <div class="field-row">
@@ -297,11 +308,11 @@
     <div class="field-row">
       <div class="field-group">
         <label>Match Against (Shared)</label>
-        <input type="text" id="metaAgainst" value="Northern District U13/1" placeholder="e.g. Northern District U13/1" oninput="saveSharedMeta(); renderScorebook()">
+        <input type="text" id="metaAgainst" value="Northern District U13/1" placeholder="e.g. Mosman U10 McCabe" oninput="saveSharedMeta(); renderScorebook()">
       </div>
       <div class="field-group">
         <label>Played At (Shared)</label>
-        <input type="text" id="metaVenue" value="" placeholder="e.g. Primula Oval" oninput="saveSharedMeta(); renderScorebook()">
+        <input type="text" id="metaVenue" value="" placeholder="e.g. Allan Border Oval" oninput="saveSharedMeta(); renderScorebook()">
       </div>
     </div>
     <div class="field-row">
@@ -311,7 +322,7 @@
       </div>
       <div class="field-group">
         <label>Toss Won By (Shared)</label>
-        <input type="text" id="metaToss" value="" placeholder="e.g. North Shore (bat)" oninput="saveSharedMeta(); renderScorebook()">
+        <input type="text" id="metaToss" value="" placeholder="e.g. Mosman (bat)" oninput="saveSharedMeta(); renderScorebook()">
       </div>
     </div>
     <div class="field-row">
@@ -739,6 +750,171 @@ MANUJ RAJ
 0
 0`;
 
+const STAGE1_SCORECARD = `Mosman U10 Boland Batting
+Batters
+R
+B
+4S
+6s
+SR
+Winston Burnett
+retired not out
+20
+15
+4
+0
+133.33
+Rafael Evans-Labadini
+retired not out
+18
+15
+2
+0
+120.00
+Aveer Varma
+retired not out
+2
+15
+0
+0
+13.33
+Gustaaf Rots
+retired not out
+26
+15
+5
+0
+173.33
+Edward Shaw
+retired not out
+9
+15
+1
+0
+60.00
+Theodore Edwards
+retired not out
+38
+15
+4
+3
+253.33
+Henry Corbett
+not out
+10*
+15
+0
+0
+66.66
+Harry Engelbrecht
+not out
+18*
+15
+2
+0
+120.00
+Extras
+61
+2WD
+7NB
+0LB
+8B
+44P
+Total
+0 / 202
+(20 Overs)
+Mosman U10 McCabe Bowling
+Bowlers
+O
+M
+R
+W
+HT
+E
+WD
+NB
+Jonathan Abboud
+2
+0
+13
+0
+0
+6.50
+0
+2
+Austin Carroll
+4
+0
+23
+0
+0
+5.75
+0
+3
+Henry Nguyen-Sowden
+3
+0
+29
+0
+0
+9.66
+0
+0
+Jack Morgan (c)
+3
+0
+24
+0
+0
+8.00
+0
+0
+Harvey Chance
+3
+0
+15
+1
+0
+5.00
+0
+0
+Lucien Baker
+3
+0
+26
+0
+0
+8.66
+2
+0
+Rupert Eckett
+2
+0
+20
+0
+0
+10.00
+0
+2
+Fielders
+CF
+CWK
+ROU
+ROA
+S
+Henry Nguyen-Sowden
+0
+0
+1
+0
+0
+Jack Morgan (c)
+0
+0
+1
+0
+0`;
+
 let activeInnings = 1;
 
 const sharedMeta = {
@@ -760,6 +936,7 @@ const inningsStore = {
     team: 'North Shore U13 Gee',
     csv: '',
     scorecard: '',
+    matchFormat: 'auto',
     dotFormat: 'grouped',
     parsed: null
   },
@@ -768,6 +945,7 @@ const inningsStore = {
     team: '',
     csv: '',
     scorecard: '',
+    matchFormat: 'auto',
     dotFormat: 'grouped',
     parsed: null
   }
@@ -777,6 +955,11 @@ function handleDirectCSV(input) {
   const statusEl = document.getElementById('statusMsg');
   if (!input || !input.files || input.files.length === 0) return;
   const file = input.files[0];
+  if (file.name.toLowerCase().endsWith('.numbers')) {
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = 'Apple Numbers (.numbers) file detected — please export to CSV in Numbers first (File → Export To → CSV).';
+    return;
+  }
   statusEl.style.color = '#2563eb';
   statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
 
@@ -803,10 +986,13 @@ function emptyScorebookModel() {
     lbTotal: 0,
     widesTotal: 0,
     nbTotal: 0,
+    penaltyTotal: 0,
     totalSundries: 0,
+    runsOffBatAndExtras: 0,
     totalScore: 0,
     totalWickets: 0,
-    totalOvers: 0
+    totalOvers: 0,
+    isStage1: false
   };
 }
 
@@ -827,6 +1013,7 @@ function saveCurrentInputs() {
   const st = inningsStore[activeInnings];
   st.csv = document.getElementById('csvInput').value;
   st.scorecard = document.getElementById('scorecardInput').value;
+  st.matchFormat = document.getElementById('matchFormat').value;
   st.dotFormat = document.getElementById('dotFormat').value;
   st.label = document.getElementById('metaInnings').value;
   st.team = document.getElementById('metaTeam').value;
@@ -847,6 +1034,7 @@ function switchInnings(num) {
   const st = inningsStore[num];
   document.getElementById('csvInput').value = st.csv;
   document.getElementById('scorecardInput').value = st.scorecard;
+  document.getElementById('matchFormat').value = st.matchFormat;
   document.getElementById('dotFormat').value = st.dotFormat;
   document.getElementById('metaInnings').value = st.label;
   document.getElementById('metaTeam').value = st.team;
@@ -884,15 +1072,51 @@ function clearCurrentInnings() {
 function loadSampleData() {
   inningsStore[1].csv = SAMPLE_CSV;
   inningsStore[1].scorecard = SAMPLE_SCORECARD;
+  inningsStore[1].matchFormat = 'auto';
   inningsStore[1].label = '1st';
   inningsStore[1].team = 'North Shore U13 Gee';
+  sharedMeta.comp = 'SEJCA U13 Boys Gee Shield';
+  sharedMeta.club = 'North Shore Junior Cricket Association';
+  sharedMeta.grade = 'U13 Boys Gee Shield';
+  sharedMeta.against = 'Northern District U13/1';
+  document.getElementById('metaComp').value = sharedMeta.comp;
+  document.getElementById('metaClub').value = sharedMeta.club;
+  document.getElementById('metaGrade').value = sharedMeta.grade;
+  document.getElementById('metaAgainst').value = sharedMeta.against;
   if (activeInnings !== 1) {
     switchInnings(1);
   } else {
     document.getElementById('csvInput').value = SAMPLE_CSV;
     document.getElementById('scorecardInput').value = SAMPLE_SCORECARD;
+    document.getElementById('matchFormat').value = 'auto';
     document.getElementById('metaInnings').value = '1st';
     document.getElementById('metaTeam').value = 'North Shore U13 Gee';
+    parseAndRender();
+  }
+}
+
+function loadStage1Sample() {
+  inningsStore[1].csv = '';
+  inningsStore[1].scorecard = STAGE1_SCORECARD;
+  inningsStore[1].matchFormat = 'auto';
+  inningsStore[1].label = '1st';
+  inningsStore[1].team = 'Mosman U10 Boland';
+  sharedMeta.comp = 'NSJCA U10 Stage 1';
+  sharedMeta.club = 'Mosman Cricket Club';
+  sharedMeta.grade = 'U10 Stage 1';
+  sharedMeta.against = 'Mosman U10 McCabe';
+  document.getElementById('metaComp').value = sharedMeta.comp;
+  document.getElementById('metaClub').value = sharedMeta.club;
+  document.getElementById('metaGrade').value = sharedMeta.grade;
+  document.getElementById('metaAgainst').value = sharedMeta.against;
+  if (activeInnings !== 1) {
+    switchInnings(1);
+  } else {
+    document.getElementById('csvInput').value = '';
+    document.getElementById('scorecardInput').value = STAGE1_SCORECARD;
+    document.getElementById('matchFormat').value = 'auto';
+    document.getElementById('metaInnings').value = '1st';
+    document.getElementById('metaTeam').value = 'Mosman U10 Boland';
     parseAndRender();
   }
 }
@@ -924,8 +1148,15 @@ function parseScorecardView(text) {
     bowlingTeam: '',
     batters: [],
     bowlers: [],
+    bowlerStats: {},
     nameLookup: {},
-    batterDetails: {}
+    batterDetails: {},
+    penaltyExtras: 0,
+    extrasSummary: { wd: 0, nb: 0, lb: 0, b: 0, p: 0 },
+    totalOvers: 0,
+    totalScore: 0,
+    totalWickets: 0,
+    hasStage1Markers: false
   };
   if (lines.length === 0) return result;
 
@@ -945,7 +1176,51 @@ function parseScorecardView(text) {
       i += 10;
       continue;
     }
-    if (line === 'Extras' || line === 'Fall of Wickets' || line === 'Fielders') {
+    if (line === 'Extras') {
+      mode = null;
+      i += 1;
+      // Parse extras breakdown lines like 16, 7WD, 4NB, 1LB, 4B, 0P or 61, 2WD, 7NB, 0LB, 8B, 44P
+      while (i < lines.length && lines[i] !== 'Total' && lines[i] !== 'Fall of Wickets' && !lines[i].endsWith(' Bowling')) {
+        const tok = lines[i].toUpperCase();
+        const mWd = tok.match(/^(\d+)WD$/);
+        const mNb = tok.match(/^(\d+)NB$/);
+        const mLb = tok.match(/^(\d+)LB$/);
+        const mB = tok.match(/^(\d+)B$/);
+        const mP = tok.match(/^(\d+)P$/);
+        if (mWd) result.extrasSummary.wd = parseInt(mWd[1], 10);
+        if (mNb) result.extrasSummary.nb = parseInt(mNb[1], 10);
+        if (mLb) result.extrasSummary.lb = parseInt(mLb[1], 10);
+        if (mB) result.extrasSummary.b = parseInt(mB[1], 10);
+        if (mP) {
+          result.extrasSummary.p = parseInt(mP[1], 10);
+          result.penaltyExtras = result.extrasSummary.p;
+          if (result.penaltyExtras > 0) result.hasStage1Markers = true;
+        }
+        i += 1;
+      }
+      continue;
+    }
+    if (line === 'Total') {
+      mode = null;
+      i += 1;
+      if (i < lines.length) {
+        const mTot = lines[i].match(/^(\d+)\s*\/\s*(\d+)$/);
+        if (mTot) {
+          result.totalWickets = parseInt(mTot[1], 10);
+          result.totalScore = parseInt(mTot[2], 10);
+          i += 1;
+        }
+      }
+      if (i < lines.length) {
+        const mOv = lines[i].match(/^\((\d+(?:\.\d+)?)\s*Overs?\)$/i);
+        if (mOv) {
+          result.totalOvers = parseFloat(mOv[1]);
+          i += 1;
+        }
+      }
+      continue;
+    }
+    if (line === 'Fall of Wickets' || line === 'Fielders') {
       mode = null;
       i += 1;
       continue;
@@ -959,6 +1234,9 @@ function parseScorecardView(text) {
         dismissalLines.push(lines[i]);
         i += 1;
       }
+      const statVals = lines.slice(i, i + 5);
+      const runsVal = statVals[0] && statVals[0] !== '-' ? parseInt(statVals[0].replace('*', ''), 10) : 0;
+      const ballsVal = statVals[1] && statVals[1] !== '-' ? parseInt(statVals[1], 10) : 0;
       i += 5;
 
       const rawD = dismissalLines.join(' ');
@@ -970,6 +1248,12 @@ function parseScorecardView(text) {
       if (dLow.includes('did not bat')) {
         howOut = '';
         isDNB = true;
+      } else if (dLow.includes('retired not out')) {
+        howOut = 'retired not out';
+        result.hasStage1Markers = true;
+      } else if (dLow.includes('retired')) {
+        howOut = 'retired';
+        result.hasStage1Markers = true;
       } else if (dLow.includes('not out')) {
         howOut = 'Not out';
       } else if (dLow.startsWith('c&b:')) {
@@ -1007,7 +1291,7 @@ function parseScorecardView(text) {
         }
       }
 
-      const bObj = { name: fullName, howOut, bowlerOut, isDNB };
+      const bObj = { name: fullName, howOut, bowlerOut, isDNB, runs: runsVal, balls: ballsVal };
       result.batters.push(bObj);
       result.batterDetails[fullName] = bObj;
 
@@ -1020,7 +1304,18 @@ function parseScorecardView(text) {
 
     if (mode === 'bowling') {
       const fullName = cleanPlayerName(line);
+      const bStats = lines.slice(i + 1, i + 9); // O, M, R, W, HT, E, WD, NB
       result.bowlers.push(fullName);
+      if (bStats.length >= 8) {
+        result.bowlerStats[fullName] = {
+          overs: bStats[0],
+          maidens: parseInt(bStats[1], 10) || 0,
+          runs: parseInt(bStats[2], 10) || 0,
+          wickets: parseInt(bStats[3], 10) || 0,
+          wides: parseInt(bStats[6], 10) || 0,
+          noBalls: parseInt(bStats[7], 10) || 0
+        };
+      }
       const parts = fullName.split(/\s+/);
       if (parts.length >= 2) {
         result.nameLookup[`${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`] = fullName;
@@ -1105,18 +1400,33 @@ function parseCSV(text) {
   return rows;
 }
 
+function detectStage1(formatSetting, csvRows, scData) {
+  if (formatSetting === 'stage1') return true;
+  if (formatSetting === 'standard') return false;
+  if (scData && scData.hasStage1Markers) return true;
+  // Auto-detect from CSV: dismissal event where score starts with "0--" (no wickets lost)
+  for (const r of csvRows) {
+    const ev = r.event.toLowerCase();
+    if ((ev.includes('dismissed') || ev.includes('out')) && /^0(--|\/)/.test(r.score)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function parseAndRender() {
   saveCurrentInputs();
   const st = inningsStore[activeInnings];
   const rawCsv = st.csv.trim();
   const csvRows = parseCSV(rawCsv);
   const scData = parseScorecardView(st.scorecard.trim());
+  const isStage1 = detectStage1(st.matchFormat, csvRows, scData);
 
-  if (scData.battingTeam && (!st.team || st.team === 'North Shore U13 Gee Shield' || st.team === 'North Shore U13 Gee')) {
+  if (scData.battingTeam) {
     st.team = scData.battingTeam;
     document.getElementById('metaTeam').value = scData.battingTeam;
   }
-  if (scData.bowlingTeam && (!sharedMeta.against || sharedMeta.against === 'Northern District U13/1')) {
+  if (scData.bowlingTeam) {
     sharedMeta.against = scData.bowlingTeam;
     document.getElementById('metaAgainst').value = scData.bowlingTeam;
   }
@@ -1138,21 +1448,24 @@ function parseAndRender() {
       const fullBatter = resolveName(c.batter);
       deliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event));
     }
+    st.parsed = buildScorebookModel(deliveries, scData, isStage1);
+    document.getElementById('statusMsg').style.color = '#059669';
+    document.getElementById('statusMsg').textContent =
+      `${isStage1 ? '[Stage 1] ' : ''}Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`;
+  } else if (scData.batters.length > 0) {
+    st.parsed = buildModelFromScorecardOnly(scData, isStage1);
+    document.getElementById('statusMsg').style.color = '#059669';
+    document.getElementById('statusMsg').textContent =
+      `${isStage1 ? '[Stage 1] ' : ''}Loaded Scorecard View (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`;
   } else {
     st.parsed = emptyScorebookModel();
     const lineCount = rawCsv ? rawCsv.split(/\r?\n/).length : 0;
     document.getElementById('statusMsg').style.color = '#dc2626';
     document.getElementById('statusMsg').textContent = lineCount > 0
       ? `Loaded ${lineCount} lines, but 0 matched "Bowler to Batter : Outcome" format.`
-      : 'No CSV data loaded — select a file or paste CSV rows.';
-    renderScorebook();
-    return;
+      : 'No CSV or Scorecard data loaded.';
   }
 
-  st.parsed = buildScorebookModel(deliveries, scData);
-  document.getElementById('statusMsg').style.color = '#059669';
-  document.getElementById('statusMsg').textContent =
-    `Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`;
   renderScorebook();
 }
 
@@ -1209,7 +1522,62 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent) {
   };
 }
 
-function buildScorebookModel(deliveries, scData) {
+function buildModelFromScorecardOnly(scData, isStage1) {
+  const batters = scData.batters.map(b => ({
+    name: b.name,
+    balls: b.balls,
+    runs: b.runs,
+    events: [],
+    howOut: b.howOut,
+    bowlerOut: b.bowlerOut,
+    isDNB: b.isDNB
+  }));
+
+  const bowlers = scData.bowlers.map((name, idx) => {
+    const s = scData.bowlerStats[name] || { overs: '0', maidens: 0, runs: 0, wickets: 0, wides: 0, noBalls: 0 };
+    return {
+      name,
+      index: idx + 1,
+      oversDisplay: s.overs,
+      maidens: s.maidens,
+      wides: s.wides,
+      noBalls: s.noBalls,
+      wickets: s.wickets,
+      runs: s.runs,
+      cells: []
+    };
+  });
+
+  const ex = scData.extrasSummary;
+  const penaltyTotal = isStage1 ? (ex.p || 0) : 0;
+  const runsOffBatAndExtras = scData.totalScore - penaltyTotal;
+
+  return {
+    batters,
+    bowlers,
+    fowList: [],
+    overSummary: [],
+    sundries: {
+      byes: ex.b > 0 ? [ex.b] : [],
+      legByes: ex.lb > 0 ? [ex.lb] : [],
+      wides: ex.wd > 0 ? [ex.wd] : [],
+      noBalls: ex.nb > 0 ? [ex.nb] : []
+    },
+    byesTotal: ex.b,
+    lbTotal: ex.lb,
+    widesTotal: ex.wd,
+    nbTotal: ex.nb,
+    penaltyTotal,
+    totalSundries: ex.b + ex.lb + ex.wd + ex.nb,
+    runsOffBatAndExtras,
+    totalScore: scData.totalScore,
+    totalWickets: isStage1 ? 0 : scData.totalWickets,
+    totalOvers: scData.totalOvers,
+    isStage1
+  };
+}
+
+function buildScorebookModel(deliveries, scData, isStage1) {
   const batters = {};
   const batterOrder = [];
   const bowlers = {};
@@ -1218,7 +1586,8 @@ function buildScorebookModel(deliveries, scData) {
   const overSummary = [];
 
   const sundries = { byes: [], legByes: [], wides: [], noBalls: [] };
-  let totalScore = 0;
+  let runsOffBatAndExtras = 0;
+  let penaltyTotal = 0;
   let totalWickets = 0;
 
   const ensureBatter = (name, isDNB = false) => {
@@ -1258,6 +1627,10 @@ function buildScorebookModel(deliveries, scData) {
     }
   };
 
+  if (scData && scData.bowlers && scData.bowlers.length > 0) {
+    scData.bowlers.forEach(bName => ensureBowler(bName));
+  }
+
   deliveries.forEach(d => {
     ensureBatter(d.batter, false);
     ensureBowler(d.bowler);
@@ -1271,7 +1644,7 @@ function buildScorebookModel(deliveries, scData) {
     }
     const ovObj = bwl.oversMap[d.over];
 
-    totalScore += d.batterRuns + d.extras;
+    runsOffBatAndExtras += d.batterRuns + d.extras;
 
     if (d.extraType === 'Wide') {
       sundries.wides.push(d.extras);
@@ -1301,33 +1674,45 @@ function buildScorebookModel(deliveries, scData) {
         bat.events.push(0);
         ovObj.tokens.push('.');
       } else if (d.isWicket) {
-        totalWickets += 1;
-        bat.events.push(0);
-
-        const scInfo = scData && scData.batterDetails ? scData.batterDetails[d.batter] : null;
-        if (scInfo && scInfo.howOut && scInfo.howOut !== 'Not out') {
-          bat.howOut = scInfo.howOut;
-          bat.bowlerOut = scInfo.bowlerOut;
+        if (isStage1) {
+          // Stage 1 Junior Cricket: batter stays in (retired not out after set balls), +4 penalty extras added to team total
+          penaltyTotal += 4;
+          bat.events.push('W');
+          const scInfo = scData && scData.batterDetails ? scData.batterDetails[d.batter] : null;
+          bat.howOut = (scInfo && scInfo.howOut) ? scInfo.howOut : 'Not out';
+          bat.bowlerOut = '';
+          bwl.wickets += 1;
+          ovObj.wicketsTaken += 1;
+          ovObj.tokens.push('W');
         } else {
-          bat.howOut = 'out';
-          bat.bowlerOut = d.bowler;
+          totalWickets += 1;
+          bat.events.push(0);
+
+          const scInfo = scData && scData.batterDetails ? scData.batterDetails[d.batter] : null;
+          if (scInfo && scInfo.howOut && scInfo.howOut !== 'Not out') {
+            bat.howOut = scInfo.howOut;
+            bat.bowlerOut = scInfo.bowlerOut;
+          } else {
+            bat.howOut = 'out';
+            bat.bowlerOut = d.bowler;
+          }
+
+          bwl.wickets += 1;
+          ovObj.wicketsTaken += 1;
+          ovObj.tokens.push('W');
+
+          const activeBatters = batterOrder.filter(n => !batters[n].isDNB && batters[n].howOut === 'Not out' && n !== d.batter && batters[n].balls > 0);
+          const notOutName = activeBatters.length > 0 ? activeBatters[activeBatters.length - 1] : '';
+          const notOutScore = notOutName ? batters[notOutName].runs : 0;
+          const shortPartner = notOutName ? `${notOutName.split(' ')[0][0]} ${notOutName.split(' ').slice(1).join(' ')} (${notOutScore})` : '';
+
+          fowList.push({
+            wicketNum: totalWickets,
+            score: runsOffBatAndExtras + penaltyTotal,
+            batterOut: d.batter,
+            partnerText: shortPartner
+          });
         }
-
-        bwl.wickets += 1;
-        ovObj.wicketsTaken += 1;
-        ovObj.tokens.push('W');
-
-        const activeBatters = batterOrder.filter(n => !batters[n].isDNB && batters[n].howOut === 'Not out' && n !== d.batter && batters[n].balls > 0);
-        const notOutName = activeBatters.length > 0 ? activeBatters[activeBatters.length - 1] : '';
-        const notOutScore = notOutName ? batters[notOutName].runs : 0;
-        const shortPartner = notOutName ? `${notOutName.split(' ')[0][0]} ${notOutName.split(' ').slice(1).join(' ')} (${notOutScore})` : '';
-
-        fowList.push({
-          wicketNum: totalWickets,
-          score: totalScore,
-          batterOut: d.batter,
-          partnerText: shortPartner
-        });
       } else if (d.batterRuns > 0) {
         bat.runs += d.batterRuns;
         bat.events.push(d.batterRuns);
@@ -1340,6 +1725,11 @@ function buildScorebookModel(deliveries, scData) {
       }
     }
   });
+
+  // If Stage 1 scorecard specifies total penalty extras (e.g. 44P), reconcile with CSV penalty count
+  if (isStage1 && scData && scData.penaltyExtras > 0 && penaltyTotal === 0) {
+    penaltyTotal = scData.penaltyExtras;
+  }
 
   const MAX_CHARS_PER_CELL = 6;
   bowlerOrder.forEach(name => {
@@ -1392,7 +1782,13 @@ function buildScorebookModel(deliveries, scData) {
     const bwlName = grp[0].bowler;
     grp.forEach(d => {
       runningR += d.batterRuns + d.extras;
-      if (d.isWicket) runningW += 1;
+      if (d.isWicket) {
+        if (isStage1) {
+          runningR += 4;
+        } else {
+          runningW += 1;
+        }
+      }
     });
     const finalScore = grp[grp.length - 1].score || `${runningW}/${runningR}`;
     overSummary.push({
@@ -1407,6 +1803,7 @@ function buildScorebookModel(deliveries, scData) {
   const lbTotal = sumArr(sundries.legByes);
   const widesTotal = sumArr(sundries.wides);
   const nbTotal = sumArr(sundries.noBalls);
+  const totalScore = runsOffBatAndExtras + penaltyTotal;
 
   return {
     batters: batterOrder.map(n => batters[n]),
@@ -1418,24 +1815,28 @@ function buildScorebookModel(deliveries, scData) {
     lbTotal,
     widesTotal,
     nbTotal,
+    penaltyTotal,
     totalSundries: byesTotal + lbTotal + widesTotal + nbTotal,
+    runsOffBatAndExtras,
     totalScore,
     totalWickets,
-    totalOvers: overSummary.length
+    totalOvers: overSummary.length,
+    isStage1
   };
 }
 
 function formatBatterEvents(events, mode) {
+  if (!events || events.length === 0) return '';
   if (mode === 'scoring_only') {
-    return events.filter(r => r > 0).join(' ');
+    return events.filter(r => r === 'W' || r > 0).join(' ');
   }
   if (mode === 'individual') {
-    return events.map(r => (r > 0 ? String(r) : '.')).join(' ');
+    return events.map(r => (r === 'W' ? 'W' : (r > 0 ? String(r) : '.'))).join(' ');
   }
   const tokens = [];
   let streak = 0;
   events.forEach(r => {
-    if (r > 0) {
+    if (r === 'W' || r > 0) {
       if (streak > 0) {
         tokens.push(streak > 1 ? `${streak}d` : '.');
         streak = 0;
@@ -1534,7 +1935,10 @@ function renderScorebook() {
   addText(122, 73, 'SYDNEY CRICKET', { size: 6.2, bold: true, anchor: 'middle' });
   addText(122, 81, 'ASSOCIATION', { size: 6.2, bold: true, anchor: 'middle' });
 
-  addText(470, 38, 'SYDNEY CRICKET ASSOCIATION SCORE BOOK', { size: 15, bold: true, anchor: 'middle' });
+  const titleText = data.isStage1
+    ? 'SYDNEY CRICKET ASSOCIATION SCORE BOOK (STAGE 1)'
+    : 'SYDNEY CRICKET ASSOCIATION SCORE BOOK';
+  addText(470, 38, titleText, { size: data.isStage1 ? 13.5 : 15, bold: true, anchor: 'middle' });
 
   addText(165, 60, 'COMPETITION', { size: 7.5, bold: true });
   addText(245, 59, sharedMeta.comp, { size: 9.5, hand: true });
@@ -1636,12 +2040,13 @@ function renderScorebook() {
 
     if (i < data.batters.length) {
       const b = data.batters[i];
-      addText(189, yMid, b.name, { size: 9.5, hand: true });
+      const nameSize = b.name.length > 18 ? 8.2 : 9.5;
+      addText(189, yMid, b.name, { size: nameSize, hand: true });
 
       if (!b.isDNB) {
         const seqStr = formatBatterEvents(b.events, dotMode);
         const fontSize = dotMode === 'individual' && b.events.length > 35 ? 6.8 : 8.2;
-        const howOutSize = b.howOut.length > 14 ? 7.2 : 8.8;
+        const howOutSize = b.howOut.length > 13 ? 7.0 : 8.8;
 
         addText(168, yBot - 5.5, b.balls, { size: 7.5, hand: true, anchor: 'middle' });
         addText(312, yMid - 1, seqStr, { size: fontSize, hand: true });
@@ -1735,8 +2140,8 @@ function renderScorebook() {
 
   [
     { t1: 'TOTAL', t2: 'SUNDRIES', val: data.totalSundries },
-    { t1: 'TOTAL', t2: 'SCORE', val: data.totalScore },
-    { t1: 'PENALTY', t2: 'EXTRAS', val: 0 },
+    { t1: 'TOTAL', t2: 'SCORE', val: data.runsOffBatAndExtras },
+    { t1: 'PENALTY', t2: 'EXTRAS', val: data.penaltyTotal },
     { t1: 'AMENDED', t2: 'SCORE', val: data.totalScore }
   ].forEach((r, idx) => {
     const yTop = 368 + idx * sRowH;
@@ -1800,98 +2205,4 @@ function renderScorebook() {
   const bSumW = 165 / 6;
   ['OVERS', 'MAIDENS', 'WIDES', 'NO BALLS', 'WICKETS', 'RUNS'].forEach((sh, idx) => {
     const sx = bSumX0 + idx * bSumW;
-    addLine(sx, 525, sx, 730, 0.8);
-    addText(sx + bSumW / 2, 536, sh, { size: 5.5, bold: true, anchor: 'middle' });
-  });
-
-  const bowlRowH = (730 - 547) / 9;
-  for (let b = 0; b < 9; b++) {
-    const yTop = 547 + b * bowlRowH;
-    const yBot = yTop + bowlRowH;
-    const yMid = (yTop + yBot) / 2;
-    addLine(82, yBot, 980, yBot, 0.8);
-    addLine(ovGridX0, yMid, bSumX0, yMid, 0.45, '2,2');
-    addText(87, yMid - 1, `${b + 1}.`, { size: 6.5 });
-
-    if (b < data.bowlers.length) {
-      const bw = data.bowlers[b];
-      addText(98, yMid, bw.name, { size: 9, hand: true });
-
-      bw.cells.forEach((cell, cellIdx) => {
-        if (cellIdx >= 25) return;
-        const cxMid = ovGridX0 + (cellIdx + 0.5) * ovColW;
-        if (cell.isOverflow) {
-          svg.appendChild(svgEl('rect', {
-            x: ovGridX0 + cellIdx * ovColW + 0.5,
-            y: yTop + 0.5,
-            width: ovColW - 1,
-            height: bowlRowH - 1,
-            fill: '#f1f5f9'
-          }));
-        }
-        addText(cxMid, yTop + bowlRowH * 0.26, cell.balls, { size: 7.4, hand: true, anchor: 'middle' });
-        addText(cxMid, yBot - bowlRowH * 0.24, cell.cum, { size: 6.2, hand: true, anchor: 'middle' });
-      });
-
-      [bw.oversDisplay, bw.maidens, bw.wides, bw.noBalls, bw.wickets, bw.runs].forEach((val, vIdx) => {
-        const vxMid = bSumX0 + (vIdx + 0.5) * bSumW;
-        addText(vxMid, yMid, val, { size: 9.5, hand: true, anchor: 'middle' });
-      });
-    }
-  }
-}
-
-function exportPNG() {
-  const svg = document.getElementById('scorebook');
-  const serializer = new XMLSerializer();
-  const svgStr = serializer.serializeToString(svg);
-  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-
-  const img = new Image();
-  img.onload = function() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 4000;
-    canvas.height = 3000;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    URL.revokeObjectURL(url);
-
-    const link = document.createElement('a');
-    link.download = `sca-scorebook-${inningsStore[activeInnings].label.toLowerCase()}-innings.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  };
-  img.src = url;
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  const dropZone = document.getElementById('csvDropZone');
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
-    window.addEventListener(evtName, (e) => e.preventDefault(), false);
-  });
-  if (dropZone) {
-    dropZone.addEventListener('dragover', () => {
-      dropZone.style.borderColor = '#2563eb';
-      dropZone.style.background = '#eff6ff';
-    });
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.style.borderColor = '#9ca3af';
-      dropZone.style.background = '#f9fafb';
-    });
-    dropZone.addEventListener('drop', (e) => {
-      dropZone.style.borderColor = '#9ca3af';
-      dropZone.style.background = '#f9fafb';
-      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        const fakeInput = { files: e.dataTransfer.files };
-        handleDirectCSV(fakeInput);
-      }
-    });
-  }
-  loadSampleData();
-});
-</script>
-</body>
-</html>
+    addLine(sx, 525,
