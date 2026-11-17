@@ -249,14 +249,12 @@
     <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
 
         <div class="field-group">
-      <label>Upload CSV File (Ball, Score, Outcome, Innings)</label>
-      <div id="csvDropZone" class="file-drop" style="position:relative; overflow:hidden;">
-        <span>Click here or drag &amp; drop CSV file for <span id="dropInningsLabel">1st Innings</span></span>
-        <input type="file" id="csvFile" title="Select CSV file"
-               style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+      <label for="csvFile">1. Select or Drop CSV File</label>
+      <div id="csvDropZone" class="file-drop" style="padding:10px; display:flex; flex-direction:column; gap:6px; align-items:center;">
+        <input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain" style="font-size:11.5px; max-width:100%;">
+        <span style="font-size:11px; color:#6b7280;">or drag &amp; drop CSV anywhere onto this box for <strong id="dropInningsLabel">1st Innings</strong></span>
       </div>
     </div>
-
     <div class="field-group">
       <label>CSV Content (Ball-by-Ball Source)</label>
       <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;28.6,6--142,V Bhati to B Rich : 6 runs,1st Innings..."></textarea>
@@ -1059,15 +1057,37 @@ function splitCSVLine(line) {
 function parseCSV(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
   if (lines.length < 2) return [];
+  const headerParts = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+  let ballIdx = headerParts.findIndex(h => h === 'ball' || h === 'over');
+  let scoreIdx = headerParts.findIndex(h => h === 'score' || h === 'total');
+  let outcomeIdx = headerParts.findIndex(h => h === 'outcome' || h === 'commentary' || h === 'description' || h === 'event');
+  let inningsIdx = headerParts.findIndex(h => h === 'innings');
+
+  let startRow = 1;
+  if (ballIdx === -1 || outcomeIdx === -1) {
+    // Check if first row is already data (no header)
+    if (/^\d+\.\d+$/.test(headerParts[0])) {
+      startRow = 0;
+      ballIdx = 0;
+      scoreIdx = headerParts.length >= 3 ? 1 : -1;
+      outcomeIdx = headerParts.length >= 3 ? 2 : 1;
+    } else {
+      ballIdx = 0;
+      scoreIdx = 1;
+      outcomeIdx = 2;
+      inningsIdx = 3;
+    }
+  }
+
   const rows = [];
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = startRow; i < lines.length; i++) {
     const parts = splitCSVLine(lines[i]);
-    if (parts.length < 3) continue;
-    const ball = parts[0].trim();
-    const score = parts[1].trim();
-    const outcome = parts[2].trim();
-    const innings = parts.slice(3).join(',').trim();
-    const m = outcome.match(/^(.+?)\s+to\s+(.+?)\s*:\s*(.+)$/);
+    if (parts.length <= Math.max(ballIdx, outcomeIdx)) continue;
+    const ball = (parts[ballIdx] || '').trim();
+    const score = scoreIdx >= 0 ? (parts[scoreIdx] || '').trim() : '';
+    const outcome = (parts[outcomeIdx] || '').trim();
+    const innings = inningsIdx >= 0 ? parts.slice(inningsIdx).join(',').trim() : '';
+    const m = outcome.match(/^(.+?)\s+to\s+(.+?)\s*:\s*(.+)$/i);
     if (!m) continue;
     rows.push({
       ball,
@@ -1084,14 +1104,15 @@ function parseCSV(text) {
 function parseAndRender() {
   saveCurrentInputs();
   const st = inningsStore[activeInnings];
-  const csvRows = parseCSV(st.csv.trim());
+  const rawCsv = st.csv.trim();
+  const csvRows = parseCSV(rawCsv);
   const scData = parseScorecardView(st.scorecard.trim());
 
-  if (scData.battingTeam && (!st.team || st.team === 'North Shore U13 Gee Shield')) {
+  if (scData.battingTeam && (!st.team || st.team === 'North Shore U13 Gee Shield' || st.team === 'North Shore U13 Gee')) {
     st.team = scData.battingTeam;
     document.getElementById('metaTeam').value = scData.battingTeam;
   }
-  if (scData.bowlingTeam && !sharedMeta.against) {
+  if (scData.bowlingTeam && (!sharedMeta.against || sharedMeta.against === 'Northern District U13/1')) {
     sharedMeta.against = scData.bowlingTeam;
     document.getElementById('metaAgainst').value = scData.bowlingTeam;
   }
@@ -1115,12 +1136,17 @@ function parseAndRender() {
     }
   } else {
     st.parsed = emptyScorebookModel();
-    document.getElementById('statusMsg').textContent = 'No valid CSV rows found — please upload or paste CSV.';
+    const lineCount = rawCsv ? rawCsv.split(/\r?\n/).length : 0;
+    document.getElementById('statusMsg').style.color = '#dc2626';
+    document.getElementById('statusMsg').textContent = lineCount > 0
+      ? `Loaded ${lineCount} lines, but 0 matched "Bowler to Batter : Outcome" format.`
+      : 'No CSV data loaded — choose a file or paste CSV rows.';
     renderScorebook();
     return;
   }
 
   st.parsed = buildScorebookModel(deliveries, scData);
+  document.getElementById('statusMsg').style.color = '#059669';
   document.getElementById('statusMsg').textContent =
     `Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`;
   renderScorebook();
