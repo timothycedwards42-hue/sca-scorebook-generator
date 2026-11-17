@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v5.7)</title>
+<title>SCA Cricket Scorebook Generator (v5.8)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -263,7 +263,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.7</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.8</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">Team 1</button>
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
@@ -294,7 +294,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v5.7...</div>
+    <div id="statusMsg" class="status-bar">Initializing v5.8...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source for Active Side)</label>
@@ -873,13 +873,13 @@ function readSelectedFile(file) {
     const content = String(evt.target.result || '');
     const success = distributeCombinedCSV(content);
     if (success) {
-      document.getElementById('csvInput').value = inningsStore[activeInnings].csv;
-      setStatus('Successfully separated Team 1 & Team 2 from ' + file.name + '!', false);
+      // Automatically parse and render active side after distribution
       parseAndRender();
+      setStatus('Successfully separated Team 1 & Team 2 from ' + file.name + '!', false);
     } else {
       document.getElementById('csvInput').value = content;
-      setStatus('Loaded ' + file.name + ' into current side.', false);
       parseAndRender();
+      setStatus('Loaded ' + file.name + ' into current side.', false);
     }
   };
   reader.onerror = function() {
@@ -960,6 +960,7 @@ function switchInnings(num) {
   document.getElementById('metaInnings').value = st.label || sideName;
   document.getElementById('metaTeam').value = st.team || sideName;
 
+  // Automatically parse and render this side upon switching
   parseAndRender();
 }
 
@@ -2282,7 +2283,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('tab1').addEventListener('click', () => switchInnings(1));
   document.getElementById('tab2').addEventListener('click', () => switchInnings(2));
-  document.getElementById('btnStage1Sample').addEventListener('click', loadStage1Sample);
   document.getElementById('btnClear').addEventListener('click', clearCurrentInnings);
   document.getElementById('btnExportPNG').addEventListener('click', exportPNG);
   document.getElementById('btnPrint').addEventListener('click', () => window.print());
@@ -2305,7 +2305,8 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById(id).addEventListener('input', () => { saveSharedMeta(); renderScorebook(); });
   });
 
-  loadStage1Sample();
+  // Initialize with Team 1
+  switchInnings(1);
 });
 </script>
 </body>
