@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v5.4)</title>
+<title>SCA Cricket Scorebook Generator (v5.6)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -68,14 +68,14 @@
   .tab-btn {
     background: transparent;
     color: rgba(255,255,255,0.8);
-    padding: 6px 14px;
+    padding: 6px 16px;
     border-radius: 5px;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     border: none;
     transition: background 0.15s;
-    max-width: 210px;
+    max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -141,6 +141,19 @@
     padding-bottom: 5px;
   }
 
+  .active-side-banner {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .field-group {
     display: flex;
     flex-direction: column;
@@ -172,7 +185,7 @@
     font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
     font-size: 10.5px;
     resize: vertical;
-    min-height: 72px;
+    min-height: 68px;
   }
 
   .file-drop {
@@ -250,7 +263,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.4</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.6</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">Team 1</button>
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
@@ -265,7 +278,10 @@
 
 <div class="workspace">
   <div class="sidebar">
-    <h2 id="sidebarInningsTitle">Team 1 — Batting Input</h2>
+    <div id="activeSideBanner" class="active-side-banner">
+      <span>Currently Editing: <strong id="bannerTeamName">Team 1</strong></span>
+      <span style="font-size:10px; background:#dbeafe; padding:2px 6px; border-radius:4px;">Side <span id="bannerSideNum">1</span> of 2</span>
+    </div>
 
     <div class="field-group">
       <label for="csvFile">1. Select or Drop Combined CSV (Auto-separates Teams)</label>
@@ -278,10 +294,10 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v5.4...</div>
+    <div id="statusMsg" class="status-bar">Initializing v5.6...</div>
 
     <div class="field-group">
-      <label for="csvInput">CSV Content (Ball-by-Ball Source)</label>
+      <label for="csvInput">CSV Content (Ball-by-Ball Source for Active Side)</label>
       <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;19.6,0--202,A Carroll to H Engelbrecht : 1 run..."></textarea>
     </div>
 
@@ -291,7 +307,7 @@
     </div>
 
     <div class="field-group">
-      <label for="playhqText">PlayHQ Ball-by-Ball Text (Optional — For Run-out vs Stumped Attribution)</label>
+      <label for="playhqText">PlayHQ Ball-by-Ball Text (Optional — For Run-out vs Stumped)</label>
       <textarea id="playhqText" placeholder="Over 20&#10;19.6&#10;1&#10;Austin Carroll to Harry Engelbrecht..."></textarea>
     </div>
 
@@ -833,6 +849,8 @@ function distributeCombinedCSV(content) {
 
   inningsStore[1].label = inningsStore[1].team;
   inningsStore[2].label = inningsStore[2].team;
+  inningsStore[1].parsed = null;
+  inningsStore[2].parsed = null;
 
   document.getElementById('tab1').textContent = inningsStore[1].team;
   document.getElementById('tab2').textContent = inningsStore[2].team;
@@ -906,6 +924,7 @@ function saveSharedMeta() {
 
 function saveCurrentInputs() {
   const st = inningsStore[activeInnings];
+  if (!st) return;
   st.csv = document.getElementById('csvInput').value;
   st.scorecard = document.getElementById('scorecardInput').value;
   st.playhqText = document.getElementById('playhqText').value;
@@ -926,30 +945,22 @@ function switchInnings(num) {
 
   const st = inningsStore[num];
   const sideName = st.team || (num === 1 ? 'Team 1' : 'Team 2');
+  
+  document.getElementById('bannerTeamName').textContent = sideName;
+  document.getElementById('bannerSideNum').textContent = num;
   document.getElementById('sidebarInningsTitle').textContent = sideName + ' — Batting Input';
   document.getElementById('dropInningsLabel').textContent = sideName;
 
-  document.getElementById('csvInput').value = st.csv;
-  document.getElementById('scorecardInput').value = st.scorecard;
+  document.getElementById('csvInput').value = st.csv || '';
+  document.getElementById('scorecardInput').value = st.scorecard || '';
   document.getElementById('playhqText').value = st.playhqText || '';
-  document.getElementById('matchFormat').value = st.matchFormat;
+  document.getElementById('matchFormat').value = st.matchFormat || 'auto';
   document.getElementById('overRule').value = st.overRule || 'auto';
-  document.getElementById('dotFormat').value = st.dotFormat;
-  document.getElementById('metaInnings').value = st.label;
-  document.getElementById('metaTeam').value = st.team;
+  document.getElementById('dotFormat').value = st.dotFormat || 'grouped';
+  document.getElementById('metaInnings').value = st.label || sideName;
+  document.getElementById('metaTeam').value = st.team || sideName;
 
-  if (!st.parsed) {
-    if (st.csv.trim() || st.scorecard.trim()) {
-      parseAndRender();
-    } else {
-      st.parsed = emptyScorebookModel();
-      setStatus(sideName + ': blank sheet ready — select CSV & paste scorecard.', false);
-      renderScorebook();
-    }
-  } else {
-    setStatus(sideName + ': ' + st.parsed.totalOvers + ' overs, ' + st.parsed.totalWickets + '/' + st.parsed.totalScore + '.', false);
-    renderScorebook();
-  }
+  parseAndRender();
 }
 
 function clearCurrentInnings() {
@@ -1321,10 +1332,7 @@ function parseAndRender() {
     st.label = scData.battingTeam;
     document.getElementById('metaInnings').value = scData.battingTeam;
     document.getElementById(`tab${activeInnings}`).textContent = scData.battingTeam;
-  }
-  if (scData.bowlingTeam) {
-    sharedMeta.against = scData.bowlingTeam;
-    document.getElementById('metaAgainst').value = scData.bowlingTeam;
+    document.getElementById('bannerTeamName').textContent = scData.battingTeam;
   }
 
   const resolveName = (abbr) => {
@@ -1363,7 +1371,7 @@ function parseAndRender() {
     const lineCount = rawCsv ? rawCsv.split(/\r?\n/).length : 0;
     setStatus(
       lineCount > 0
-        ? 'Loaded ' + lineCount + ' lines, but 0 matched "Bowler to Batter : Outcome" format for ' + st.team + '.'
+        ? 'Loaded ' + lineCount + ' lines, but 0 matched format for ' + st.team + '.'
         : 'No CSV or Scorecard data loaded for ' + st.team + '.',
       lineCount > 0
     );
@@ -1589,14 +1597,14 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule) {
         bat.events.push(0);
         ovObj.tokens.push('.');
       } else if (d.isWicket) {
-        const isExemptFromBowler = (d.wicketKind === 'run out');
+        const isRunOut = (d.wicketKind === 'run out');
         if (isStage1) {
           penaltyTotal += 4;
           bat.events.push('W');
           const scInfo = scData && scData.batterDetails ? scData.batterDetails[d.batter] : null;
           bat.howOut = (scInfo && scInfo.howOut) ? scInfo.howOut : 'Not out';
           bat.bowlerOut = '';
-          if (!isExemptFromBowler) {
+          if (!isRunOut) {
             bwl.wickets += 1;
             ovObj.wicketsTaken += 1;
           }
@@ -1610,11 +1618,11 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule) {
             bat.howOut = scInfo.howOut;
             bat.bowlerOut = scInfo.bowlerOut;
           } else {
-            bat.howOut = isExemptFromBowler ? 'run out' : 'out';
-            bat.bowlerOut = isExemptFromBowler ? '' : d.bowler;
+            bat.howOut = isRunOut ? 'run out' : 'out';
+            bat.bowlerOut = isRunOut ? '' : d.bowler;
           }
 
-          if (!isExemptFromBowler) {
+          if (!isRunOut) {
             bwl.wickets += 1;
             ovObj.wicketsTaken += 1;
           }
@@ -2288,6 +2296,7 @@ window.addEventListener('DOMContentLoaded', () => {
     inningsStore[activeInnings].team = val;
     inningsStore[activeInnings].label = val;
     document.getElementById(`tab${activeInnings}`).textContent = val || `Team ${activeInnings}`;
+    document.getElementById('bannerTeamName').textContent = val || `Team ${activeInnings}`;
     saveCurrentInputs();
     renderScorebook();
   });
