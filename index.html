@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v5.8)</title>
+<title>SCA Cricket Scorebook Generator (v5.9)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -263,7 +263,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.8</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.9</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">Team 1</button>
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
@@ -294,7 +294,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v5.8...</div>
+    <div id="statusMsg" class="status-bar">Initializing v5.9...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source for Active Side)</label>
@@ -854,6 +854,13 @@ function distributeCombinedCSV(content) {
 
   document.getElementById('tab1').textContent = inningsStore[1].team;
   document.getElementById('tab2').textContent = inningsStore[2].team;
+
+  const activeSt = inningsStore[activeInnings];
+  document.getElementById('csvInput').value = activeSt.csv || '';
+  document.getElementById('metaTeam').value = activeSt.team;
+  document.getElementById('metaInnings').value = activeSt.label;
+  document.getElementById('bannerTeamName').textContent = activeSt.team;
+  document.getElementById('sidebarInningsTitle') && (document.getElementById('sidebarInningsTitle').textContent = activeSt.team + ' — Batting Input');
   return true;
 }
 
@@ -873,9 +880,9 @@ function readSelectedFile(file) {
     const content = String(evt.target.result || '');
     const success = distributeCombinedCSV(content);
     if (success) {
-      // Automatically parse and render active side after distribution
+      document.getElementById('csvInput').value = inningsStore[activeInnings].csv || '';
       parseAndRender();
-      setStatus('Successfully separated Team 1 & Team 2 from ' + file.name + '!', false);
+      setStatus('Successfully separated ' + inningsStore[1].team + ' (' + (inningsStore[1].csv.split(/\r?\n/).length - 1) + ' balls) & ' + inningsStore[2].team + ' (' + (inningsStore[2].csv.split(/\r?\n/).length - 1) + ' balls)!', false);
     } else {
       document.getElementById('csvInput').value = content;
       parseAndRender();
