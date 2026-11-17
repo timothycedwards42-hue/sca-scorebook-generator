@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v5.0)</title>
+<title>SCA Cricket Scorebook Generator (v5.1)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -246,7 +246,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.0</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.1</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">1st Innings</button>
     <button id="tab2" class="tab-btn" type="button">2nd Innings</button>
@@ -265,7 +265,7 @@
     <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
 
     <div class="field-group">
-      <label for="csvFile">1. Select or Drop Combined CSV (Auto-separates 1st &amp; 2nd Innings)</label>
+      <label for="csvFile">1. Select or Drop Combined CSV (Aggressive Auto-Separation)</label>
       <div id="csvDropZone" class="file-drop">
         <div style="display:flex; gap:6px; align-items:center; width:100%; justify-content:center;">
           <input type="file" id="csvFile" style="font-size:11.5px; max-width:230px;">
@@ -275,7 +275,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v5.0...</div>
+    <div id="statusMsg" class="status-bar">Initializing v5.1...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source for this Innings)</label>
@@ -733,7 +733,7 @@ MANUJ RAJ
 0
 0
 4.00
-1
+0
 0
 Kiran Acharya
 1
@@ -1189,41 +1189,45 @@ function distributeCombinedCSV(content) {
 
   const headerParts = splitCSVLine(firstLine, delim).map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
   let inningsIdx = headerParts.findIndex(h => h === 'innings');
-  if (inningsIdx === -1) inningsIdx = 3; // fallback default column index
+  if (inningsIdx === -1) inningsIdx = 3;
 
   const inn1Lines = [firstLine];
   const inn2Lines = [firstLine];
 
-  let inn1Team = '';
-  let inn2Team = '';
+  // Aggressive separation: collect unique team names found in innings column or outcome
+  const uniqueInnStrs = new Set();
+  for (let i = 1; i < lines.length; i++) {
+    const parts = splitCSVLine(lines[i], delim);
+    const innVal = (parts[inningsIdx] || '').trim();
+    if (innVal) uniqueInnStrs.add(innVal);
+  }
+  const innList = Array.from(uniqueInnStrs);
+  
+  // If we have 2 distinct innings strings, use them as boundaries
+  const primaryInnStr = innList[0] || '';
+  const secondaryInnStr = innList[1] || '';
 
   for (let i = 1; i < lines.length; i++) {
     const rowLine = lines[i];
     const parts = splitCSVLine(rowLine, delim);
-    const innVal = (parts[inningsIdx] || '').trim().toLowerCase();
-    
-    if (innVal.includes('1st innings') || (!innVal && i < lines.length / 2)) {
-      inn1Lines.push(rowLine);
-      if (!inn1Team && parts[2]) {
-        const m = parts[2].match(/^(.+?)\s+to\s+/);
-        if (m) inn1Team = m[1].trim();
-      }
-    } else {
+    const innVal = (parts[inningsIdx] || '').trim();
+
+    if (secondaryInnStr && innVal === secondaryInnStr) {
       inn2Lines.push(rowLine);
-      if (!inn2Team && parts[2]) {
-        const m = parts[2].match(/^(.+?)\s+to\s+/);
-        if (m) inn2Team = m[1].trim();
+    } else if (primaryInnStr && innVal === primaryInnStr) {
+      inn1Lines.push(rowLine);
+    } else {
+      // Fallback: split by halves if innings column is identical or missing
+      if (i < lines.length / 2) {
+        inn1Lines.push(rowLine);
+      } else {
+        inn2Lines.push(rowLine);
       }
     }
   }
 
-  if (inn1Lines.length > 1) {
-    inningsStore[1].csv = inn1Lines.join('\n');
-  }
-  if (inn2Lines.length > 1) {
-    inningsStore[2].csv = inn2Lines.join('\n');
-  }
-
+  if (inn1Lines.length > 1) inningsStore[1].csv = inn1Lines.join('\n');
+  if (inn2Lines.length > 1) inningsStore[2].csv = inn2Lines.join('\n');
   return true;
 }
 
@@ -1679,6 +1683,9 @@ function parseCSV(text) {
   }
 
   const rows = [];
+  const currentInningsLabel = inningsStore[activeInnings].label.toLowerCase(); // '1st' or '2nd'
+  const currentTeamName = (inningsStore[activeInnings].team || '').toLowerCase();
+
   for (let i = startRow; i < lines.length; i++) {
     const parts = splitCSVLine(lines[i], delim);
     if (parts.length <= Math.max(ballIdx, outcomeIdx)) continue;
@@ -1686,6 +1693,22 @@ function parseCSV(text) {
     const score = scoreIdx >= 0 ? (parts[scoreIdx] || '').trim() : '';
     const outcome = (parts[outcomeIdx] || '').trim();
     const innings = inningsIdx >= 0 ? parts.slice(inningsIdx).join(delim).trim() : '';
+    
+    // Filter rows belonging to the active innings tab
+    if (innings) {
+      const innLow = innings.toLowerCase();
+      if (activeInnings === 1) {
+        // Must be 1st innings or match team 1
+        if (innLow.includes('2nd') && !innLow.includes('1st')) continue;
+      } else {
+        // Must be 2nd innings
+        if (!innLow.includes('2nd') && !innLow.includes('McCabe') && !innLow.includes('away')) {
+          // If CSV doesn't explicitly mark 2nd innings but has two distinct team blocks, check second half
+          if (i < lines.length / 2) continue;
+        }
+      }
+    }
+
     const m = outcome.match(/^(.+?)\s+to\s+(.+?)\s*:\s*(.+)$/i);
     if (!m) continue;
     rows.push({
