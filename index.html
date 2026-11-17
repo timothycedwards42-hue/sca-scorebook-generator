@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator</title>
+<title>SCA Cricket Scorebook Generator (v4.2)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -44,6 +44,17 @@
     font-size: 17px;
     font-weight: 600;
     letter-spacing: 0.3px;
+  }
+
+  .ver-badge {
+    background: #10b981;
+    color: #064e3b;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 99px;
+    margin-left: 8px;
+    vertical-align: middle;
   }
 
   .innings-tabs {
@@ -200,6 +211,11 @@
     font-size: 11.5px;
     color: #059669;
     font-weight: 600;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 6px 8px;
+    border-radius: 5px;
+    word-break: break-word;
   }
 
   @media print {
@@ -227,17 +243,17 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook</h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v4.2</span></h1>
   <div class="innings-tabs">
-    <button id="tab1" class="tab-btn active" onclick="switchInnings(1)">1st Innings</button>
-    <button id="tab2" class="tab-btn" onclick="switchInnings(2)">2nd Innings</button>
+    <button id="tab1" class="tab-btn active" type="button">1st Innings</button>
+    <button id="tab2" class="tab-btn" type="button">2nd Innings</button>
   </div>
   <div class="actions">
-    <button class="btn-secondary" onclick="loadSampleData()">Load Standard Sample</button>
-    <button class="btn-secondary" onclick="loadStage1Sample()">Load Stage 1 Sample (U10)</button>
-    <button class="btn-secondary" onclick="clearCurrentInnings()">Clear Innings</button>
-    <button class="btn-secondary" onclick="exportPNG()">Export Ultra-HD PNG</button>
-    <button class="btn-primary" onclick="window.print()">Print / Save PDF</button>
+    <button id="btnStdSample" class="btn-secondary" type="button">Load Standard Sample</button>
+    <button id="btnStage1Sample" class="btn-secondary" type="button">Load Stage 1 Sample (U10)</button>
+    <button id="btnClear" class="btn-secondary" type="button">Clear Innings</button>
+    <button id="btnExportPNG" class="btn-secondary" type="button">Export Ultra-HD PNG</button>
+    <button id="btnPrint" class="btn-primary" type="button">Print / Save PDF</button>
   </div>
 </header>
 
@@ -246,26 +262,31 @@
     <h2 id="sidebarInningsTitle">1st Innings — Ball-by-Ball Input</h2>
 
     <div class="field-group">
-      <label for="csvFile">1. Select or Drop CSV File (Export Numbers to CSV first)</label>
+      <label for="csvFile">1. Select or Drop CSV File</label>
       <div id="csvDropZone" class="file-drop">
-        <input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain" style="font-size:11.5px; max-width:100%;" onchange="handleDirectCSV(this)">
+        <div style="display:flex; gap:6px; align-items:center; width:100%; justify-content:center;">
+          <input type="file" id="csvFile" style="font-size:11.5px; max-width:230px;">
+          <button id="btnLoadSelectedFile" type="button" class="btn-primary" style="padding:5px 9px; font-size:11px;">Read File</button>
+        </div>
         <span style="font-size:11px; color:#6b7280;">or drag &amp; drop CSV onto this box for <strong id="dropInningsLabel">1st Innings</strong></span>
       </div>
     </div>
 
+    <div id="statusMsg" class="status-bar">Initializing v4.2...</div>
+
     <div class="field-group">
-      <label>CSV Content (Ball-by-Ball Source)</label>
+      <label for="csvInput">CSV Content (Ball-by-Ball Source)</label>
       <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;19.6,0--202,A Carroll to H Engelbrecht : 1 run,1st Innings..."></textarea>
     </div>
 
     <div class="field-group">
-      <label>PlayHQ Scorecard View (Enriches Full Names, Batting Order &amp; Fielders)</label>
+      <label for="scorecardInput">PlayHQ Scorecard View (Enriches Full Names, Batting Order &amp; Fielders)</label>
       <textarea id="scorecardInput" placeholder="Mosman U10 Boland Batting&#10;Batters&#10;R&#10;B&#10;4S&#10;6s&#10;SR..."></textarea>
     </div>
 
     <div class="field-group">
-      <label>Match Format (Stage 1: +4 Penalty Runs on Wickets &amp; Retired Batters)</label>
-      <select id="matchFormat" onchange="saveCurrentInputs(); parseAndRender()">
+      <label for="matchFormat">Match Format (Stage 1: +4 Penalty Runs on Wickets &amp; Retired Batters)</label>
+      <select id="matchFormat">
         <option value="auto" selected>Auto-Detect Format (Standard / Stage 1)</option>
         <option value="standard">Standard Cricket</option>
         <option value="stage1">Stage 1 Cricket (+4 Penalty / Retired)</option>
@@ -274,75 +295,74 @@
 
     <div class="field-row">
       <div class="field-group">
-        <label>Dot Ball Format</label>
-        <select id="dotFormat" onchange="saveCurrentInputs(); renderScorebook()">
+        <label for="dotFormat">Dot Ball Format</label>
+        <select id="dotFormat">
           <option value="grouped" selected>Grouped (10d 1 6d)</option>
           <option value="individual">Individual (. . . 1)</option>
           <option value="scoring_only">Scoring Shots Only (1 4 2)</option>
         </select>
       </div>
       <div class="field-group">
-        <label>Innings Label</label>
-        <input type="text" id="metaInnings" value="1st" oninput="saveCurrentInputs(); renderScorebook()">
+        <label for="metaInnings">Innings Label</label>
+        <input type="text" id="metaInnings" value="1st">
       </div>
     </div>
 
-    <button class="btn-primary" style="width:100%" onclick="parseAndRender()">Generate / Update Scorebook</button>
-    <div id="statusMsg" class="status-bar">Ready.</div>
+    <button id="btnGenerate" class="btn-primary" type="button" style="width:100%">Generate / Update Scorebook</button>
 
     <h2>Match &amp; Innings Header Details</h2>
     <div class="field-group">
-      <label>Competition (Shared)</label>
-      <input type="text" id="metaComp" value="SEJCA U13 Boys Gee Shield" oninput="saveSharedMeta(); renderScorebook()">
+      <label for="metaComp">Competition (Shared)</label>
+      <input type="text" id="metaComp" value="SEJCA U13 Boys Gee Shield">
     </div>
     <div class="field-row">
       <div class="field-group">
-        <label>Club (Shared)</label>
-        <input type="text" id="metaClub" value="North Shore Junior Cricket Association" oninput="saveSharedMeta(); renderScorebook()">
+        <label for="metaClub">Club (Shared)</label>
+        <input type="text" id="metaClub" value="North Shore Junior Cricket Association">
       </div>
       <div class="field-group">
-        <label>Grade (Shared)</label>
-        <input type="text" id="metaGrade" value="U13 Boys Gee Shield" oninput="saveSharedMeta(); renderScorebook()">
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field-group">
-        <label>Match Against (Shared)</label>
-        <input type="text" id="metaAgainst" value="Northern District U13/1" placeholder="e.g. Mosman U10 McCabe" oninput="saveSharedMeta(); renderScorebook()">
-      </div>
-      <div class="field-group">
-        <label>Played At (Shared)</label>
-        <input type="text" id="metaVenue" value="" placeholder="e.g. Allan Border Oval" oninput="saveSharedMeta(); renderScorebook()">
+        <label for="metaGrade">Grade (Shared)</label>
+        <input type="text" id="metaGrade" value="U13 Boys Gee Shield">
       </div>
     </div>
     <div class="field-row">
       <div class="field-group">
-        <label>Innings Of (This Innings)</label>
-        <input type="text" id="metaTeam" value="North Shore U13 Gee" oninput="saveCurrentInputs(); renderScorebook()">
+        <label for="metaAgainst">Match Against (Shared)</label>
+        <input type="text" id="metaAgainst" value="Northern District U13/1">
       </div>
       <div class="field-group">
-        <label>Toss Won By (Shared)</label>
-        <input type="text" id="metaToss" value="" placeholder="e.g. Mosman (bat)" oninput="saveSharedMeta(); renderScorebook()">
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field-group">
-        <label>Round No (Shared)</label>
-        <input type="text" id="metaRound" value="" placeholder="e.g. 5" oninput="saveSharedMeta(); renderScorebook()">
-      </div>
-      <div class="field-group">
-        <label>Date (Shared)</label>
-        <input type="text" id="metaDate" value="16/11/2026" oninput="saveSharedMeta(); renderScorebook()">
+        <label for="metaVenue">Played At (Shared)</label>
+        <input type="text" id="metaVenue" value="" placeholder="e.g. Allan Border Oval">
       </div>
     </div>
     <div class="field-row">
       <div class="field-group">
-        <label>Result (Shared)</label>
-        <input type="text" id="metaResult" value="" oninput="saveSharedMeta(); renderScorebook()">
+        <label for="metaTeam">Innings Of (This Innings)</label>
+        <input type="text" id="metaTeam" value="North Shore U13 Gee">
       </div>
       <div class="field-group">
-        <label>Scorers (Shared)</label>
-        <input type="text" id="metaScorers" value="electronic scored" oninput="saveSharedMeta(); renderScorebook()">
+        <label for="metaToss">Toss Won By (Shared)</label>
+        <input type="text" id="metaToss" value="" placeholder="e.g. Mosman (bat)">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label for="metaRound">Round No (Shared)</label>
+        <input type="text" id="metaRound" value="" placeholder="e.g. 5">
+      </div>
+      <div class="field-group">
+        <label for="metaDate">Date (Shared)</label>
+        <input type="text" id="metaDate" value="16/11/2026">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label for="metaResult">Result (Shared)</label>
+        <input type="text" id="metaResult" value="">
+      </div>
+      <div class="field-group">
+        <label for="metaScorers">Scorers (Shared)</label>
+        <input type="text" id="metaScorers" value="electronic scored">
       </div>
     </div>
   </div>
@@ -951,43 +971,38 @@ const inningsStore = {
   }
 };
 
-function handleDirectCSV(input) {
-  const statusEl = document.getElementById('statusMsg');
-  try {
-    if (!input || !input.files || input.files.length === 0) return;
-    const file = input.files[0];
-    if (file.name.toLowerCase().endsWith('.numbers')) {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Apple Numbers (.numbers) file detected — export to CSV in Numbers first (File → Export To → CSV).';
-      input.value = '';
-      return;
-    }
-    statusEl.style.color = '#2563eb';
-    statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
+function setStatus(text, isError = false) {
+  const el = document.getElementById('statusMsg');
+  if (!el) return;
+  el.style.color = isError ? '#b91c1c' : '#047857';
+  el.style.background = isError ? '#fef2f2' : '#f0fdf4';
+  el.style.borderColor = isError ? '#fecaca' : '#bbf7d0';
+  el.textContent = text;
+}
 
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      try {
-        document.getElementById('csvInput').value = evt.target.result;
-        parseAndRender();
-      } catch (err) {
-        statusEl.style.color = '#dc2626';
-        statusEl.textContent = 'Parse error: ' + err.message;
-      }
-      input.value = '';
-    };
-    reader.onerror = function() {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Error reading file: ' + file.name;
-      input.value = '';
-    };
-    reader.readAsText(file);
-  } catch (e) {
-    if (statusEl) {
-      statusEl.style.color = '#dc2626';
-      statusEl.textContent = 'Upload error: ' + e.message;
-    }
+function readSelectedFile(file) {
+  if (!file) {
+    setStatus('No file selected yet — click Choose File first.', true);
+    return;
   }
+  if (file.name.toLowerCase().endsWith('.numbers')) {
+    setStatus('Apple Numbers (.numbers) file detected — in Numbers choose File → Export To → CSV first.', true);
+    return;
+  }
+  setStatus('Reading ' + file.name + ' (' + file.size + ' bytes)...', false);
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const content = String(evt.target.result || '');
+    document.getElementById('csvInput').value = content;
+    const firstLine = content.split(/\r?\n/)[0] || '(empty)';
+    setStatus('Loaded ' + file.name + ' (' + content.length + ' chars). Header: ' + firstLine, false);
+    parseAndRender();
+  };
+  reader.onerror = function() {
+    setStatus('Browser could not read ' + file.name + ' (check macOS file permissions or iCloud download).', true);
+  };
+  reader.readAsText(file);
 }
 
 function emptyScorebookModel() {
@@ -1059,14 +1074,11 @@ function switchInnings(num) {
       parseAndRender();
     } else {
       st.parsed = emptyScorebookModel();
-      document.getElementById('statusMsg').style.color = '#059669';
-      document.getElementById('statusMsg').textContent = `${ord}: blank sheet ready — select CSV & paste scorecard.`;
+      setStatus(`${ord}: blank sheet ready — select CSV & paste scorecard.`);
       renderScorebook();
     }
   } else {
-    document.getElementById('statusMsg').style.color = '#059669';
-    document.getElementById('statusMsg').textContent =
-      `${ord}: ${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}.`;
+    setStatus(`${ord}: ${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}.`);
     renderScorebook();
   }
 }
@@ -1079,8 +1091,7 @@ function clearCurrentInnings() {
   document.getElementById('csvInput').value = '';
   document.getElementById('scorecardInput').value = '';
   document.getElementById('csvFile').value = '';
-  document.getElementById('statusMsg').style.color = '#059669';
-  document.getElementById('statusMsg').textContent = `${activeInnings === 1 ? '1st' : '2nd'} Innings cleared.`;
+  setStatus(`${activeInnings === 1 ? '1st' : '2nd'} Innings cleared.`);
   renderScorebook();
 }
 
@@ -1194,7 +1205,6 @@ function parseScorecardView(text) {
     if (line === 'Extras') {
       mode = null;
       i += 1;
-      // Parse extras breakdown lines like 16, 7WD, 4NB, 1LB, 4B, 0P or 61, 2WD, 7NB, 0LB, 8B, 44P
       while (i < lines.length && lines[i] !== 'Total' && lines[i] !== 'Fall of Wickets' && !lines[i].endsWith(' Bowling')) {
         const tok = lines[i].toUpperCase();
         const mWd = tok.match(/^(\d+)WD$/);
@@ -1319,7 +1329,7 @@ function parseScorecardView(text) {
 
     if (mode === 'bowling') {
       const fullName = cleanPlayerName(line);
-      const bStats = lines.slice(i + 1, i + 9); // O, M, R, W, HT, E, WD, NB
+      const bStats = lines.slice(i + 1, i + 9);
       result.bowlers.push(fullName);
       if (bStats.length >= 8) {
         result.bowlerStats[fullName] = {
@@ -1374,7 +1384,6 @@ function parseCSV(text) {
   const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(l => l);
   if (lines.length < 1) return [];
 
-  // Auto-detect delimiter (comma, semicolon from Numbers/Excel, or tab)
   const firstLine = lines[0];
   let delim = ',';
   if ((firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length) delim = ';';
@@ -1427,7 +1436,6 @@ function detectStage1(formatSetting, csvRows, scData) {
   if (formatSetting === 'stage1') return true;
   if (formatSetting === 'standard') return false;
   if (scData && scData.hasStage1Markers) return true;
-  // Auto-detect from CSV: dismissal event where score starts with "0--" (no wickets lost)
   for (const r of csvRows) {
     const ev = r.event.toLowerCase();
     if ((ev.includes('dismissed') || ev.includes('out')) && /^0(--|\/)/.test(r.score)) {
@@ -1472,21 +1480,19 @@ function parseAndRender() {
       deliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event));
     }
     st.parsed = buildScorebookModel(deliveries, scData, isStage1);
-    document.getElementById('statusMsg').style.color = '#059669';
-    document.getElementById('statusMsg').textContent =
-      `${isStage1 ? '[Stage 1] ' : ''}Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`;
+    setStatus(`${isStage1 ? '[Stage 1] ' : ''}Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`);
   } else if (scData.batters.length > 0) {
     st.parsed = buildModelFromScorecardOnly(scData, isStage1);
-    document.getElementById('statusMsg').style.color = '#059669';
-    document.getElementById('statusMsg').textContent =
-      `${isStage1 ? '[Stage 1] ' : ''}Loaded Scorecard View (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`;
+    setStatus(`${isStage1 ? '[Stage 1] ' : ''}Loaded Scorecard View (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`);
   } else {
     st.parsed = emptyScorebookModel();
     const lineCount = rawCsv ? rawCsv.split(/\r?\n/).length : 0;
-    document.getElementById('statusMsg').style.color = '#dc2626';
-    document.getElementById('statusMsg').textContent = lineCount > 0
-      ? `Loaded ${lineCount} lines, but 0 matched "Bowler to Batter : Outcome" format.`
-      : 'No CSV or Scorecard data loaded.';
+    setStatus(
+      lineCount > 0
+        ? `Loaded ${lineCount} lines, but 0 matched "Bowler to Batter : Outcome" format.`
+        : 'No CSV or Scorecard data loaded.',
+      lineCount > 0
+    );
   }
 
   renderScorebook();
@@ -1698,7 +1704,6 @@ function buildScorebookModel(deliveries, scData, isStage1) {
         ovObj.tokens.push('.');
       } else if (d.isWicket) {
         if (isStage1) {
-          // Stage 1 Junior Cricket: batter stays in (retired not out after set balls), +4 penalty extras added to team total
           penaltyTotal += 4;
           bat.events.push('W');
           const scInfo = scData && scData.batterDetails ? scData.batterDetails[d.batter] : null;
@@ -1749,7 +1754,6 @@ function buildScorebookModel(deliveries, scData, isStage1) {
     }
   });
 
-  // If Stage 1 scorecard specifies total penalty extras (e.g. 44P), reconcile with CSV penalty count
   if (isStage1 && scData && scData.penaltyExtras > 0 && penaltyTotal === 0) {
     penaltyTotal = scData.penaltyExtras;
   }
@@ -1806,11 +1810,8 @@ function buildScorebookModel(deliveries, scData, isStage1) {
     grp.forEach(d => {
       runningR += d.batterRuns + d.extras;
       if (d.isWicket) {
-        if (isStage1) {
-          runningR += 4;
-        } else {
-          runningW += 1;
-        }
+        if (isStage1) runningR += 4;
+        else runningW += 1;
       }
     });
     const finalScore = grp[grp.length - 1].score || `${runningW}/${runningR}`;
@@ -2228,4 +2229,136 @@ function renderScorebook() {
   const bSumW = 165 / 6;
   ['OVERS', 'MAIDENS', 'WIDES', 'NO BALLS', 'WICKETS', 'RUNS'].forEach((sh, idx) => {
     const sx = bSumX0 + idx * bSumW;
-    addLine(sx, 525,
+    addLine(sx, 525, sx, 730, 0.8);
+    addText(sx + bSumW / 2, 536, sh, { size: 5.5, bold: true, anchor: 'middle' });
+  });
+
+  const bowlRowH = (730 - 547) / 9;
+  for (let b = 0; b < 9; b++) {
+    const yTop = 547 + b * bowlRowH;
+    const yBot = yTop + bowlRowH;
+    const yMid = (yTop + yBot) / 2;
+    addLine(82, yBot, 980, yBot, 0.8);
+    addLine(ovGridX0, yMid, bSumX0, yMid, 0.45, '2,2');
+    addText(87, yMid - 1, `${b + 1}.`, { size: 6.5 });
+
+    if (b < data.bowlers.length) {
+      const bw = data.bowlers[b];
+      const bNameSize = bw.name.length > 16 ? 7.8 : 9;
+      addText(98, yMid, bw.name, { size: bNameSize, hand: true });
+
+      bw.cells.forEach((cell, cellIdx) => {
+        if (cellIdx >= 25) return;
+        const cxMid = ovGridX0 + (cellIdx + 0.5) * ovColW;
+        if (cell.isOverflow) {
+          svg.appendChild(svgEl('rect', {
+            x: ovGridX0 + cellIdx * ovColW + 0.5,
+            y: yTop + 0.5,
+            width: ovColW - 1,
+            height: bowlRowH - 1,
+            fill: '#f1f5f9'
+          }));
+        }
+        addText(cxMid, yTop + bowlRowH * 0.26, cell.balls, { size: 7.4, hand: true, anchor: 'middle' });
+        addText(cxMid, yBot - bowlRowH * 0.24, cell.cum, { size: 6.2, hand: true, anchor: 'middle' });
+      });
+
+      [bw.oversDisplay, bw.maidens, bw.wides, bw.noBalls, bw.wickets, bw.runs].forEach((val, vIdx) => {
+        const vxMid = bSumX0 + (vIdx + 0.5) * bSumW;
+        addText(vxMid, yMid, val, { size: 9.5, hand: true, anchor: 'middle' });
+      });
+    }
+  }
+}
+
+function exportPNG() {
+  const svg = document.getElementById('scorebook');
+  const serializer = new XMLSerializer();
+  const svgStr = serializer.serializeToString(svg);
+  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 4000;
+    canvas.height = 3000;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+
+    const link = document.createElement('a');
+    link.download = `sca-scorebook-${inningsStore[activeInnings].label.toLowerCase()}-innings.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+  img.src = url;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const fileInput = document.getElementById('csvFile');
+  const btnRead = document.getElementById('btnLoadSelectedFile');
+  const dropZone = document.getElementById('csvDropZone');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        readSelectedFile(e.target.files[0]);
+      }
+    });
+  }
+  if (btnRead) {
+    btnRead.addEventListener('click', () => {
+      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        readSelectedFile(fileInput.files[0]);
+      } else {
+        setStatus('Click "Choose File" first to pick a CSV file.', true);
+      }
+    });
+  }
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
+    window.addEventListener(evtName, (e) => e.preventDefault(), false);
+  });
+  if (dropZone) {
+    dropZone.addEventListener('dragover', () => {
+      dropZone.style.borderColor = '#2563eb';
+      dropZone.style.background = '#eff6ff';
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = '#9ca3af';
+      dropZone.style.background = '#f9fafb';
+    });
+    dropZone.addEventListener('drop', (e) => {
+      dropZone.style.borderColor = '#9ca3af';
+      dropZone.style.background = '#f9fafb';
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        readSelectedFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  document.getElementById('tab1').addEventListener('click', () => switchInnings(1));
+  document.getElementById('tab2').addEventListener('click', () => switchInnings(2));
+  document.getElementById('btnStdSample').addEventListener('click', loadSampleData);
+  document.getElementById('btnStage1Sample').addEventListener('click', loadStage1Sample);
+  document.getElementById('btnClear').addEventListener('click', clearCurrentInnings);
+  document.getElementById('btnExportPNG').addEventListener('click', exportPNG);
+  document.getElementById('btnPrint').addEventListener('click', () => window.print());
+  document.getElementById('btnGenerate').addEventListener('click', parseAndRender);
+  document.getElementById('matchFormat').addEventListener('change', () => { saveCurrentInputs(); parseAndRender(); });
+  document.getElementById('dotFormat').addEventListener('change', () => { saveCurrentInputs(); renderScorebook(); });
+  document.getElementById('metaInnings').addEventListener('input', () => { saveCurrentInputs(); renderScorebook(); });
+  document.getElementById('metaTeam').addEventListener('input', () => { saveCurrentInputs(); renderScorebook(); });
+
+  ['metaComp', 'metaClub', 'metaGrade', 'metaAgainst', 'metaVenue', 'metaToss', 'metaRound', 'metaDate', 'metaResult', 'metaScorers'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => { saveSharedMeta(); renderScorebook(); });
+  });
+
+  loadSampleData();
+});
+</script>
+</body>
+</html>
