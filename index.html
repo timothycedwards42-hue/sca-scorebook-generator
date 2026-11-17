@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v4.3)</title>
+<title>SCA Cricket Scorebook Generator (v4.4)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -243,7 +243,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v4.3</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v4.4</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">1st Innings</button>
     <button id="tab2" class="tab-btn" type="button">2nd Innings</button>
@@ -272,7 +272,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v4.3...</div>
+    <div id="statusMsg" class="status-bar">Initializing v4.4...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source)</label>
@@ -1467,7 +1467,8 @@ function parseAndRender() {
   const csvRows = parseCSV(rawCsv);
   const scData = parseScorecardView(st.scorecard.trim());
   const isStage1 = detectStage1(st.matchFormat, csvRows, scData);
-  const resolvedOverRule = (st.overRule && st.overRule !== 'auto') ? st.overRule : (isStage1 ? 'max6' : 'normal');
+  const rawRule = st.overRule || document.getElementById('overRule')?.value || 'auto';
+  const resolvedOverRule = (rawRule !== 'auto') ? rawRule : (isStage1 ? 'max6' : 'normal');
 
   if (scData.battingTeam) {
     st.team = scData.battingTeam;
@@ -1666,6 +1667,7 @@ function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
         noBalls: 0,
         wickets: 0,
         runs: 0,
+        oversDisplay: '0',
         oversMap: {}
       };
       bowlerOrder.push(name);
@@ -1831,6 +1833,10 @@ function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
       completedOv += Math.floor(remBalls / 6);
       remBalls = remBalls % 6;
       bwl.oversDisplay = remBalls === 0 ? `${completedOv}` : `${completedOv}.${remBalls}`;
+    } else {
+      const fullOv = Math.floor(bwl.legalBalls / 6);
+      const remBalls = bwl.legalBalls % 6;
+      bwl.oversDisplay = remBalls === 0 ? `${fullOv}` : `${fullOv}.${remBalls}`;
     } else if (overRule === 'max8') {
       // Over is complete at 6 legal balls OR 8 total balls (except final over which requires 6 legal balls)
       let completedOv = 0;
