@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v6.3)</title>
+<title>SCA Cricket Scorebook Generator (v6.4)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -263,7 +263,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v6.3</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v6.4</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">Team 1</button>
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
@@ -294,7 +294,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v6.3...</div>
+    <div id="statusMsg" class="status-bar">Initializing v6.4...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source for <span id="lblCsvSide">Side 1</span>)</label>
@@ -845,7 +845,7 @@ function trySplitCombinedScorecard(text) {
   const lines = cleaned.split(/\r?\n/).map(l => l.trim()).filter(l => l);
   const battingHeaders = [];
   for (let i = 0; i < lines.length - 1; i++) {
-    if (lines[i].endsWith(' Batting') && lines[i + 1] === 'Batters') {
+    if (/\bbatting$/i.test(lines[i]) && /^batters$/i.test(lines[i + 1])) {
       battingHeaders.push(i);
     }
   }
@@ -855,297 +855,6 @@ function trySplitCombinedScorecard(text) {
     return [part1, part2];
   }
   return null;
-}
-
-function distributeCombinedCSV(content) {
-  const cleanText = content.replace(/^\uFEFF/, '');
-  const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(l => l);
-  if (lines.length < 2) return false;
-
-  const firstLine = lines[0];
-  let delim = ',';
-  if ((firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length) delim = ';';
-  else if ((firstLine.match(/\t/g) || []).length > (firstLine.match(/\t/g) ? 0 : -1) && (firstLine.match(/\t/g) || []).length > (firstLine.match(/,/g) || []).length) delim = '\t';
-
-  const headerParts = splitCSVLine(firstLine, delim).map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
-  let inningsIdx = headerParts.findIndex(h => h === 'innings');
-  if (inningsIdx === -1) inningsIdx = 3;
-
-  const inningsMap = {};
-  const keyOrder = [];
-  for (let i = 1; i < lines.length; i++) {
-    const parts = splitCSVLine(lines[i], delim);
-    const innVal = (parts[inningsIdx] || '').trim();
-    if (innVal) {
-      if (!inningsMap[innVal]) {
-        inningsMap[innVal] = [];
-        keyOrder.push(innVal);
-      }
-      inningsMap[innVal].push(lines[i]);
-    }
-  }
-
-  if (keyOrder.length >= 2) {
-    // Match each CSV innings group to the corresponding inningsStore slot by team name if scorecards are already present
-    let key1 = keyOrder[0];
-    let key2 = keyOrder[1];
-    const m1 = key1.match(/-\s*(.+)$/);
-    const m2 = key2.match(/-\s*(.+)$/);
-    const name1 = m1 ? m1[1].trim() : key1;
-    const name2 = m2 ? m2[1].trim() : key2;
-
-    const sc1 = parseScorecardView(inningsStore[1].scorecard || '');
-    const sc2 = parseScorecardView(inningsStore[2].scorecard || '');
-
-    if (sc1.battingTeam && name2.toLowerCase() === sc1.battingTeam.toLowerCase()) {
-      // Swap so slot 1 matches scorecard 1
-      inningsStore[1].csv = [firstLine, ...inningsMap[key2]].join('\n');
-      inningsStore[2].csv = [firstLine, ...inningsMap[key1]].join('\n');
-      inningsStore[1].team = name2;
-      inningsStore[2].team = name1;
-    } else {
-      inningsStore[1].csv = [firstLine, ...inningsMap[key1]].join('\n');
-      inningsStore[2].csv = [firstLine, ...inningsMap[key2]].join('\n');
-      inningsStore[1].team = name1;
-      inningsStore[2].team = name2;
-    }
-
-    inningsStore[1].against = inningsStore[2].team;
-    inningsStore[2].against = inningsStore[1].team;
-    inningsStore[1].label = inningsStore[1].team;
-    inningsStore[2].label = inningsStore[2].team;
-    inningsStore[1].preSplit = true;
-    inningsStore[2].preSplit = true;
-
-    // Count dismissals in each innings so Stage 1 cross-innings penalty runs (4 * opp dismissals) are known even without scorecard
-    inningsStore[1].dismissalCount = parseCSV(inningsStore[1].csv, 1).filter(r => /dismissed|\bout\b/i.test(r.event)).length;
-    inningsStore[2].dismissalCount = parseCSV(inningsStore[2].csv, 2).filter(r => /dismissed|\bout\b/i.test(r.event)).length;
-
-    // Pre-build both models immediately so switching tabs is instantaneous
-    compileInningsModel(1);
-    compileInningsModel(2);
-    syncUIFromStore(activeInnings);
-    renderScorebook();
-    return true;
-  }
-
-  return false;
-}
-
-function readSelectedFile(file) {
-  if (!file) {
-    setStatus('No file selected yet — click Choose File first.', true);
-    return;
-  }
-  if (file.name.toLowerCase().endsWith('.numbers')) {
-    setStatus('Apple Numbers (.numbers) file detected — in Numbers choose File → Export To → CSV first.', true);
-    return;
-  }
-  setStatus('Reading ' + file.name + ' (' + file.size + ' bytes)...', false);
-
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    const content = String(evt.target.result || '');
-    const separated = distributeCombinedCSV(content);
-    if (separated) {
-      const c1 = inningsStore[1].parsed ? inningsStore[1].parsed.totalOvers : 0;
-      const c2 = inningsStore[2].parsed ? inningsStore[2].parsed.totalOvers : 0;
-      setStatus(
-        'Loaded both sides from ' + file.name + ': ' +
-        inningsStore[1].team + ' (' + c1 + ' ov, ' + inningsStore[1].parsed.totalWickets + '/' + inningsStore[1].parsed.totalScore + ') & ' +
-        inningsStore[2].team + ' (' + c2 + ' ov, ' + inningsStore[2].parsed.totalWickets + '/' + inningsStore[2].parsed.totalScore + '). Click tabs above to switch!',
-        false
-      );
-    } else {
-      inningsStore[activeInnings].csv = content;
-      inningsStore[activeInnings].preSplit = true;
-      document.getElementById('csvInput').value = content;
-      compileInningsModel(activeInnings);
-      syncUIFromStore(activeInnings);
-      renderScorebook();
-      setStatus('Loaded ' + file.name + ' into ' + inningsStore[activeInnings].team + '.', false);
-    }
-  };
-  reader.onerror = function() {
-    setStatus('Browser could not read ' + file.name, true);
-  };
-  reader.readAsText(file);
-}
-
-function emptyScorebookModel() {
-  return {
-    batters: [],
-    bowlers: [],
-    fowList: [],
-    overSummary: [],
-    sundries: { byes: [], legByes: [], wides: [], noBalls: [] },
-    byesTotal: 0,
-    lbTotal: 0,
-    widesTotal: 0,
-    nbTotal: 0,
-    penaltyTotal: 0,
-    totalSundries: 0,
-    runsOffBatAndExtras: 0,
-    totalScore: 0,
-    totalWickets: 0,
-    totalOvers: 0,
-    isStage1: false
-  };
-}
-
-function saveSharedMeta() {
-  sharedMeta.comp = document.getElementById('metaComp').value;
-  sharedMeta.club = document.getElementById('metaClub').value;
-  sharedMeta.grade = document.getElementById('metaGrade').value;
-  sharedMeta.venue = document.getElementById('metaVenue').value;
-  sharedMeta.toss = document.getElementById('metaToss').value;
-  sharedMeta.round = document.getElementById('metaRound').value;
-  sharedMeta.date = document.getElementById('metaDate').value;
-  sharedMeta.result = document.getElementById('metaResult').value;
-  sharedMeta.scorers = document.getElementById('metaScorers').value;
-}
-
-function saveCurrentInputs() {
-  const st = inningsStore[activeInnings];
-  if (!st) return;
-  st.csv = document.getElementById('csvInput').value;
-  const rawSc = document.getElementById('scorecardInput').value;
-  const splitSc = trySplitCombinedScorecard(rawSc);
-  if (splitSc) {
-    inningsStore[1].scorecard = splitSc[0];
-    inningsStore[2].scorecard = splitSc[1];
-  } else {
-    st.scorecard = rawSc;
-  }
-  st.playhqText = document.getElementById('playhqText').value;
-  st.matchFormat = document.getElementById('matchFormat').value;
-  st.overRule = document.getElementById('overRule').value;
-  st.dotFormat = document.getElementById('dotFormat').value;
-  st.label = document.getElementById('metaInnings').value;
-  st.team = document.getElementById('metaTeam').value;
-  st.against = document.getElementById('metaAgainst').value;
-}
-
-function syncUIFromStore(num) {
-  const st = inningsStore[num];
-  const sideName = st.team || (num === 1 ? 'Team 1' : 'Team 2');
-
-  document.getElementById('tab1').classList.toggle('active', num === 1);
-  document.getElementById('tab2').classList.toggle('active', num === 2);
-  document.getElementById('tab1').textContent = inningsStore[1].team || 'Team 1';
-  document.getElementById('tab2').textContent = inningsStore[2].team || 'Team 2';
-
-  document.getElementById('bannerTeamName').textContent = sideName;
-  document.getElementById('bannerSideNum').textContent = num;
-  document.getElementById('lblCsvSide').textContent = sideName;
-
-  document.getElementById('csvInput').value = st.csv || '';
-  document.getElementById('scorecardInput').value = st.scorecard || '';
-  document.getElementById('playhqText').value = st.playhqText || '';
-  document.getElementById('matchFormat').value = st.matchFormat || 'auto';
-  document.getElementById('overRule').value = st.overRule || 'auto';
-  document.getElementById('dotFormat').value = st.dotFormat || 'grouped';
-  document.getElementById('metaInnings').value = st.label || sideName;
-  document.getElementById('metaTeam').value = sideName;
-  document.getElementById('metaAgainst').value = st.against || '';
-}
-
-function switchInnings(num) {
-  if (activeInnings !== num) {
-    saveCurrentInputs();
-    saveSharedMeta();
-  }
-  activeInnings = num;
-  syncUIFromStore(num);
-  compileInningsModel(num);
-  syncUIFromStore(num);
-  renderScorebook();
-
-  const st = inningsStore[num];
-  const p = st.parsed || emptyScorebookModel();
-  setStatus(
-    (p.isStage1 ? '[Stage 1] ' : '') +
-    st.team + ': ' + p.totalOvers + ' overs, ' + p.totalWickets + '/' + p.totalScore +
-    (p.penaltyTotal > 0 ? ' (incl. ' + p.penaltyTotal + 'P)' : '') + '.',
-    false
-  );
-}
-
-function clearCurrentInnings() {
-  const st = inningsStore[activeInnings];
-  st.csv = '';
-  st.scorecard = '';
-  st.playhqText = '';
-  st.dismissalCount = 0;
-  st.parsed = emptyScorebookModel();
-  syncUIFromStore(activeInnings);
-  document.getElementById('csvFile').value = '';
-  setStatus(st.team + ' cleared.', false);
-  renderScorebook();
-}
-
-function loadStage1Sample() {
-  inningsStore[1].scorecard = STAGE1_SCORECARD_1;
-  inningsStore[1].team = 'Mosman U10 Boland';
-  inningsStore[1].label = 'Mosman U10 Boland';
-  inningsStore[1].against = 'Mosman U10 McCabe';
-
-  inningsStore[2].scorecard = STAGE1_SCORECARD_2;
-  inningsStore[2].team = 'Mosman U10 McCabe';
-  inningsStore[2].label = 'Mosman U10 McCabe';
-  inningsStore[2].against = 'Mosman U10 Boland';
-
-  compileInningsModel(1);
-  compileInningsModel(2);
-  syncUIFromStore(activeInnings);
-  renderScorebook();
-  setStatus('Loaded Mosman U10 Boland & Mosman U10 McCabe sample scorecards.', false);
-}
-
-function cleanPlayerName(name) {
-  const trimmed = String(name || '').replace(/\s*\((?:c|wk|vc)\)\s*/gi, '').trim();
-  if (!trimmed) return '';
-  if (/^\*+$/.test(trimmed) || trimmed.toLowerCase() === 'private player') {
-    return 'Private Player';
-  }
-  if (trimmed === trimmed.toUpperCase() || trimmed === trimmed.toLowerCase()) {
-    return trimmed.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-  }
-  return trimmed.split(/\s+/).map(part => {
-    if (part === part.toLowerCase()) {
-      return part.charAt(0).toUpperCase() + part.slice(1);
-    }
-    return part;
-  }).join(' ');
-}
-
-function getSurname(fullName) {
-  const cleaned = cleanPlayerName(fullName);
-  const parts = cleaned.split(/\s+/);
-  return parts.length > 0 ? parts[parts.length - 1] : '';
-}
-
-function parsePlayHQGranular(text) {
-  const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Over '));
-  const results = {};
-  let i = 0;
-  while (i < lines.length) {
-    if (/^\d+\.\d+$/.test(lines[i])) {
-      const ball = lines[i];
-      if (i + 2 < lines.length && lines[i + 1].includes(' to ')) {
-        results[ball] = lines[i + 2].toLowerCase();
-        i += 3;
-        continue;
-      }
-      if (i + 3 < lines.length && lines[i + 2].includes(' to ')) {
-        results[ball] = lines[i + 3].toLowerCase();
-        i += 4;
-        continue;
-      }
-    }
-    i += 1;
-  }
-  return results;
 }
 
 function parseScorecardView(text) {
@@ -1158,6 +867,7 @@ function parseScorecardView(text) {
     bowlerStats: {},
     nameLookup: {},
     batterDetails: {},
+    fowFromScorecard: [],
     penaltyExtras: 0,
     extrasSummary: { wd: 0, nb: 0, lb: 0, b: 0, p: 0 },
     totalOvers: 0,
@@ -1171,22 +881,31 @@ function parseScorecardView(text) {
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    if (line.endsWith(' Batting') && i + 1 < lines.length && lines[i + 1] === 'Batters') {
-      result.battingTeam = line.slice(0, -8).trim();
+    if (/\bbatting$/i.test(line) && i + 1 < lines.length && /^batters$/i.test(lines[i + 1])) {
+      result.battingTeam = line.replace(/\s+batting$/i, '').trim();
       mode = 'batting';
-      i += 7;
+      i += 2;
+      // Skip R, B, 4S, 6S, SR column headers
+      while (i < lines.length && /^(r|b|4s|6s|sr)$/i.test(lines[i])) i++;
       continue;
     }
-    if (line.endsWith(' Bowling') && i + 1 < lines.length && lines[i + 1] === 'Bowlers') {
-      result.bowlingTeam = line.slice(0, -8).trim();
+    if (/\bbowling$/i.test(line) && i + 1 < lines.length && /^bowlers$/i.test(lines[i + 1])) {
+      result.bowlingTeam = line.replace(/\s+bowling$/i, '').trim();
       mode = 'bowling';
-      i += 10;
+      i += 2;
+      // Skip O, M, R, W, HT, E, WD, NB column headers
+      while (i < lines.length && /^(o|m|r|w|ht|e|wd|nb)$/i.test(lines[i])) i++;
       continue;
     }
-    if (line === 'Extras') {
+    if (/^extras$/i.test(line)) {
       mode = null;
       i += 1;
-      while (i < lines.length && lines[i] !== 'Total' && lines[i] !== 'Fall of Wickets' && !lines[i].endsWith(' Bowling')) {
+      while (
+        i < lines.length &&
+        !/^total$/i.test(lines[i]) &&
+        !/^fall of wickets$/i.test(lines[i]) &&
+        !/\bbowling$/i.test(lines[i])
+      ) {
         const tok = lines[i].toUpperCase();
         const mWd = tok.match(/^(\d+)WD$/);
         const mNb = tok.match(/^(\d+)NB$/);
@@ -1206,7 +925,7 @@ function parseScorecardView(text) {
       }
       continue;
     }
-    if (line === 'Total') {
+    if (/^total$/i.test(line)) {
       mode = null;
       i += 1;
       if (i < lines.length) {
@@ -1226,8 +945,31 @@ function parseScorecardView(text) {
       }
       continue;
     }
-    if (line === 'Fall of Wickets' || line === 'Fielders') {
+    if (/^fall of wickets$/i.test(line)) {
       mode = null;
+      i += 1;
+      if (i < lines.length && !/\bbowling$/i.test(lines[i])) {
+        const fowLine = lines[i];
+        fowLine.split(',').forEach(part => {
+          const mF = part.trim().match(/^(\d+)-(\d+)\s+(.+)$/);
+          if (mF) {
+            result.fowFromScorecard.push({
+              wicketNum: parseInt(mF[1], 10),
+              score: parseInt(mF[2], 10),
+              batterOut: cleanPlayerName(mF[3])
+            });
+          }
+        });
+        i += 1;
+      }
+      continue;
+    }
+    if (/^fielders$/i.test(line)) {
+      mode = 'fielders';
+      i += 1;
+      continue;
+    }
+    if (mode === 'fielders') {
       i += 1;
       continue;
     }
@@ -1236,14 +978,38 @@ function parseScorecardView(text) {
       const fullName = cleanPlayerName(line);
       i += 1;
       const dismissalLines = [];
-      while (i < lines.length && !/^(\d+\*?|-)$/.test(lines[i])) {
+      while (
+        i < lines.length &&
+        !/^(\d+\*?|-|\d+\.\d+)$/.test(lines[i]) &&
+        !/^extras$/i.test(lines[i]) &&
+        !/^total$/i.test(lines[i])
+      ) {
         dismissalLines.push(lines[i]);
         i += 1;
       }
-      const statVals = lines.slice(i, i + 5);
-      const runsVal = statVals[0] && statVals[0] !== '-' ? parseInt(statVals[0].replace('*', ''), 10) : 0;
-      const ballsVal = statVals[1] && statVals[1] !== '-' ? parseInt(statVals[1], 10) : 0;
-      i += 5;
+
+      // Collect numeric/dash stat tokens for this batter (either 5 tokens [R,B,4S,6S,SR] or 4 tokens [B,4S,6S,SR] when R=0 duck icon was blank)
+      const statVals = [];
+      while (i < lines.length && statVals.length < 5 && /^(\d+\*?|-|\d+\.\d+)$/.test(lines[i])) {
+        const tok = lines[i];
+        statVals.push(tok);
+        i += 1;
+        // Strike rate (SR) is always formatted with a decimal (e.g. 0.00, 43.47) and marks the final stat column for a batter who batted
+        if (/^\d+\.\d+$/.test(tok)) {
+          break;
+        }
+      }
+
+      let runsVal = 0;
+      let ballsVal = 0;
+      if (statVals.length === 5) {
+        runsVal = statVals[0] !== '-' ? parseInt(statVals[0].replace('*', ''), 10) : 0;
+        ballsVal = statVals[1] !== '-' ? parseInt(statVals[1], 10) : 0;
+      } else if (statVals.length === 4) {
+        // Duck (0 runs) where PlayHQ rendered an image instead of '0'
+        runsVal = 0;
+        ballsVal = statVals[0] !== '-' ? parseInt(statVals[0], 10) : 0;
+      }
 
       const rawD = dismissalLines.join(' ');
       const dLow = rawD.toLowerCase();
@@ -1415,7 +1181,7 @@ function detectStage1(formatSetting, csvRows, scData) {
 }
 
 // Handles both simple and compound events (e.g. "1b, 1nb" or "2 runs, 1nb")
-function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granularDesc) {
+function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granularDesc, resolveNameFn) {
   const overNum = parseInt(ballStr.split('.')[0], 10) + 1;
   let batterRuns = 0;
   let wideRuns = 0;
@@ -1425,8 +1191,10 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granular
   let isLegal = true;
   let isWicket = false;
   let wicketKind = 'bowled';
+  let dismissedBatter = batter;
 
-  const ev = (csvEvent || '').toLowerCase();
+  const rawEv = String(csvEvent || '').trim();
+  const ev = rawEv.toLowerCase();
   const desc = (granularDesc || '').toLowerCase();
 
   if (!ev.includes('no run')) {
@@ -1453,21 +1221,33 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granular
     byeRuns = m ? parseInt(m[1], 10) : 1;
   }
 
+  const mDis = rawEv.match(/^(.+?)\s+dismissed$/i);
+  if (mDis && resolveNameFn) {
+    dismissedBatter = resolveNameFn(mDis[1].trim());
+  }
+
   if (ev.includes('dismissed') || ev.includes('out') || desc.includes('out') || desc.includes('was run out') || desc.includes('was caught') || desc.includes('was bowled') || desc.includes('was stumped')) {
     isWicket = true;
-    if (desc.includes('run out') || desc.includes('run-out')) wicketKind = 'run out';
+    if (dismissedBatter !== batter || desc.includes('run out') || desc.includes('run-out')) wicketKind = 'run out';
     else if (desc.includes('stumped')) wicketKind = 'stumped';
     else if (desc.includes('caught')) wicketKind = 'caught';
     else if (desc.includes('lbw')) wicketKind = 'LBW';
     else wicketKind = 'bowled';
   }
 
+  const scoreParts = String(scoreStr || '').split(/--|\/ /);
+  const cumWickets = scoreParts.length >= 2 ? (parseInt(scoreParts[0], 10) || 0) : 0;
+  const cumRuns = scoreParts.length >= 2 ? (parseInt(scoreParts[1], 10) || 0) : 0;
+
   return {
     over: overNum,
     ball: ballStr,
     score: scoreStr.replace('--', '/'),
+    cumWickets,
+    cumRuns,
     bowler,
     batter,
+    dismissedBatter,
     batterRuns,
     wideRuns,
     nbRuns,
@@ -1526,14 +1306,34 @@ function compileInningsModel(sideNum) {
   };
 
   if (csvRows.length > 0) {
-    const deliveries = [];
+    const rawDeliveries = [];
     for (let i = csvRows.length - 1; i >= 0; i--) {
       const c = csvRows[i];
       const fullBowler = resolveName(c.bowler);
       const fullBatter = resolveName(c.batter);
       const granularDesc = granularMap[c.ball] || '';
-      deliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event, granularDesc));
+      rawDeliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event, granularDesc, resolveName));
     }
+    // Group by over and sort within each over by cumulative (wickets, runs) so Apple Numbers 5.10 -> 5.1 sorting never scrambles 10+ ball overs
+    const deliveries = [];
+    const oversSeen = [];
+    const byOv = {};
+    rawDeliveries.forEach((d, idx) => {
+      d._seq = idx;
+      if (!byOv[d.over]) {
+        byOv[d.over] = [];
+        oversSeen.push(d.over);
+      }
+      byOv[d.over].push(d);
+    });
+    oversSeen.sort((a, b) => a - b).forEach(ovNum => {
+      byOv[ovNum].sort((a, b) => {
+        if (a.cumRuns !== b.cumRuns) return a.cumRuns - b.cumRuns;
+        if (a.cumWickets !== b.cumWickets) return a.cumWickets - b.cumWickets;
+        return a._seq - b._seq;
+      });
+      byOv[ovNum].forEach(d => deliveries.push(d));
+    });
     const oppDismissals = oppSt ? (oppSt.dismissalCount || 0) : 0;
     st.parsed = buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule, oppDismissals, Object.keys(granularMap).length > 0);
   } else if (scData.batters.length > 0) {
@@ -1727,18 +1527,23 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
         bat.events.push(0);
         ovObj.tokens.push('.');
       } else if (d.isWicket) {
-        // Check if bowler has 0 official wickets in Scorecard View -> must be a run out
+        const outPlayerName = d.dismissedBatter || d.batter;
+        ensureBatter(outPlayerName, false);
+        const outBat = batters[outPlayerName];
+        outBat.isDNB = false;
+
         const scBwl = scData && scData.bowlerStats ? scData.bowlerStats[d.bowler] : null;
-        const scBatter = scData && scData.batterDetails ? scData.batterDetails[d.batter] : null;
-        const isRunOut = (d.wicketKind === 'run out') ||
+        const scBatter = scData && scData.batterDetails ? scData.batterDetails[outPlayerName] : null;
+        const isRunOut = (outPlayerName !== d.batter) ||
+          (d.wicketKind === 'run out') ||
           (scBatter && scBatter.howOut && scBatter.howOut.toLowerCase().includes('run out')) ||
           (!hasGranular && scBwl && scBwl.wickets === 0) ||
           (!hasGranular && scBwl && bwl.wickets >= scBwl.wickets);
 
         if (isStage1) {
           bat.events.push('W');
-          bat.howOut = (scBatter && scBatter.howOut) ? scBatter.howOut : 'Not out';
-          bat.bowlerOut = '';
+          outBat.howOut = (scBatter && scBatter.howOut) ? scBatter.howOut : 'Not out';
+          outBat.bowlerOut = '';
           if (!isRunOut) {
             bwl.wickets += 1;
             ovObj.wicketsTaken += 1;
@@ -1751,11 +1556,11 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
           bat.events.push(0);
 
           if (scBatter && scBatter.howOut && scBatter.howOut !== 'Not out') {
-            bat.howOut = scBatter.howOut;
-            bat.bowlerOut = scBatter.bowlerOut;
+            outBat.howOut = scBatter.howOut;
+            outBat.bowlerOut = scBatter.bowlerOut;
           } else {
-            bat.howOut = isRunOut ? 'run out' : 'out';
-            bat.bowlerOut = isRunOut ? '' : d.bowler;
+            outBat.howOut = isRunOut ? 'run out' : 'out';
+            outBat.bowlerOut = isRunOut ? '' : d.bowler;
           }
 
           if (!isRunOut) {
@@ -1766,15 +1571,21 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
             ovObj.tokens.push('.');
           }
 
-          const activeBatters = batterOrder.filter(n => !batters[n].isDNB && batters[n].howOut === 'Not out' && n !== d.batter && batters[n].balls > 0);
-          const notOutName = activeBatters.length > 0 ? activeBatters[activeBatters.length - 1] : '';
-          const notOutScore = notOutName ? batters[notOutName].runs : 0;
+          // Identify the not-out partner at the crease
+          let notOutName = '';
+          if (outPlayerName !== d.batter) {
+            notOutName = d.batter;
+          } else {
+            const activeBatters = batterOrder.filter(n => !batters[n].isDNB && n !== outPlayerName && batters[n].balls > 0 && !fowList.some(f => f.batterOut === n));
+            notOutName = activeBatters.length > 0 ? activeBatters[activeBatters.length - 1] : '';
+          }
+          const notOutScore = notOutName && batters[notOutName] ? batters[notOutName].runs : 0;
           const shortPartner = notOutName ? `${notOutName.split(' ')[0][0]} ${notOutName.split(' ').slice(1).join(' ')} (${notOutScore})` : '';
 
           fowList.push({
             wicketNum: totalWickets,
             score: runsOffBatAndExtras,
-            batterOut: d.batter,
+            batterOut: outPlayerName,
             partnerText: shortPartner
           });
         }
