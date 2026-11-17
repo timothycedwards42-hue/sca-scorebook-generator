@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v4.2)</title>
+<title>SCA Cricket Scorebook Generator (v4.3)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -243,7 +243,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v4.2</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v4.3</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">1st Innings</button>
     <button id="tab2" class="tab-btn" type="button">2nd Innings</button>
@@ -272,7 +272,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v4.2...</div>
+    <div id="statusMsg" class="status-bar">Initializing v4.3...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source)</label>
@@ -284,13 +284,24 @@
       <textarea id="scorecardInput" placeholder="Mosman U10 Boland Batting&#10;Batters&#10;R&#10;B&#10;4S&#10;6s&#10;SR..."></textarea>
     </div>
 
-    <div class="field-group">
-      <label for="matchFormat">Match Format (Stage 1: +4 Penalty Runs on Wickets &amp; Retired Batters)</label>
-      <select id="matchFormat">
-        <option value="auto" selected>Auto-Detect Format (Standard / Stage 1)</option>
-        <option value="standard">Standard Cricket</option>
-        <option value="stage1">Stage 1 Cricket (+4 Penalty / Retired)</option>
-      </select>
+    <div class="field-row">
+      <div class="field-group">
+        <label for="matchFormat">Match Format</label>
+        <select id="matchFormat">
+          <option value="auto" selected>Auto-Detect (Std / Stage 1)</option>
+          <option value="standard">Standard Cricket</option>
+          <option value="stage1">Stage 1 (+4 Pen / Retired)</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="overRule">Over Ball-Count Rule</label>
+        <select id="overRule">
+          <option value="auto" selected>Auto (Std=Normal, Stg1=Max 6)</option>
+          <option value="normal">Normal (6 legal balls)</option>
+          <option value="max8">Max 8 Ball Overs (6 legal last)</option>
+          <option value="max6">Max 6 Ball Overs (No rebowl)</option>
+        </select>
+      </div>
     </div>
 
     <div class="field-row">
@@ -957,6 +968,7 @@ const inningsStore = {
     csv: '',
     scorecard: '',
     matchFormat: 'auto',
+    overRule: 'auto',
     dotFormat: 'grouped',
     parsed: null
   },
@@ -966,6 +978,7 @@ const inningsStore = {
     csv: '',
     scorecard: '',
     matchFormat: 'auto',
+    overRule: 'auto',
     dotFormat: 'grouped',
     parsed: null
   }
@@ -1044,6 +1057,7 @@ function saveCurrentInputs() {
   st.csv = document.getElementById('csvInput').value;
   st.scorecard = document.getElementById('scorecardInput').value;
   st.matchFormat = document.getElementById('matchFormat').value;
+  st.overRule = document.getElementById('overRule').value;
   st.dotFormat = document.getElementById('dotFormat').value;
   st.label = document.getElementById('metaInnings').value;
   st.team = document.getElementById('metaTeam').value;
@@ -1065,6 +1079,7 @@ function switchInnings(num) {
   document.getElementById('csvInput').value = st.csv;
   document.getElementById('scorecardInput').value = st.scorecard;
   document.getElementById('matchFormat').value = st.matchFormat;
+  document.getElementById('overRule').value = st.overRule || 'auto';
   document.getElementById('dotFormat').value = st.dotFormat;
   document.getElementById('metaInnings').value = st.label;
   document.getElementById('metaTeam').value = st.team;
@@ -1452,6 +1467,7 @@ function parseAndRender() {
   const csvRows = parseCSV(rawCsv);
   const scData = parseScorecardView(st.scorecard.trim());
   const isStage1 = detectStage1(st.matchFormat, csvRows, scData);
+  const resolvedOverRule = (st.overRule && st.overRule !== 'auto') ? st.overRule : (isStage1 ? 'max6' : 'normal');
 
   if (scData.battingTeam) {
     st.team = scData.battingTeam;
@@ -1479,7 +1495,7 @@ function parseAndRender() {
       const fullBatter = resolveName(c.batter);
       deliveries.push(normalizeDelivery(c.ball, c.score, fullBowler, fullBatter, c.event));
     }
-    st.parsed = buildScorebookModel(deliveries, scData, isStage1);
+    st.parsed = buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule);
     setStatus(`${isStage1 ? '[Stage 1] ' : ''}Parsed ${deliveries.length} deliveries (${st.parsed.totalOvers} overs, ${st.parsed.totalWickets}/${st.parsed.totalScore}).`);
   } else if (scData.batters.length > 0) {
     st.parsed = buildModelFromScorecardOnly(scData, isStage1);
@@ -1606,7 +1622,7 @@ function buildModelFromScorecardOnly(scData, isStage1) {
   };
 }
 
-function buildScorebookModel(deliveries, scData, isStage1) {
+function buildScorebookModel(deliveries, scData, isStage1, resolvedOverRule) {
   const batters = {};
   const batterOrder = [];
   const bowlers = {};
@@ -1669,9 +1685,11 @@ function buildScorebookModel(deliveries, scData, isStage1) {
     const bwl = bowlers[d.bowler];
 
     if (!bwl.oversMap[d.over]) {
-      bwl.oversMap[d.over] = { tokens: [], runsConceded: 0, wicketsTaken: 0 };
+      bwl.oversMap[d.over] = { tokens: [], runsConceded: 0, wicketsTaken: 0, totalBalls: 0, legalBalls: 0 };
     }
     const ovObj = bwl.oversMap[d.over];
+    ovObj.totalBalls += 1;
+    if (d.isLegal) ovObj.legalBalls += 1;
 
     runsOffBatAndExtras += d.batterRuns + d.extras;
 
@@ -1792,9 +1810,47 @@ function buildScorebookModel(deliveries, scData, isStage1) {
       }
     });
 
-    const fullOv = Math.floor(bwl.legalBalls / 6);
-    const remBalls = bwl.legalBalls % 6;
-    bwl.oversDisplay = remBalls === 0 ? `${fullOv}` : `${fullOv}.${remBalls}`;
+    const maxInningsOver = deliveries.length > 0 ? Math.max(...deliveries.map(x => x.over)) : 0;
+    const ovKeys = Object.keys(bwl.oversMap).map(Number).sort((a, b) => a - b);
+    if (overRule === 'normal') {
+      const fullOv = Math.floor(bwl.legalBalls / 6);
+      const remBalls = bwl.legalBalls % 6;
+      bwl.oversDisplay = remBalls === 0 ? `${fullOv}` : `${fullOv}.${remBalls}`;
+    } else if (overRule === 'max6') {
+      // Every delivery (including wides/no-balls) counts as 1 of the 6 balls in the over
+      let completedOv = 0;
+      let remBalls = 0;
+      ovKeys.forEach(ovNum => {
+        const o = bwl.oversMap[ovNum];
+        if (o.totalBalls >= 6) {
+          completedOv += 1;
+        } else {
+          remBalls += o.totalBalls;
+        }
+      });
+      completedOv += Math.floor(remBalls / 6);
+      remBalls = remBalls % 6;
+      bwl.oversDisplay = remBalls === 0 ? `${completedOv}` : `${completedOv}.${remBalls}`;
+    } else if (overRule === 'max8') {
+      // Over is complete at 6 legal balls OR 8 total balls (except final over which requires 6 legal balls)
+      let completedOv = 0;
+      let remBalls = 0;
+      ovKeys.forEach(ovNum => {
+        const o = bwl.oversMap[ovNum];
+        const isLastOver = (ovNum === maxInningsOver);
+        const isComplete = isLastOver
+          ? (o.legalBalls >= 6)
+          : (o.legalBalls >= 6 || o.totalBalls >= 8);
+        if (isComplete) {
+          completedOv += 1;
+        } else {
+          remBalls += o.legalBalls;
+        }
+      });
+      completedOv += Math.floor(remBalls / 6);
+      remBalls = remBalls % 6;
+      bwl.oversDisplay = remBalls === 0 ? `${completedOv}` : `${completedOv}.${remBalls}`;
+    }
   });
 
   const byOver = {};
@@ -2349,6 +2405,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnPrint').addEventListener('click', () => window.print());
   document.getElementById('btnGenerate').addEventListener('click', parseAndRender);
   document.getElementById('matchFormat').addEventListener('change', () => { saveCurrentInputs(); parseAndRender(); });
+  document.getElementById('overRule').addEventListener('change', () => { saveCurrentInputs(); parseAndRender(); });
   document.getElementById('dotFormat').addEventListener('change', () => { saveCurrentInputs(); renderScorebook(); });
   document.getElementById('metaInnings').addEventListener('input', () => { saveCurrentInputs(); renderScorebook(); });
   document.getElementById('metaTeam').addEventListener('input', () => { saveCurrentInputs(); renderScorebook(); });
