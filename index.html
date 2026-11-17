@@ -251,7 +251,7 @@
         <div class="field-group">
       <label for="csvFile">1. Select or Drop CSV File</label>
       <div id="csvDropZone" class="file-drop" style="padding:10px; display:flex; flex-direction:column; gap:6px; align-items:center;">
-        <input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain" style="font-size:11.5px; max-width:100%;">
+        <input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain" style="font-size:11.5px; max-width:100%;" onchange="handleDirectCSV(this)">
         <span style="font-size:11px; color:#6b7280;">or drag &amp; drop CSV anywhere onto this box for <strong id="dropInningsLabel">1st Innings</strong></span>
       </div>
     </div>
@@ -348,6 +348,41 @@
 </div>
 
 <script>
+window.onerror = function(msg, url, line) {
+  const el = document.getElementById('statusMsg');
+  if (el) {
+    el.style.color = '#dc2626';
+    el.textContent = 'JS Error (line ' + line + '): ' + msg;
+  }
+};
+
+function handleDirectCSV(input) {
+  const statusEl = document.getElementById('statusMsg');
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  if (statusEl) {
+    statusEl.style.color = '#2563eb';
+    statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
+  }
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    document.getElementById('csvInput').value = evt.target.result;
+    if (typeof parseAndRender === 'function') {
+      parseAndRender();
+    } else if (statusEl) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = 'Error: parseAndRender() is missing due to a script syntax error.';
+    }
+  };
+  reader.onerror = function() {
+    if (statusEl) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = 'Could not read file: ' + file.name;
+    }
+  };
+  reader.readAsText(file);
+}
+
 const SAMPLE_CSV = `Ball,Score,Outcome,Innings
 28.6,6--142,V Bhati to B Rich : 6 runs,1st Innings - North Shore U13 Gee
 28.5,6--136,V Bhati to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
