@@ -383,6 +383,41 @@ function handleDirectCSV(input) {
   reader.readAsText(file);
 }
 
+window.onerror = function(msg, url, line) {
+  const el = document.getElementById('statusMsg');
+  if (el) {
+    el.style.color = '#dc2626';
+    el.textContent = 'JS Error (line ' + line + '): ' + msg;
+  }
+};
+
+function handleDirectCSV(input) {
+  const statusEl = document.getElementById('statusMsg');
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  if (statusEl) {
+    statusEl.style.color = '#2563eb';
+    statusEl.textContent = 'Reading ' + file.name + ' (' + file.size + ' bytes)...';
+  }
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    document.getElementById('csvInput').value = evt.target.result;
+    if (typeof parseAndRender === 'function') {
+      parseAndRender();
+    } else if (statusEl) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = 'Error: parseAndRender() is missing due to a script syntax error.';
+    }
+  };
+  reader.onerror = function() {
+    if (statusEl) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = 'Could not read file: ' + file.name;
+    }
+  };
+  reader.readAsText(file);
+}
+
 const SAMPLE_CSV = `Ball,Score,Outcome,Innings
 28.6,6--142,V Bhati to B Rich : 6 runs,1st Innings - North Shore U13 Gee
 28.5,6--136,V Bhati to R Bhandari : 1 run,1st Innings - North Shore U13 Gee
