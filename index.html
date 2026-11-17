@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCA Cricket Scorebook Generator (v5.9)</title>
+<title>SCA Cricket Scorebook Generator (v6.0)</title>
 <style>
   :root {
     --bg: #f4f6f9;
@@ -263,7 +263,7 @@
 <body>
 
 <header>
-  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v5.9</span></h1>
+  <h1>Sydney Cricket Association — Digital Scorebook <span class="ver-badge">v6.0</span></h1>
   <div class="innings-tabs">
     <button id="tab1" class="tab-btn active" type="button">Team 1</button>
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
@@ -294,7 +294,7 @@
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v5.9...</div>
+    <div id="statusMsg" class="status-bar">Initializing v6.0...</div>
 
     <div class="field-group">
       <label for="csvInput">CSV Content (Ball-by-Ball Source for Active Side)</label>
@@ -1285,7 +1285,7 @@ function parseCSV(text) {
     const outcome = (parts[outcomeIdx] || '').trim();
     const innings = inningsIdx >= 0 ? parts.slice(inningsIdx).join(delim).trim() : '';
     
-    if (innings && activeTeam && activeTeam !== 'team 1' && activeTeam !== 'team 2') {
+    if (!inningsStore[activeInnings].preSplit && innings && activeTeam && activeTeam !== 'team 1' && activeTeam !== 'team 2') {
       const innLow = innings.toLowerCase();
       const teamWords = activeTeam.split(/\s+/);
       const matchesTeam = teamWords.some(w => w.length > 2 && innLow.includes(w));
@@ -2103,7 +2103,31 @@ function renderScorebook() {
     addText(596, yMid, s.lbl, { size: 6, bold: true });
     addLine(638, yMid + 2, 718, yMid + 2, 0.6, '1.2,1.2');
     if (s.list.length > 0) {
-      addText(645, yMid - 1, s.list.join(', '), { size: 7.5, hand: true });
+      const tokens = s.list.map(String);
+      const maxCharsPerLine = 15;
+      const lines = [];
+      let cur = '';
+      tokens.forEach(tok => {
+        if (!cur) {
+          cur = tok;
+        } else if ((cur.length + 1 + tok.length) <= maxCharsPerLine) {
+          cur += ' ' + tok;
+        } else {
+          lines.push(cur);
+          cur = tok;
+        }
+      });
+      if (cur) lines.push(cur);
+
+      if (lines.length === 1) {
+        addText(643, yMid - 1, lines[0], { size: 7.5, hand: true });
+      } else {
+        const line1 = lines[0];
+        const line2 = lines.slice(1).join(' ');
+        const fSize = line2.length > 18 ? 6.0 : 6.6;
+        addText(643, yTop + sRowH * 0.30, line1, { size: fSize, hand: true });
+        addText(643, yTop + sRowH * 0.74, line2, { size: fSize, hand: true });
+      }
     }
     if (data.totalOvers > 0 || s.val > 0) {
       addText(739, yMid, s.val, { size: 9, hand: true, anchor: 'middle' });
