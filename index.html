@@ -1808,7 +1808,7 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
       if (d.lbRuns > 0) {
         sundries.legByes.push(d.lbRuns);
       }
-      ovObj.tokens.push({ type: 'noball', batterRuns: d.batterRuns, byeRuns: d.byeRuns });
+      ovObj.tokens.push({ type: 'noball', batterRuns: d.batterRuns, byeRuns: d.byeRuns, lbRuns: d.lbRuns });
     } else {
       bat.balls += 1;
       bwl.legalBalls += 1;
@@ -2315,10 +2315,10 @@ function renderScorebook() {
     const colIdx = rem % 10;
     const bx0 = 82 + blk * progW;
     const cx = bx0 + colIdx * cellW;
-    const cy = 368 + (rowIdx + 0.5) * cellH;
+    const ry = 368 + rowIdx * cellH;
     svg.appendChild(svgEl('line', {
-      x1: cx + 1, y1: cy, x2: cx + cellW - 1, y2: cy,
-      stroke: ink, 'stroke-width': 1.2
+      x1: cx + 1.2, y1: ry + cellH - 1.2, x2: cx + cellW - 1.2, y2: ry + 1.2,
+      stroke: ink, 'stroke-width': 1.2, 'stroke-linecap': 'round'
     }));
   }
 
@@ -2465,6 +2465,7 @@ function renderScorebook() {
       if (typeof tok === 'string') return tok === '.' ? 2.2 : 3.7;
       if (tok.type === 'wide') return 4.6;
       if (tok.type === 'noball') {
+        if (tok.lbRuns > 0) return 7.4;
         if (tok.byeRuns > 0) return 6.4;
         if (tok.batterRuns > 0) return 5.4;
         return 4.8;
@@ -2503,7 +2504,13 @@ function renderScorebook() {
           }));
         }
       } else if (tok.type === 'noball') {
-        if (tok.byeRuns > 0) {
+        if (tok.lbRuns > 0) {
+          svg.appendChild(svgEl('ellipse', {
+            cx: tx, cy: cy, rx: 3.5 * scale, ry: 2.6 * scale,
+            fill: 'none', stroke: ink, 'stroke-width': 0.75 * scale
+          }));
+          addText(tx, cy, `${tok.lbRuns}lb`, { size: 3.4 * scale, hand: true, anchor: 'middle' });
+        } else if (tok.byeRuns > 0) {
           svg.appendChild(svgEl('ellipse', {
             cx: tx, cy: cy, rx: 3.0 * scale, ry: 2.6 * scale,
             fill: 'none', stroke: ink, 'stroke-width': 0.75 * scale
