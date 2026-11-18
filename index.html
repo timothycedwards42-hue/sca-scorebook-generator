@@ -1928,8 +1928,8 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
     return 3.7;
   };
 
-  const MAX_TOKENS_PER_CELL = 8;
-  const MAX_CELL_WIDTH = 29.2;
+  const MAX_TOKENS_PER_CELL = 6;
+  const MAX_CELL_WIDTH = 28.8;
   const maxInningsOver = deliveries.length > 0 ? Math.max(...deliveries.map(x => x.over)) : 0;
 
   bowlerOrder.forEach(name => {
@@ -2513,10 +2513,12 @@ function renderScorebook() {
     });
     const totalW = widths.reduce((a, b) => a + b, 0);
     const scale = totalW > maxW ? maxW / totalW : 1;
-    let x = cxMid - (totalW * scale) / 2;
+    const extraPerToken = totalW < maxW ? (maxW - totalW) / tokens.length : 0;
+    const usedW = totalW < maxW ? maxW : totalW * scale;
+    let x = cxMid - usedW / 2;
 
     tokens.forEach((tok, idx) => {
-      const w = widths[idx] * scale;
+      const w = widths[idx] * scale + extraPerToken;
       const tx = x + w / 2;
 
       if (typeof tok === 'string') {
