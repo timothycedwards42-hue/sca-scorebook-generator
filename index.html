@@ -1928,8 +1928,8 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
     return 3.7;
   };
 
-  const MAX_TOKENS_PER_CELL = 6;
-  const MAX_CELL_WIDTH = 28.6;
+  const MAX_TOKENS_PER_CELL = 8;
+  const MAX_CELL_WIDTH = 29.2;
   const maxInningsOver = deliveries.length > 0 ? Math.max(...deliveries.map(x => x.over)) : 0;
 
   bowlerOrder.forEach(name => {
