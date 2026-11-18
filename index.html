@@ -1140,14 +1140,19 @@ function parsePlayHQGranular(text) {
   while (i < lines.length) {
     if (/^\d+\.\d+$/.test(lines[i])) {
       const ball = lines[i];
-      if (i + 2 < lines.length && lines[i + 1].includes(' to ')) {
-        results[ball] = lines[i + 2].toLowerCase();
-        i += 3;
-        continue;
-      }
-      if (i + 3 < lines.length && lines[i + 2].includes(' to ')) {
-        results[ball] = lines[i + 3].toLowerCase();
-        i += 4;
+      let toIdx = -1;
+      if (i + 1 < lines.length && lines[i + 1].includes(' to ')) toIdx = i + 1;
+      else if (i + 2 < lines.length && lines[i + 2].includes(' to ')) toIdx = i + 2;
+
+      if (toIdx !== -1) {
+        const descParts = [];
+        let j = toIdx + 1;
+        while (j < lines.length && !/^\d+\.\d+$/.test(lines[j]) && descParts.length < 3) {
+          descParts.push(lines[j]);
+          j++;
+        }
+        results[ball] = descParts.join(' ').toLowerCase();
+        i = j;
         continue;
       }
     }
@@ -1342,8 +1347,10 @@ function parseScorecardView(text) {
         const bName = cleanPlayerName(rawD.split(':').slice(1).join(':'));
         howOut = 'LBW';
         bowlerOut = bName;
-      } else if (dLow.startsWith('run out:')) {
-        const fielders = rawD.split(':').slice(1).join(':').split(',').map(s => cleanPlayerName(s)).filter(Boolean);
+      } else if (dLow.startsWith('run out')) {
+        const fielders = rawD.includes(':')
+          ? rawD.split(':').slice(1).join(':').split(',').map(s => cleanPlayerName(s)).filter(Boolean)
+          : [];
         const surnames = fielders.map(f => getSurname(f)).join('/');
         howOut = surnames ? `run out(${surnames})` : 'run out';
         bowlerOut = '';
@@ -1521,7 +1528,7 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granular
 
   if (ev.includes('dismissed') || ev.includes('out') || desc.includes('out') || desc.includes('was run out') || desc.includes('was caught') || desc.includes('was bowled') || desc.includes('was stumped')) {
     isWicket = true;
-    if (dismissedBatter !== batter || desc.includes('run out') || desc.includes('run-out')) wicketKind = 'run out';
+    if (dismissedBatter !== batter || ev.includes('run out') || ev.includes('run-out') || desc.includes('run out') || desc.includes('run-out')) wicketKind = 'run out';
     else if (desc.includes('stumped')) wicketKind = 'stumped';
     else if (desc.includes('caught')) wicketKind = 'caught';
     else if (desc.includes('lbw')) wicketKind = 'LBW';
@@ -1832,8 +1839,8 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
         const isRunOut = (outPlayerName !== d.batter) ||
           (d.wicketKind === 'run out') ||
           (scBatter && scBatter.howOut && scBatter.howOut.toLowerCase().includes('run out')) ||
-          (!hasGranular && scBwl && scBwl.wickets === 0) ||
-          (!hasGranular && scBwl && bwl.wickets >= scBwl.wickets);
+          (scBwl && scBwl.wickets === 0) ||
+          (scBwl && bwl.wickets >= scBwl.wickets);
 
         if (isStage1) {
           bat.events.push('W');
@@ -1905,7 +1912,24 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
     }
   }
 
-  const MAX_CHARS_PER_CELL = 6;
+  const getOverTokenWidth = (tok) => {
+    if (typeof tok === 'string') {
+      if (tok === '.') return 2.1;
+      if (tok === 'W') return 5.2;
+      return 3.7;
+    }
+    if (tok.type === 'wide') return 4.6;
+    if (tok.type === 'noball') {
+      if (tok.lbRuns > 0) return 7.2;
+      if (tok.byeRuns > 0) return 6.2;
+      if (tok.batterRuns > 0) return 5.2;
+      return 4.6;
+    }
+    return 3.7;
+  };
+
+  const MAX_TOKENS_PER_CELL = 6;
+  const MAX_CELL_WIDTH = 28.6;
   const maxInningsOver = deliveries.length > 0 ? Math.max(...deliveries.map(x => x.over)) : 0;
 
   bowlerOrder.forEach(name => {
@@ -1923,22 +1947,33 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
       const cumStr = `${cumW}/${cumR}`;
       const tokens = o.tokens;
 
-      if (tokens.length <= MAX_CHARS_PER_CELL) {
-        bwl.cells.push({
-          tokens: tokens,
-          cum: cumStr,
-          isOverflow: false
-        });
+      const chunks = [];
+      let curChunk = [];
+      let curW = 0;
+      tokens.forEach(tok => {
+        const tw = getOverTokenWidth(tok);
+        if (curChunk.length > 0 && (curChunk.length >= MAX_TOKENS_PER_CELL || (curW + tw > MAX_CELL_WIDTH))) {
+          chunks.push(curChunk);
+          curChunk = [tok];
+          curW = tw;
+        } else {
+          curChunk.push(tok);
+          curW += tw;
+        }
+      });
+      if (curChunk.length > 0) chunks.push(curChunk);
+
+      if (chunks.length === 0) {
+        bwl.cells.push({ tokens: [], cum: cumStr, isOverflow: false });
       } else {
-        for (let idx = 0; idx < tokens.length; idx += MAX_CHARS_PER_CELL) {
-          const chunk = tokens.slice(idx, idx + MAX_CHARS_PER_CELL);
-          const isLastChunk = (idx + MAX_CHARS_PER_CELL) >= tokens.length;
+        chunks.forEach((chunk, cIdx) => {
+          const isLastChunk = cIdx === chunks.length - 1;
           bwl.cells.push({
             tokens: chunk,
             cum: isLastChunk ? cumStr : '→',
-            isOverflow: idx > 0
+            isOverflow: cIdx > 0
           });
-        }
+        });
       }
     });
 
@@ -2444,8 +2479,8 @@ function renderScorebook() {
   addText(505, 531, 'BOWLING ANALYSIS', { size: 6.5, bold: true, anchor: 'middle' });
 
   const ovGridX0 = 195;
-  const ovColW = 620 / 25;
-  for (let c = 0; c < 25; c++) {
+  const ovColW = 620 / 20;
+  for (let c = 0; c < 20; c++) {
     const cx = ovGridX0 + c * ovColW;
     addLine(cx, 537, cx, 730, 0.6);
     addText(cx + ovColW / 2, 542, c + 1, { size: 6, anchor: 'middle' });
@@ -2462,13 +2497,17 @@ function renderScorebook() {
   const renderOverCellTokens = (tokens, cxMid, cy, maxW) => {
     if (!tokens || tokens.length === 0) return;
     const widths = tokens.map(tok => {
-      if (typeof tok === 'string') return tok === '.' ? 2.2 : 3.7;
+      if (typeof tok === 'string') {
+        if (tok === '.') return 2.1;
+        if (tok === 'W') return 5.2;
+        return 3.7;
+      }
       if (tok.type === 'wide') return 4.6;
       if (tok.type === 'noball') {
-        if (tok.lbRuns > 0) return 7.4;
-        if (tok.byeRuns > 0) return 6.4;
-        if (tok.batterRuns > 0) return 5.4;
-        return 4.8;
+        if (tok.lbRuns > 0) return 7.2;
+        if (tok.byeRuns > 0) return 6.2;
+        if (tok.batterRuns > 0) return 5.2;
+        return 4.6;
       }
       return 3.7;
     });
@@ -2481,7 +2520,8 @@ function renderScorebook() {
       const tx = x + w / 2;
 
       if (typeof tok === 'string') {
-        addText(tx, cy, tok, { size: 7.4 * scale, hand: true, anchor: 'middle' });
+        const fontSize = (tok === 'W' ? 6.4 : 7.4) * scale;
+        addText(tx, cy, tok, { size: fontSize, hand: true, anchor: 'middle' });
       } else if (tok.type === 'wide') {
         const arm = 2.1 * scale;
         const sw = 0.85 * scale;
@@ -2549,7 +2589,7 @@ function renderScorebook() {
       addText(98, yMid, bw.name, { size: bNameSize, hand: true });
 
       bw.cells.forEach((cell, cellIdx) => {
-        if (cellIdx >= 25) return;
+        if (cellIdx >= 20) return;
         const cxMid = ovGridX0 + (cellIdx + 0.5) * ovColW;
         if (cell.isOverflow) {
           svg.appendChild(svgEl('rect', {
