@@ -1791,7 +1791,7 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
       bwl.wides += d.wideRuns;
       bwl.runs += d.wideRuns;
       ovObj.runsConceded += d.wideRuns;
-      ovObj.tokens.push(d.wideRuns > 1 ? `${d.wideRuns}W` : 'W');
+      ovObj.tokens.push({ type: 'wide', wideRuns: d.wideRuns });
     } else if (d.nbRuns > 0) {
       sundries.noBalls.push(d.nbRuns);
       bwl.noBalls += d.nbRuns;
@@ -1808,7 +1808,7 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
       if (d.lbRuns > 0) {
         sundries.legByes.push(d.lbRuns);
       }
-      ovObj.tokens.push(d.batterRuns > 0 ? `${d.batterRuns}N` : 'N');
+      ovObj.tokens.push({ type: 'noball', batterRuns: d.batterRuns, byeRuns: d.byeRuns });
     } else {
       bat.balls += 1;
       bwl.legalBalls += 1;
@@ -1925,16 +1925,16 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
 
       if (tokens.length <= MAX_CHARS_PER_CELL) {
         bwl.cells.push({
-          balls: tokens.join(''),
+          tokens: tokens,
           cum: cumStr,
           isOverflow: false
         });
       } else {
         for (let idx = 0; idx < tokens.length; idx += MAX_CHARS_PER_CELL) {
-          const chunk = tokens.slice(idx, idx + MAX_CHARS_PER_CELL).join('');
+          const chunk = tokens.slice(idx, idx + MAX_CHARS_PER_CELL);
           const isLastChunk = (idx + MAX_CHARS_PER_CELL) >= tokens.length;
           bwl.cells.push({
-            balls: chunk,
+            tokens: chunk,
             cum: isLastChunk ? cumStr : '→',
             isOverflow: idx > 0
           });
@@ -2459,6 +2459,74 @@ function renderScorebook() {
     addText(sx + bSumW / 2, 536, sh, { size: 5.5, bold: true, anchor: 'middle' });
   });
 
+  const renderOverCellTokens = (tokens, cxMid, cy, maxW) => {
+    if (!tokens || tokens.length === 0) return;
+    const widths = tokens.map(tok => {
+      if (typeof tok === 'string') return tok === '.' ? 2.2 : 3.7;
+      if (tok.type === 'wide') return 4.6;
+      if (tok.type === 'noball') {
+        if (tok.byeRuns > 0) return 6.4;
+        if (tok.batterRuns > 0) return 5.4;
+        return 4.8;
+      }
+      return 3.7;
+    });
+    const totalW = widths.reduce((a, b) => a + b, 0);
+    const scale = totalW > maxW ? maxW / totalW : 1;
+    let x = cxMid - (totalW * scale) / 2;
+
+    tokens.forEach((tok, idx) => {
+      const w = widths[idx] * scale;
+      const tx = x + w / 2;
+
+      if (typeof tok === 'string') {
+        addText(tx, cy, tok, { size: 7.4 * scale, hand: true, anchor: 'middle' });
+      } else if (tok.type === 'wide') {
+        const arm = 2.1 * scale;
+        const sw = 0.85 * scale;
+        svg.appendChild(svgEl('line', {
+          x1: tx - arm, y1: cy, x2: tx + arm, y2: cy,
+          stroke: ink, 'stroke-width': sw, 'stroke-linecap': 'round'
+        }));
+        svg.appendChild(svgEl('line', {
+          x1: tx, y1: cy - arm, x2: tx, y2: cy + arm,
+          stroke: ink, 'stroke-width': sw, 'stroke-linecap': 'round'
+        }));
+        const extra = Math.min(Math.max((tok.wideRuns || 1) - 1, 0), 4);
+        const corners = [[-1.3, -1.3], [1.3, -1.3], [-1.3, 1.3], [1.3, 1.3]];
+        for (let c = 0; c < extra; c++) {
+          svg.appendChild(svgEl('circle', {
+            cx: tx + corners[c][0] * scale,
+            cy: cy + corners[c][1] * scale,
+            r: 0.62 * scale,
+            fill: ink
+          }));
+        }
+      } else if (tok.type === 'noball') {
+        if (tok.byeRuns > 0) {
+          svg.appendChild(svgEl('ellipse', {
+            cx: tx, cy: cy, rx: 3.0 * scale, ry: 2.6 * scale,
+            fill: 'none', stroke: ink, 'stroke-width': 0.75 * scale
+          }));
+          addText(tx, cy, `${tok.byeRuns}B`, { size: 3.9 * scale, hand: true, anchor: 'middle' });
+        } else if (tok.batterRuns > 0) {
+          svg.appendChild(svgEl('circle', {
+            cx: tx, cy: cy, r: 2.5 * scale,
+            fill: 'none', stroke: ink, 'stroke-width': 0.75 * scale
+          }));
+          addText(tx, cy, String(tok.batterRuns), { size: 4.5 * scale, hand: true, anchor: 'middle' });
+        } else {
+          svg.appendChild(svgEl('circle', {
+            cx: tx, cy: cy, r: 2.2 * scale,
+            fill: 'none', stroke: ink, 'stroke-width': 0.75 * scale
+          }));
+        }
+      }
+
+      x += w;
+    });
+  };
+
   const bowlRowH = (730 - 547) / 9;
   for (let b = 0; b < 9; b++) {
     const yTop = 547 + b * bowlRowH;
@@ -2485,7 +2553,7 @@ function renderScorebook() {
             fill: '#f1f5f9'
           }));
         }
-        addText(cxMid, yTop + bowlRowH * 0.26, cell.balls, { size: 7.4, hand: true, anchor: 'middle' });
+        renderOverCellTokens(cell.tokens || [], cxMid, yTop + bowlRowH * 0.26, ovColW - 2.2);
         addText(cxMid, yBot - bowlRowH * 0.24, cell.cum, { size: 6.2, hand: true, anchor: 'middle' });
       });
 
