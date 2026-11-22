@@ -238,25 +238,99 @@
     word-break: break-word;
   }
 
+  #printContainer {
+    position: fixed;
+    left: -99999px;
+    top: 0;
+    width: 1000px;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .season-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .season-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .season-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 5px 7px;
+    font-size: 11px;
+  }
+  .season-item-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .season-item-actions {
+    display: flex;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+  .btn-mini {
+    padding: 2px 6px;
+    font-size: 10px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e1;
+    background: #f1f5f9;
+    color: #1e293b;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn-mini:hover { background: #e2e8f0; }
+  .btn-mini-danger { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
+  .btn-mini-danger:hover { background: #fee2e2; }
+
   @media print {
-    @page {
-      size: A4 landscape;
-      margin: 4mm;
-    }
     body { background: white; }
-    header, .sidebar { display: none !important; }
-    .workspace { display: block; padding: 0; }
-    .preview-container {
-      background: white;
-      padding: 0;
-      max-height: none;
-      overflow: visible;
-    }
-    .sheet-wrapper {
-      box-shadow: none;
-      max-width: none;
+    header, .sidebar, .workspace { display: none !important; }
+    #printContainer {
+      position: static;
+      left: auto;
       width: 100%;
+      visibility: visible;
+      display: block !important;
     }
+    .print-page {
+      width: 100%;
+      page-break-after: always;
+      break-after: page;
+    }
+    .print-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .print-page svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  }
+</style>
+<style id="printPageStyle">
+  @page {
+    size: A4 landscape;
+    margin: 4mm;
   }
 </style>
 </head>
@@ -272,6 +346,15 @@
     <button id="btnStage1Sample" class="btn-secondary" type="button">Load Mosman U10 Sample</button>
     <button id="btnClear" class="btn-secondary" type="button">Clear Side</button>
     <button id="btnExportPNG" class="btn-secondary" type="button">Export Ultra-HD PNG</button>
+    <select id="pdfPaperSize" title="PDF Paper Size" style="width:auto; padding:6px 8px; font-size:12px; background:#334155; color:#fff; border:1px solid #475569;">
+      <option value="A4" selected>A4 Landscape</option>
+      <option value="A3">A3 Landscape</option>
+    </select>
+    <select id="printScope" title="What to Print / Save as PDF" style="width:auto; padding:6px 8px; font-size:12px; background:#334155; color:#fff; border:1px solid #475569;">
+      <option value="current">Current Side (1 pg)</option>
+      <option value="match" selected>Both Innings (2 pgs)</option>
+      <option value="season">Full Season Book</option>
+    </select>
     <button id="btnPrint" class="btn-primary" type="button">Print / Save PDF</button>
   </div>
 </header>
@@ -403,6 +486,19 @@
         <input type="text" id="metaScorers" value="" placeholder="e.g. electronic scored">
       </div>
     </div>
+
+    <h2>Season Scorebook Builder</h2>
+    <div class="season-card">
+      <button id="btnAddToSeason" class="btn-primary" type="button" style="width:100%">+ Add Current Match to Season</button>
+      <div id="seasonMatchList" class="season-list"></div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button id="btnPrintSeason" class="btn-secondary" type="button" style="flex:1; font-size:11px; padding:5px 8px;">Print / PDF Season</button>
+        <button id="btnExportSeason" class="btn-secondary" type="button" style="font-size:11px; padding:5px 8px;">Export .json</button>
+        <button id="btnImportSeason" class="btn-secondary" type="button" style="font-size:11px; padding:5px 8px;">Import .json</button>
+        <button id="btnClearSeason" class="btn-mini btn-mini-danger" type="button" style="padding:5px 8px;">Clear</button>
+        <input type="file" id="seasonImportFile" accept=".json,application/json" style="display:none;">
+      </div>
+    </div>
   </div>
 
   <div class="preview-container">
@@ -411,6 +507,8 @@
     </div>
   </div>
 </div>
+
+<div id="printContainer"></div>
 
 <script>
 const STAGE1_SCORECARD_1 = `Mosman U10 Boland Batting
@@ -2121,16 +2219,15 @@ function svgEl(tag, attrs, textContent) {
   return el;
 }
 
-function renderScorebook() {
-  const st = inningsStore[activeInnings];
-  const data = st.parsed || emptyScorebookModel();
-  const svg = document.getElementById('scorebook');
+function renderScorebookTo(svg, st, meta) {
+  const data = (st && st.parsed) ? st.parsed : emptyScorebookModel();
+  const m = meta || sharedMeta;
   svg.innerHTML = '';
 
   const ink = '#1b2a4a';
   const sans = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
   const serif = 'Georgia, "Times New Roman", serif';
-  const dotMode = st.dotFormat;
+  const dotMode = (st && st.dotFormat) || 'grouped';
 
   const addText = (x, y, txt, opts) => {
     const o = opts || {};
@@ -2148,7 +2245,9 @@ function renderScorebook() {
     if (o.rotate) {
       attrs.transform = `rotate(${o.rotate} ${x} ${y})`;
     }
-    svg.appendChild(svgEl('text', attrs, String(txt)));
+    const el = svgEl('text', attrs, String(txt));
+    svg.appendChild(el);
+    return el;
   };
 
   const addLine = (x1, y1, x2, y2, w, dash) => {
@@ -2201,7 +2300,7 @@ function renderScorebook() {
   addText(470, 38, titleText, { size: data.isStage1 ? 13.5 : 15, bold: true, anchor: 'middle' });
 
   addText(165, 60, 'COMPETITION', { size: 7.5, bold: true });
-  addText(245, 59, sharedMeta.comp, { size: 9.5, hand: true });
+  addText(245, 59, m.comp, { size: 9.5, hand: true });
   addLine(240, 64, 415, 64, 0.8, '1.5,1.5');
 
   addText(165, 78, 'MATCH AGAINST', { size: 7.5, bold: true });
@@ -2209,15 +2308,15 @@ function renderScorebook() {
   addLine(245, 82, 415, 82, 0.8, '1.5,1.5');
 
   addText(165, 96, 'TOSS WON BY', { size: 7.5, bold: true });
-  addText(245, 95, sharedMeta.toss, { size: 9.5, hand: true });
+  addText(245, 95, m.toss, { size: 9.5, hand: true });
   addLine(240, 100, 415, 100, 0.8, '1.5,1.5');
 
   addText(425, 60, 'CLUB', { size: 7.5, bold: true });
-  addText(460, 59, sharedMeta.club, { size: 9, hand: true });
+  addText(460, 59, m.club, { size: 9, hand: true });
   addLine(455, 64, 660, 64, 0.8, '1.5,1.5');
 
   addText(425, 78, 'PLAYED AT', { size: 7.5, bold: true });
-  addText(482, 77, sharedMeta.venue, { size: 9, hand: true });
+  addText(482, 77, m.venue, { size: 9, hand: true });
   addLine(480, 82, 660, 82, 0.8, '1.5,1.5');
 
   const displayTeam = ((st.team === 'Team 1' || st.team === 'Team 2') && !st.csv && !st.scorecard) ? '' : (st.team || st.label);
@@ -2226,15 +2325,15 @@ function renderScorebook() {
   addLine(488, 100, 660, 100, 0.8, '1.5,1.5');
 
   addText(670, 60, 'GRADE', { size: 7.5, bold: true });
-  addText(715, 59, sharedMeta.grade, { size: 9.5, hand: true });
+  addText(715, 59, m.grade, { size: 9.5, hand: true });
   addLine(710, 64, 825, 64, 0.8, '1.5,1.5');
 
   addText(670, 78, 'ROUND No', { size: 7.5, bold: true });
-  addText(730, 77, sharedMeta.round, { size: 9.5, hand: true });
+  addText(730, 77, m.round, { size: 9.5, hand: true });
   addLine(725, 82, 825, 82, 0.8, '1.5,1.5');
 
   addText(670, 96, 'DATE', { size: 7.5, bold: true });
-  addText(715, 95, sharedMeta.date, { size: 9.5, hand: true });
+  addText(715, 95, m.date, { size: 9.5, hand: true });
   addLine(705, 100, 825, 100, 0.8, '1.5,1.5');
 
   addRect(832, 20, 148, 485, { w: 1.2 });
@@ -2310,7 +2409,20 @@ function renderScorebook() {
         const howOutSize = b.howOut.length > 13 ? 7.0 : 8.8;
 
         addText(168, yBot - 5.5, b.balls, { size: 7.5, hand: true, anchor: 'middle' });
-        addText(312, yMid - 1, seqStr, { size: fontSize, hand: true });
+        const seqEl = addText(312, yMid - 1, seqStr, { size: fontSize, hand: true });
+        const howOutLow = (b.howOut || '').trim().toLowerCase();
+        const isOut = !data.isStage1 && howOutLow !== '' && !howOutLow.includes('not out');
+        if (isOut) {
+          const textW = (seqEl && typeof seqEl.getComputedTextLength === 'function')
+            ? seqEl.getComputedTextLength()
+            : seqStr.length * fontSize * 0.45;
+          const xBase = Math.min(625, 312 + textW + 4);
+          svg.appendChild(svgEl('polyline', {
+            points: `${xBase},${yTop} ${xBase + 7},${yMid} ${xBase},${yBot}`,
+            fill: 'none', stroke: '#64748b', 'stroke-width': 0.85,
+            'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+          }));
+        }
         addText(673.5, yMid, b.howOut, { size: howOutSize, hand: true, anchor: 'middle' });
         if (b.bowlerOut) {
           addText(752, yMid, b.bowlerOut, { size: 8.5, hand: true, anchor: 'middle' });
@@ -2461,11 +2573,11 @@ function renderScorebook() {
   }
 
   addText(86, 513.5, 'RESULT', { size: 7.5, bold: true });
-  addText(135, 513.5, sharedMeta.result, { size: 9, hand: true });
+  addText(135, 513.5, m.result, { size: 9, hand: true });
   addLine(295, 502, 295, 525, 0.7);
   addText(299, 510, 'SCORERS', { size: 5.5, bold: true });
   addText(299, 517, 'NAMES', { size: 5.5, bold: true });
-  addText(355, 513.5, sharedMeta.scorers, { size: 8.5, hand: true });
+  addText(355, 513.5, m.scorers, { size: 8.5, hand: true });
   addLine(445, 502, 445, 525, 0.7);
   addText(449, 510, 'UMPIRES', { size: 5.5, bold: true });
   addText(449, 517, 'NAMES', { size: 5.5, bold: true });
@@ -2614,6 +2726,235 @@ function renderScorebook() {
   }
 }
 
+function renderScorebook() {
+  renderScorebookTo(document.getElementById('scorebook'), inningsStore[activeInnings], sharedMeta);
+}
+
+const SEASON_STORAGE_KEY = 'sca_season_book_v1';
+let seasonBook = [];
+
+function loadSeasonFromStorage() {
+  try {
+    const raw = localStorage.getItem(SEASON_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) seasonBook = parsed;
+    }
+  } catch (e) {}
+}
+
+function saveSeasonToStorage() {
+  try {
+    localStorage.setItem(SEASON_STORAGE_KEY, JSON.stringify(seasonBook));
+  } catch (e) {}
+}
+
+function makeMatchTitle(meta, i1, i2, fallbackNum) {
+  const rd = meta.round ? `Rd ${meta.round}: ` : '';
+  const t1 = i1.team || 'Team 1';
+  const t2 = i2.team || i1.against || 'Team 2';
+  const dt = meta.date ? ` (${meta.date})` : '';
+  if ((t1 === 'Team 1' && !i1.csv && !i1.scorecard) && (t2 === 'Team 2' && !i2.csv && !i2.scorecard)) {
+    return `${rd}Match ${fallbackNum}${dt}`;
+  }
+  return `${rd}${t1} vs ${t2}${dt}`;
+}
+
+function addCurrentMatchToSeason() {
+  saveCurrentInputs();
+  saveSharedMeta();
+  compileInningsModel(1);
+  compileInningsModel(2);
+
+  const clone = (obj) => JSON.parse(JSON.stringify(obj));
+  const entry = {
+    id: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    title: makeMatchTitle(sharedMeta, inningsStore[1], inningsStore[2], seasonBook.length + 1),
+    savedAt: new Date().toISOString(),
+    sharedMeta: clone(sharedMeta),
+    innings1: clone(inningsStore[1]),
+    innings2: clone(inningsStore[2])
+  };
+  seasonBook.push(entry);
+  saveSeasonToStorage();
+  renderSeasonList();
+  setStatus(`Added "${entry.title}" to Season Book (${seasonBook.length} match${seasonBook.length === 1 ? '' : 'es'}).`, false);
+}
+
+function loadMatchFromSeason(idx) {
+  const entry = seasonBook[idx];
+  if (!entry) return;
+  Object.assign(sharedMeta, entry.sharedMeta || {});
+  ['comp', 'club', 'grade', 'venue', 'toss', 'round', 'date', 'result', 'scorers'].forEach(k => {
+    const elId = 'meta' + k.charAt(0).toUpperCase() + k.slice(1);
+    const el = document.getElementById(elId);
+    if (el) el.value = sharedMeta[k] || '';
+  });
+  Object.assign(inningsStore[1], entry.innings1 || {});
+  Object.assign(inningsStore[2], entry.innings2 || {});
+  compileInningsModel(1);
+  compileInningsModel(2);
+  syncUIFromStore(activeInnings);
+  renderScorebook();
+  setStatus(`Loaded "${entry.title}" into editor.`, false);
+}
+
+function renderSeasonList() {
+  const container = document.getElementById('seasonMatchList');
+  if (!container) return;
+  container.innerHTML = '';
+  if (seasonBook.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:11px; color:#64748b; text-align:center; padding:6px 0;';
+    empty.textContent = 'No matches added yet. Load a match and click "+ Add Current Match to Season".';
+    container.appendChild(empty);
+    return;
+  }
+  seasonBook.forEach((m, idx) => {
+    const row = document.createElement('div');
+    row.className = 'season-item';
+
+    const title = document.createElement('div');
+    title.className = 'season-item-title';
+    title.title = m.title;
+    title.textContent = `${idx + 1}. ${m.title}`;
+
+    const actions = document.createElement('div');
+    actions.className = 'season-item-actions';
+
+    const btnLoad = document.createElement('button');
+    btnLoad.type = 'button';
+    btnLoad.className = 'btn-mini';
+    btnLoad.textContent = 'Load';
+    btnLoad.onclick = () => loadMatchFromSeason(idx);
+
+    const btnUp = document.createElement('button');
+    btnUp.type = 'button';
+    btnUp.className = 'btn-mini';
+    btnUp.textContent = '↑';
+    btnUp.disabled = idx === 0;
+    btnUp.onclick = () => {
+      if (idx === 0) return;
+      const tmp = seasonBook[idx - 1];
+      seasonBook[idx - 1] = seasonBook[idx];
+      seasonBook[idx] = tmp;
+      saveSeasonToStorage();
+      renderSeasonList();
+    };
+
+    const btnDown = document.createElement('button');
+    btnDown.type = 'button';
+    btnDown.className = 'btn-mini';
+    btnDown.textContent = '↓';
+    btnDown.disabled = idx === seasonBook.length - 1;
+    btnDown.onclick = () => {
+      if (idx >= seasonBook.length - 1) return;
+      const tmp = seasonBook[idx + 1];
+      seasonBook[idx + 1] = seasonBook[idx];
+      seasonBook[idx] = tmp;
+      saveSeasonToStorage();
+      renderSeasonList();
+    };
+
+    const btnDel = document.createElement('button');
+    btnDel.type = 'button';
+    btnDel.className = 'btn-mini btn-mini-danger';
+    btnDel.textContent = '×';
+    btnDel.onclick = () => {
+      seasonBook.splice(idx, 1);
+      saveSeasonToStorage();
+      renderSeasonList();
+    };
+
+    actions.appendChild(btnLoad);
+    actions.appendChild(btnUp);
+    actions.appendChild(btnDown);
+    actions.appendChild(btnDel);
+    row.appendChild(title);
+    row.appendChild(actions);
+    container.appendChild(row);
+  });
+}
+
+function exportSeasonJSON() {
+  if (seasonBook.length === 0) {
+    setStatus('Season Book is empty — add at least one match before exporting.', true);
+    return;
+  }
+  const blob = new Blob([JSON.stringify(seasonBook, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sca-season-book.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus(`Exported ${seasonBook.length} match${seasonBook.length === 1 ? '' : 'es'} to sca-season-book.json.`, false);
+}
+
+function importSeasonJSON(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const parsed = JSON.parse(String(ev.target.result || '[]'));
+      if (!Array.isArray(parsed)) throw new Error('Invalid season file format.');
+      seasonBook = parsed;
+      saveSeasonToStorage();
+      renderSeasonList();
+      setStatus(`Imported ${seasonBook.length} match${seasonBook.length === 1 ? '' : 'es'} into Season Book.`, false);
+    } catch (err) {
+      setStatus(`Failed to import season JSON: ${err.message}`, true);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function updatePrintPageSize() {
+  const size = document.getElementById('pdfPaperSize')?.value || 'A4';
+  const styleEl = document.getElementById('printPageStyle');
+  if (styleEl) {
+    styleEl.textContent = `@page { size: ${size} landscape; margin: 4mm; }`;
+  }
+}
+
+function printScorebook(overrideScope) {
+  saveCurrentInputs();
+  saveSharedMeta();
+  updatePrintPageSize();
+
+  const scope = overrideScope || document.getElementById('printScope')?.value || 'current';
+  const container = document.getElementById('printContainer');
+  container.innerHTML = '';
+
+  const pages = [];
+  if (scope === 'current') {
+    pages.push({ st: inningsStore[activeInnings], meta: sharedMeta });
+  } else if (scope === 'match') {
+    pages.push({ st: inningsStore[1], meta: sharedMeta });
+    pages.push({ st: inningsStore[2], meta: sharedMeta });
+  } else if (scope === 'season') {
+    if (seasonBook.length === 0) {
+      setStatus('Season Book is empty — add matches first or choose "Both Innings" / "Current Side".', true);
+      return;
+    }
+    seasonBook.forEach(m => {
+      pages.push({ st: m.innings1, meta: m.sharedMeta });
+      pages.push({ st: m.innings2, meta: m.sharedMeta });
+    });
+  }
+
+  pages.forEach(p => {
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'print-page';
+    const svg = svgEl('svg', { viewBox: '0 0 1000 750', xmlns: 'http://www.w3.org/2000/svg' });
+    pageDiv.appendChild(svg);
+    container.appendChild(pageDiv);
+    renderScorebookTo(svg, p.st, p.meta);
+  });
+
+  window.print();
+}
+
 function exportPNG() {
   const svg = document.getElementById('scorebook');
   const serializer = new XMLSerializer();
@@ -2688,7 +3029,30 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnStage1Sample').addEventListener('click', loadStage1Sample);
   document.getElementById('btnClear').addEventListener('click', clearCurrentInnings);
   document.getElementById('btnExportPNG').addEventListener('click', exportPNG);
-  document.getElementById('btnPrint').addEventListener('click', () => window.print());
+  document.getElementById('pdfPaperSize').addEventListener('change', updatePrintPageSize);
+  document.getElementById('btnPrint').addEventListener('click', () => printScorebook());
+  document.getElementById('btnAddToSeason').addEventListener('click', addCurrentMatchToSeason);
+  document.getElementById('btnPrintSeason').addEventListener('click', () => {
+    document.getElementById('printScope').value = 'season';
+    printScorebook('season');
+  });
+  document.getElementById('btnExportSeason').addEventListener('click', exportSeasonJSON);
+  document.getElementById('btnImportSeason').addEventListener('click', () => {
+    document.getElementById('seasonImportFile').click();
+  });
+  document.getElementById('seasonImportFile').addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) importSeasonJSON(e.target.files[0]);
+    e.target.value = '';
+  });
+  document.getElementById('btnClearSeason').addEventListener('click', () => {
+    if (seasonBook.length === 0) return;
+    if (confirm(`Clear all ${seasonBook.length} saved matches from the Season Book?`)) {
+      seasonBook = [];
+      saveSeasonToStorage();
+      renderSeasonList();
+      setStatus('Cleared Season Book.', false);
+    }
+  });
   document.getElementById('btnGenerate').addEventListener('click', parseAndRender);
   document.getElementById('matchFormat').addEventListener('change', parseAndRender);
   document.getElementById('overRule').addEventListener('change', parseAndRender);
@@ -2711,6 +3075,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   inningsStore[1].parsed = emptyScorebookModel();
   inningsStore[2].parsed = emptyScorebookModel();
+  loadSeasonFromStorage();
+  renderSeasonList();
+  updatePrintPageSize();
   syncUIFromStore(1);
   renderScorebook();
   setStatus('Ready — select or drop a CSV file to populate teams and generate the scorebook.', false);
