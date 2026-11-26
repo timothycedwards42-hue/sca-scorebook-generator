@@ -293,10 +293,17 @@
   }
   .player-note-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
     border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 5px;
+    padding-bottom: 6px;
+  }
+  .player-note-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
   }
   .player-note-head .pname {
     font-weight: 700;
@@ -307,6 +314,27 @@
     font-size: 11.5px;
     color: #64748b;
     font-weight: 600;
+  }
+  .player-rec-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    max-width: 340px;
+    min-width: 190px;
+  }
+  .player-rec-wrap label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+  }
+  .player-rec-wrap input[type="text"] {
+    padding: 4px 8px;
+    font-size: 12px;
+    height: 28px;
+    background: #fff;
   }
   .player-note-stats {
     display: flex;
@@ -1160,6 +1188,7 @@ function renderAll(data) {
   const pNotesEl = document.getElementById('playerNotesList');
   pNotesEl.innerHTML = '';
   const pNotesMap = notes.players || {};
+  const pRecsMap = notes.recommendations || {};
   byName.forEach(p => {
     const row = document.createElement('div');
     row.className = 'player-note-row';
@@ -1176,7 +1205,25 @@ function renderAll(data) {
 
     const header = document.createElement('div');
     header.className = 'player-note-head';
-    header.innerHTML = `<span class="pname">${p.name}</span><span class="pmat">${p.matchCount} match${p.matchCount === 1 ? '' : 'es'}</span>`;
+    header.innerHTML = `<div class="player-note-title"><span class="pname">${p.name}</span><span class="pmat">(${p.matchCount} match${p.matchCount === 1 ? '' : 'es'})</span></div>`;
+
+    const recWrap = document.createElement('div');
+    recWrap.className = 'player-rec-wrap';
+    const recLbl = document.createElement('label');
+    recLbl.textContent = 'Recommendation:';
+    const recInput = document.createElement('input');
+    recInput.type = 'text';
+    recInput.placeholder = 'e.g. Stage 2 / Div 1 / Award...';
+    recInput.value = pRecsMap[p.name] || '';
+    recInput.addEventListener('input', () => {
+      const cur = loadCoachNotes();
+      cur.recommendations = cur.recommendations || {};
+      cur.recommendations[p.name] = recInput.value;
+      saveCoachNotes(cur);
+    });
+    recWrap.appendChild(recLbl);
+    recWrap.appendChild(recInput);
+    header.appendChild(recWrap);
 
     const statsBox = document.createElement('div');
     statsBox.className = 'player-note-stats';
@@ -1258,6 +1305,7 @@ function buildMarkdownReport() {
     });
   }
   const pNotes = notes.players || {};
+  const pRecs = notes.recommendations || {};
   const byName = [...aggData.players].sort((a, b) => a.name.localeCompare(b.name));
   md += `\n## Player Summaries\n\n`;
   byName.forEach(p => {
@@ -1268,7 +1316,7 @@ function buildMarkdownReport() {
       ? `${p.bowlWkts}/${p.bowlRuns}, ${p.bowlOversDisplay} ov (${p.bowlMaidens} mdn), Best ${p.bestBowlDisplay}, Avg ${p.bowlAvgDisplay}, Econ ${p.bowlEconDisplay}, SR ${p.bowlSRDisplay}, ${p.bowlWides} wd, ${p.bowlNB} nb`
       : 'Did not bowl';
     const fieldLine = `${p.catches} catches, ${p.runOuts} run outs, ${p.stumpings} stumpings (${p.fieldTotal} total)`;
-    md += `### ${p.name} (${p.matchCount} matches)\n`;
+    md += `### ${p.name} (${p.matchCount} matches)${pRecs[p.name] ? ` — Recommendation: ${pRecs[p.name]}` : ''}\n`;
     md += `- **Batting:** ${batLine}\n`;
     md += `- **Bowling:** ${bowlLine}\n`;
     md += `- **Fielding:** ${fieldLine}\n`;
