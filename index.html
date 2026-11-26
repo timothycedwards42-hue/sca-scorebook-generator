@@ -487,6 +487,41 @@
       </div>
     </div>
 
+    <h2>Match Library (Repo <code>data/seasons/</code>)</h2>
+    <div class="season-card">
+      <div class="field-row">
+        <div class="field-group">
+          <label for="libSeason">Season Folder</label>
+          <input type="text" id="libSeason" value="" placeholder="e.g. 2025-26">
+        </div>
+        <div class="field-group">
+          <label for="libTeam">Team Folder</label>
+          <input type="text" id="libTeam" value="" placeholder="Auto from Side 1">
+        </div>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button id="btnSaveToRepoFolder" class="btn-primary" type="button" style="flex:1; font-size:11px; padding:6px 8px;">Save to Repo Folder</button>
+        <button id="btnDownloadGameJson" class="btn-secondary" type="button" style="font-size:11px; padding:6px 8px;">Download Game .json</button>
+        <button id="btnLoadGameJson" class="btn-secondary" type="button" style="font-size:11px; padding:6px 8px;">Load .json</button>
+        <input type="file" id="gameJsonImportFile" accept=".json,application/json" style="display:none;">
+      </div>
+      <div class="field-row" style="margin-top:2px;">
+        <div class="field-group">
+          <label for="libFilterSeason">Browse Season</label>
+          <select id="libFilterSeason"><option value="">All Seasons</option></select>
+        </div>
+        <div class="field-group">
+          <label for="libFilterTeam">Browse Team</label>
+          <select id="libFilterTeam"><option value="">All Teams</option></select>
+        </div>
+      </div>
+      <div id="libGameList" class="season-list"></div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button id="btnLoadTeamToSeason" class="btn-secondary" type="button" style="flex:1; font-size:11px; padding:5px 8px;">Load Filtered Games to Season Book</button>
+        <button id="btnRefreshRepoIndex" class="btn-mini" type="button" style="padding:5px 8px;">Refresh</button>
+      </div>
+    </div>
+
     <h2>Season Scorebook Builder</h2>
     <div class="season-card">
       <button id="btnAddToSeason" class="btn-primary" type="button" style="width:100%">+ Add Current Match to Season</button>
@@ -2175,7 +2210,8 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
     totalScore,
     totalWickets,
     totalOvers: totalOversDisplay,
-    isStage1
+    isStage1,
+    deliveries
   };
 }
 
@@ -2955,6 +2991,450 @@ function printScorebook(overrideScope) {
   window.print();
 }
 
+/* ==================== REPO MATCH LIBRARY (data/seasons/) ==================== */
+let repoIndex = { schemaVersion: 1, updatedAt: '', games: [] };
+let repoDirHandle = null;
+
+function slugifySegment(str, fallback) {
+  const s = String(str || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return s || (fallback || 'unknown');
+}
+
+function guessSeasonString(dateStr) {
+  const m = String(dateStr || '').match(/(\d{4})/);
+  const now = new Date();
+  let yr = m ? parseInt(m[1], 10) : now.getFullYear();
+  let month = now.getMonth() + 1;
+  const dm = String(dateStr || '').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dm) {
+    month = parseInt(dm[2], 10);
+    yr = parseInt(dm[3], 10);
+  }
+  // Australian cricket season spans Sep–Apr (e.g. Oct 2025 -> 2025-26, Feb 2026 -> 2025-26)
+  const startYr = month >= 8 ? yr : yr - 1;
+  return `${startYr}-${String(startYr + 1).slice(-2)}`;
+}
+
+function buildGameArchivePayload() {
+  saveCurrentInputs();
+  saveSharedMeta();
+  compileInningsModel(1);
+  compileInningsModel(2);
+
+  const seasonInput = (document.getElementById('libSeason')?.value || '').trim();
+  const teamInput = (document.getElementById('libTeam')?.value || '').trim();
+  const season = seasonInput || guessSeasonString(sharedMeta.date);
+  const team = teamInput || inningsStore[1].team || sharedMeta.club || 'Team 1';
+  const opponent = inningsStore[2].team || inningsStore[1].against || 'Opponent';
+
+  const seasonSlug = slugifySegment(season, 'season');
+  const teamSlug = slugifySegment(team, 'team');
+  const rdNum = String(sharedMeta.round || '').trim();
+  const rdSlug = rdNum ? `rd${rdNum.padStart(2, '0')}` : 'match';
+  const oppSlug = slugifySegment(opponent, 'opponent');
+  const dateSlug = sharedMeta.date ? `-${slugifySegment(sharedMeta.date, '')}` : '';
+  const fileName = `${rdSlug}-vs-${oppSlug}${dateSlug}.json`;
+  const relPath = `data/seasons/${seasonSlug}/${teamSlug}/${fileName}`;
+  const id = `${seasonSlug}/${teamSlug}/${fileName.replace(/\.json$/, '')}`;
+
+  const summarizeInnings = (sideNum, st) => {
+    const p = st.parsed || emptyScorebookModel();
+    return {
+      side: sideNum,
+      team: st.team || '',
+      against: st.against || '',
+      isStage1: !!p.isStage1,
+      totalScore: p.totalScore || 0,
+      totalWickets: p.totalWickets || 0,
+      totalOvers: p.totalOvers || 0,
+      extras: {
+        byes: p.byesTotal || 0,
+        legByes: p.lbTotal || 0,
+        wides: p.widesTotal || 0,
+        noBalls: p.nbTotal || 0,
+        penalty: p.penaltyTotal || 0,
+        total: p.totalSundries || 0
+      },
+      batters: (p.batters || []).map(b => ({
+        name: b.name,
+        runs: b.runs,
+        balls: b.balls,
+        howOut: b.howOut,
+        bowlerOut: b.bowlerOut,
+        isDNB: !!b.isDNB,
+        events: b.events || []
+      })),
+      bowlers: (p.bowlers || []).map(bw => ({
+        name: bw.name,
+        overs: bw.oversDisplay,
+        maidens: bw.maidens,
+        wides: bw.wides,
+        noBalls: bw.noBalls,
+        wickets: bw.wickets,
+        runs: bw.runs
+      })),
+      fow: p.fowList || [],
+      deliveries: p.deliveries || []
+    };
+  };
+
+  const stripParsed = (st) => ({
+    label: st.label,
+    team: st.team,
+    against: st.against,
+    csv: st.csv,
+    scorecard: st.scorecard,
+    playhqText: st.playhqText,
+    matchFormat: st.matchFormat,
+    overRule: st.overRule,
+    dotFormat: st.dotFormat,
+    preSplit: st.preSplit,
+    dismissalCount: st.dismissalCount
+  });
+
+  const title = makeMatchTitle(sharedMeta, inningsStore[1], inningsStore[2], 1);
+  const savedAt = new Date().toISOString();
+
+  const payload = {
+    schemaVersion: 1,
+    id,
+    title,
+    season,
+    team,
+    opponent,
+    savedAt,
+    match: JSON.parse(JSON.stringify(sharedMeta)),
+    innings: [
+      summarizeInnings(1, inningsStore[1]),
+      summarizeInnings(2, inningsStore[2])
+    ],
+    raw: {
+      innings1: stripParsed(inningsStore[1]),
+      innings2: stripParsed(inningsStore[2])
+    }
+  };
+
+  const indexEntry = {
+    id,
+    path: relPath,
+    season,
+    team,
+    opponent,
+    round: sharedMeta.round || '',
+    date: sharedMeta.date || '',
+    result: sharedMeta.result || '',
+    title,
+    savedAt
+  };
+
+  return { payload, indexEntry, seasonSlug, teamSlug, fileName, relPath };
+}
+
+function loadGameArchiveObject(gameObj) {
+  if (!gameObj || typeof gameObj !== 'object') return;
+  const meta = gameObj.match || gameObj.sharedMeta || {};
+  Object.assign(sharedMeta, {
+    comp: '', club: '', grade: '', venue: '', toss: '', round: '', date: '', result: '', scorers: ''
+  }, meta);
+  ['comp', 'club', 'grade', 'venue', 'toss', 'round', 'date', 'result', 'scorers'].forEach(k => {
+    const el = document.getElementById('meta' + k.charAt(0).toUpperCase() + k.slice(1));
+    if (el) el.value = sharedMeta[k] || '';
+  });
+
+  if (gameObj.season && document.getElementById('libSeason')) {
+    document.getElementById('libSeason').value = gameObj.season;
+  }
+  if (gameObj.team && document.getElementById('libTeam')) {
+    document.getElementById('libTeam').value = gameObj.team;
+  }
+
+  const raw1 = (gameObj.raw && gameObj.raw.innings1) || gameObj.innings1;
+  const raw2 = (gameObj.raw && gameObj.raw.innings2) || gameObj.innings2;
+  if (raw1) Object.assign(inningsStore[1], raw1);
+  if (raw2) Object.assign(inningsStore[2], raw2);
+
+  compileInningsModel(1);
+  compileInningsModel(2);
+  syncUIFromStore(activeInnings);
+  renderScorebook();
+  setStatus(`Loaded game "${gameObj.title || gameObj.id || 'Saved Match'}" into editor.`, false);
+}
+
+function downloadCurrentGameJson() {
+  const { payload, fileName, relPath } = buildGameArchivePayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2) + '\n'], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus(`Downloaded ${fileName}. Move to ${relPath} and run "node scripts/rebuild-index.mjs".`, false);
+}
+
+async function saveCurrentGameToRepoFolder() {
+  if (typeof window.showDirectoryPicker !== 'function') {
+    setStatus('Folder picker requires Chrome/Edge. Downloading game JSON instead...', false);
+    downloadCurrentGameJson();
+    return;
+  }
+  try {
+    if (!repoDirHandle) {
+      repoDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    }
+    const { payload, indexEntry, seasonSlug, teamSlug, fileName, relPath } = buildGameArchivePayload();
+
+    const dataDir = await repoDirHandle.getDirectoryHandle('data', { create: true });
+    const seasonsDir = await dataDir.getDirectoryHandle('seasons', { create: true });
+    const seasonDir = await seasonsDir.getDirectoryHandle(seasonSlug, { create: true });
+    const teamDir = await seasonDir.getDirectoryHandle(teamSlug, { create: true });
+
+    const gameFileHandle = await teamDir.getFileHandle(fileName, { create: true });
+    const gameWritable = await gameFileHandle.createWritable();
+    await gameWritable.write(JSON.stringify(payload, null, 2) + '\n');
+    await gameWritable.close();
+
+    // Read existing data/index.json from disk if present, merge/upsert entry, and write back
+    let diskIndex = { schemaVersion: 1, updatedAt: '', games: [] };
+    try {
+      const idxHandle = await dataDir.getFileHandle('index.json');
+      const idxFile = await idxHandle.getFile();
+      const parsed = JSON.parse(await idxFile.text());
+      if (parsed && Array.isArray(parsed.games)) diskIndex = parsed;
+    } catch (e) {}
+
+    const existingIdx = diskIndex.games.findIndex(g => g.id === indexEntry.id || g.path === indexEntry.path);
+    if (existingIdx >= 0) diskIndex.games[existingIdx] = indexEntry;
+    else diskIndex.games.push(indexEntry);
+
+    diskIndex.games.sort((a, b) => {
+      if (a.season !== b.season) return b.season.localeCompare(a.season);
+      if (a.team !== b.team) return a.team.localeCompare(b.team);
+      const ra = parseInt(a.round, 10);
+      const rb = parseInt(b.round, 10);
+      if (!Number.isNaN(ra) && !Number.isNaN(rb) && ra !== rb) return ra - rb;
+      return (a.date || '').localeCompare(b.date || '') || a.title.localeCompare(b.title);
+    });
+    diskIndex.updatedAt = new Date().toISOString();
+
+    const idxWriteHandle = await dataDir.getFileHandle('index.json', { create: true });
+    const idxWritable = await idxWriteHandle.createWritable();
+    await idxWritable.write(JSON.stringify(diskIndex, null, 2) + '\n');
+    await idxWritable.close();
+
+    repoIndex = diskIndex;
+    renderRepoLibrary();
+    setStatus(`Saved ${relPath} and updated data/index.json. Commit & push data/ when ready.`, false);
+  } catch (err) {
+    if (err && err.name === 'AbortError') return;
+    setStatus(`Could not save to repo folder: ${err.message}`, true);
+  }
+}
+
+async function fetchGameByEntry(entry) {
+  if (repoDirHandle) {
+    try {
+      const parts = entry.path.split('/');
+      let curDir = repoDirHandle;
+      for (let i = 0; i < parts.length - 1; i++) {
+        curDir = await curDir.getDirectoryHandle(parts[i]);
+      }
+      const fh = await curDir.getFileHandle(parts[parts.length - 1]);
+      const file = await fh.getFile();
+      return JSON.parse(await file.text());
+    } catch (e) {}
+  }
+  const resp = await fetch(entry.path + '?t=' + Date.now());
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} loading ${entry.path}`);
+  return await resp.json();
+}
+
+async function refreshRepoIndex() {
+  try {
+    const resp = await fetch('data/index.json?t=' + Date.now());
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const parsed = await resp.json();
+    if (parsed && Array.isArray(parsed.games)) {
+      repoIndex = parsed;
+      renderRepoLibrary();
+      return;
+    }
+  } catch (e) {
+    renderRepoLibrary(true);
+  }
+}
+
+function getFilteredRepoGames() {
+  const sFilter = document.getElementById('libFilterSeason')?.value || '';
+  const tFilter = document.getElementById('libFilterTeam')?.value || '';
+  return (repoIndex.games || []).filter(g => {
+    if (sFilter && g.season !== sFilter) return false;
+    if (tFilter && g.team !== tFilter) return false;
+    return true;
+  });
+}
+
+function renderRepoLibrary(fetchFailed) {
+  const sSelect = document.getElementById('libFilterSeason');
+  const tSelect = document.getElementById('libFilterTeam');
+  const listEl = document.getElementById('libGameList');
+  if (!sSelect || !tSelect || !listEl) return;
+
+  const games = repoIndex.games || [];
+  const prevS = sSelect.value;
+  const prevT = tSelect.value;
+
+  const seasons = Array.from(new Set(games.map(g => g.season).filter(Boolean))).sort().reverse();
+  sSelect.innerHTML = '<option value="">All Seasons</option>';
+  seasons.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    sSelect.appendChild(opt);
+  });
+  if (seasons.includes(prevS)) sSelect.value = prevS;
+
+  const curSeason = sSelect.value;
+  const teams = Array.from(new Set(games.filter(g => !curSeason || g.season === curSeason).map(g => g.team).filter(Boolean))).sort();
+  tSelect.innerHTML = '<option value="">All Teams</option>';
+  teams.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    tSelect.appendChild(opt);
+  });
+  if (teams.includes(prevT)) tSelect.value = prevT;
+
+  const filtered = getFilteredRepoGames();
+  listEl.innerHTML = '';
+
+  if (filtered.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:11px; color:#64748b; text-align:center; padding:6px 0;';
+    empty.textContent = fetchFailed
+      ? 'Open via GitHub Pages / local server to browse data/index.json, or click "Load .json" / "Save to Repo Folder".'
+      : 'No saved games in data/seasons/ yet.';
+    listEl.appendChild(empty);
+    return;
+  }
+
+  filtered.forEach(g => {
+    const row = document.createElement('div');
+    row.className = 'season-item';
+
+    const title = document.createElement('div');
+    title.className = 'season-item-title';
+    title.title = `${g.season} / ${g.team} — ${g.title}`;
+    title.textContent = g.title;
+
+    const actions = document.createElement('div');
+    actions.className = 'season-item-actions';
+
+    const btnLoad = document.createElement('button');
+    btnLoad.type = 'button';
+    btnLoad.className = 'btn-mini';
+    btnLoad.textContent = 'Load';
+    btnLoad.onclick = async () => {
+      try {
+        const obj = await fetchGameByEntry(g);
+        loadGameArchiveObject(obj);
+      } catch (err) {
+        setStatus(`Could not load ${g.path}: ${err.message}`, true);
+      }
+    };
+
+    const btnBook = document.createElement('button');
+    btnBook.type = 'button';
+    btnBook.className = 'btn-mini';
+    btnBook.textContent = '+ Book';
+    btnBook.onclick = async () => {
+      try {
+        const obj = await fetchGameByEntry(g);
+        const clone = (x) => JSON.parse(JSON.stringify(x));
+        const i1 = clone(obj.raw && obj.raw.innings1 ? obj.raw.innings1 : {});
+        const i2 = clone(obj.raw && obj.raw.innings2 ? obj.raw.innings2 : {});
+        // Load temporarily to ensure parsed models exist, then add to seasonBook
+        const prev1 = clone(inningsStore[1]);
+        const prev2 = clone(inningsStore[2]);
+        const prevMeta = clone(sharedMeta);
+        Object.assign(sharedMeta, obj.match || {});
+        Object.assign(inningsStore[1], i1);
+        Object.assign(inningsStore[2], i2);
+        compileInningsModel(1);
+        compileInningsModel(2);
+        seasonBook.push({
+          id: obj.id || (Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+          title: obj.title || g.title,
+          savedAt: obj.savedAt || new Date().toISOString(),
+          sharedMeta: clone(sharedMeta),
+          innings1: clone(inningsStore[1]),
+          innings2: clone(inningsStore[2])
+        });
+        Object.assign(sharedMeta, prevMeta);
+        Object.assign(inningsStore[1], prev1);
+        Object.assign(inningsStore[2], prev2);
+        saveSeasonToStorage();
+        renderSeasonList();
+        setStatus(`Added "${g.title}" to Season Book (${seasonBook.length} total).`, false);
+      } catch (err) {
+        setStatus(`Could not add ${g.path} to Season Book: ${err.message}`, true);
+      }
+    };
+
+    actions.appendChild(btnLoad);
+    actions.appendChild(btnBook);
+    row.appendChild(title);
+    row.appendChild(actions);
+    listEl.appendChild(row);
+  });
+}
+
+async function loadFilteredGamesToSeasonBook() {
+  const filtered = getFilteredRepoGames();
+  if (filtered.length === 0) {
+    setStatus('No games match the current Season / Team filter.', true);
+    return;
+  }
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  const prev1 = clone(inningsStore[1]);
+  const prev2 = clone(inningsStore[2]);
+  const prevMeta = clone(sharedMeta);
+
+  let added = 0;
+  for (const g of filtered) {
+    try {
+      const obj = await fetchGameByEntry(g);
+      Object.assign(sharedMeta, { comp: '', club: '', grade: '', venue: '', toss: '', round: '', date: '', result: '', scorers: '' }, obj.match || {});
+      Object.assign(inningsStore[1], obj.raw && obj.raw.innings1 ? obj.raw.innings1 : {});
+      Object.assign(inningsStore[2], obj.raw && obj.raw.innings2 ? obj.raw.innings2 : {});
+      compileInningsModel(1);
+      compileInningsModel(2);
+      seasonBook.push({
+        id: obj.id || (Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+        title: obj.title || g.title,
+        savedAt: obj.savedAt || new Date().toISOString(),
+        sharedMeta: clone(sharedMeta),
+        innings1: clone(inningsStore[1]),
+        innings2: clone(inningsStore[2])
+      });
+      added++;
+    } catch (err) {
+      console.error('Failed loading game for season book:', g.path, err);
+    }
+  }
+
+  Object.assign(sharedMeta, prevMeta);
+  Object.assign(inningsStore[1], prev1);
+  Object.assign(inningsStore[2], prev2);
+  saveSeasonToStorage();
+  renderSeasonList();
+  setStatus(`Loaded ${added} game${added === 1 ? '' : 's'} into Season Book (${seasonBook.length} total).`, false);
+}
+
 function exportPNG() {
   const svg = document.getElementById('scorebook');
   const serializer = new XMLSerializer();
@@ -3031,6 +3511,31 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnExportPNG').addEventListener('click', exportPNG);
   document.getElementById('pdfPaperSize').addEventListener('change', updatePrintPageSize);
   document.getElementById('btnPrint').addEventListener('click', () => printScorebook());
+  document.getElementById('btnSaveToRepoFolder').addEventListener('click', saveCurrentGameToRepoFolder);
+  document.getElementById('btnDownloadGameJson').addEventListener('click', downloadCurrentGameJson);
+  document.getElementById('btnLoadGameJson').addEventListener('click', () => {
+    document.getElementById('gameJsonImportFile').click();
+  });
+  document.getElementById('gameJsonImportFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          loadGameArchiveObject(JSON.parse(String(ev.target.result || '{}')));
+        } catch (err) {
+          setStatus(`Invalid game JSON file: ${err.message}`, true);
+        }
+      };
+      reader.readAsText(file);
+    }
+    e.target.value = '';
+  });
+  document.getElementById('libFilterSeason').addEventListener('change', () => renderRepoLibrary());
+  document.getElementById('libFilterTeam').addEventListener('change', () => renderRepoLibrary());
+  document.getElementById('btnLoadTeamToSeason').addEventListener('click', loadFilteredGamesToSeasonBook);
+  document.getElementById('btnRefreshRepoIndex').addEventListener('click', refreshRepoIndex);
+
   document.getElementById('btnAddToSeason').addEventListener('click', addCurrentMatchToSeason);
   document.getElementById('btnPrintSeason').addEventListener('click', () => {
     document.getElementById('printScope').value = 'season';
@@ -3077,6 +3582,10 @@ window.addEventListener('DOMContentLoaded', () => {
   inningsStore[2].parsed = emptyScorebookModel();
   loadSeasonFromStorage();
   renderSeasonList();
+  refreshRepoIndex();
+  if (document.getElementById('libSeason') && !document.getElementById('libSeason').value) {
+    document.getElementById('libSeason').value = guessSeasonString('');
+  }
   updatePrintPageSize();
   syncUIFromStore(1);
   renderScorebook();
