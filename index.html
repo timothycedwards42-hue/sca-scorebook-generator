@@ -343,8 +343,6 @@
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
   </div>
   <div class="actions">
-    <button id="btnStage1Sample" class="btn-secondary" type="button">Load Mosman U10 Sample</button>
-    <button id="btnClear" class="btn-secondary" type="button">Clear Side</button>
     <button id="btnExportPNG" class="btn-secondary" type="button">Export Ultra-HD PNG</button>
     <select id="pdfPaperSize" title="PDF Paper Size" style="width:auto; padding:6px 8px; font-size:12px; background:#334155; color:#fff; border:1px solid #475569;">
       <option value="A4" selected>A4 Landscape</option>
@@ -366,34 +364,74 @@
       <span style="font-size:10px; background:#dbeafe; padding:2px 6px; border-radius:4px;">Side <span id="bannerSideNum">1</span> of 2</span>
     </div>
 
-    <div class="field-group">
-      <label for="csvFile">1. Select or Drop Combined CSV (Auto-separates Both Sides)</label>
-      <div id="csvDropZone" class="file-drop">
-        <div style="display:flex; gap:6px; align-items:center; width:100%; justify-content:center;">
-          <input type="file" id="csvFile" accept=".csv,text/csv" style="font-size:11.5px; max-width:230px;">
-          <button id="btnLoadSelectedFile" type="button" class="btn-primary" style="padding:5px 9px; font-size:11px;">Read File</button>
+    <div id="statusMsg" class="status-bar">Loading Match Library...</div>
+
+    <h2>Match Library (<code>data/seasons/</code>)</h2>
+    <div class="season-card">
+      <div class="field-row">
+        <div class="field-group">
+          <label for="libFilterSeason">Season</label>
+          <select id="libFilterSeason"><option value="">All Seasons</option></select>
         </div>
-        <span style="font-size:11px; color:#6b7280;">or drag &amp; drop combined CSV onto this box</span>
+        <div class="field-group">
+          <label for="libFilterTeam">Team</label>
+          <select id="libFilterTeam"><option value="">All Teams</option></select>
+        </div>
+      </div>
+      <div id="libGameList" class="season-list"></div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button id="btnLoadTeamToSeason" class="btn-secondary" type="button" style="flex:1; font-size:11px; padding:5px 8px;">Load All to Season Book</button>
+        <a id="btnOpenLocalEnrich" href="/enrich" target="_blank" class="btn-mini" style="display:none; padding:5px 8px; text-decoration:none; background:#dcfce7; color:#166534; border-color:#86efac;">Submit Data</a>
+        <button id="btnLoadGameJson" class="btn-mini" type="button" style="padding:5px 8px;">Load .json</button>
+        <button id="btnRefreshRepoIndex" class="btn-mini" type="button" style="padding:5px 8px;">Refresh</button>
+        <input type="file" id="gameJsonImportFile" accept=".json,application/json" style="display:none;">
       </div>
     </div>
 
-    <div id="statusMsg" class="status-bar">Initializing v6.6...</div>
-
-    <div class="field-group">
-      <label for="csvInput">CSV Content (Ball-by-Ball Source for <span id="lblCsvSide">Side 1</span>)</label>
-      <textarea id="csvInput" placeholder="Ball,Score,Outcome,Innings&#10;19.6,0--202,A Carroll to H Engelbrecht : 1 run..."></textarea>
+    <div id="localSyncSection" style="display:none;">
+      <h2>Fetch CSVs from PlayCricket</h2>
+      <div class="season-card">
+        <div class="field-group">
+          <label for="syncOrg">Association / Club</label>
+          <input type="text" id="syncOrg" value="North Shore Junior Cricket Association" placeholder="e.g. North Shore Junior Cricket Association">
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label for="syncSeason">PlayCricket Season</label>
+            <input type="text" id="syncSeason" value="Summer 2026/27" placeholder="e.g. Summer 2026/27">
+          </div>
+          <div class="field-group">
+            <label for="syncGrade">Grade (or Club Team)</label>
+            <input type="text" id="syncGrade" value="" placeholder="e.g. Saturday U10 North Stage 1">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label for="syncTeam">Team Filter (optional)</label>
+            <input type="text" id="syncTeam" value="" placeholder="e.g. Mosman U10 Boland">
+          </div>
+          <div class="field-group">
+            <label for="syncComp">Competition (optional)</label>
+            <input type="text" id="syncComp" value="" placeholder="e.g. NSJCA U10">
+          </div>
+        </div>
+        <div style="display:flex; gap:12px; font-size:11px; color:#334155; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:4px; margin:0; cursor:pointer;">
+            <input type="checkbox" id="syncAutoImport" checked style="width:auto;"> Import to Library
+          </label>
+          <label style="display:flex; align-items:center; gap:4px; margin:0; cursor:pointer;">
+            <input type="checkbox" id="syncListOnly" style="width:auto;"> Dry run (list only)
+          </label>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button id="btnRunInlineSync" class="btn-primary" type="button" style="flex:1; font-size:11.5px; padding:6px 10px;">Fetch Ball-by-Ball CSVs</button>
+          <button id="btnStopInlineSync" class="btn-mini btn-mini-danger" type="button" style="padding:6px 10px;" disabled>Stop</button>
+        </div>
+        <pre id="syncLog" style="display:none; margin:0; background:#0f172a; color:#e2e8f0; padding:8px; border-radius:6px; font-size:10.5px; line-height:1.4; max-height:160px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;"></pre>
+      </div>
     </div>
 
-    <div class="field-group">
-      <label for="scorecardInput">PlayHQ Scorecard View (Enriches Names, Order &amp; Official Wickets)</label>
-      <textarea id="scorecardInput" placeholder="Paste 1st or both innings PlayHQ Scorecard View here..."></textarea>
-    </div>
-
-    <div class="field-group">
-      <label for="playhqText">PlayHQ Ball-by-Ball Text (Optional — Granular Run-out / Stumped)</label>
-      <textarea id="playhqText" placeholder="Over 20&#10;19.6&#10;1&#10;Austin Carroll to Harry Engelbrecht..."></textarea>
-    </div>
-
+    <h2>Display &amp; Format Options</h2>
     <div class="field-row">
       <div class="field-group">
         <label for="matchFormat">Match Format</label>
@@ -425,11 +463,11 @@
       </div>
       <div class="field-group">
         <label for="metaInnings">Side Label</label>
-        <input type="text" id="metaInnings" value="" placeholder="Auto-filled from CSV">
+        <input type="text" id="metaInnings" value="" placeholder="Auto-filled from game">
       </div>
     </div>
 
-    <button id="btnGenerate" class="btn-primary" type="button" style="width:100%">Generate / Update Scorebook</button>
+    <button id="btnGenerate" class="btn-secondary" type="button" style="width:100%">Refresh / Re-render Scorebook</button>
 
     <h2>Match &amp; Header Details</h2>
     <div class="field-group">
@@ -449,7 +487,7 @@
     <div class="field-row">
       <div class="field-group">
         <label for="metaAgainst">Match Against (Bowling Side)</label>
-        <input type="text" id="metaAgainst" value="" placeholder="Auto-filled from CSV">
+        <input type="text" id="metaAgainst" value="" placeholder="Auto-filled from game">
       </div>
       <div class="field-group">
         <label for="metaVenue">Played At (Shared)</label>
@@ -459,7 +497,7 @@
     <div class="field-row">
       <div class="field-group">
         <label for="metaTeam">Batting Side Name</label>
-        <input type="text" id="metaTeam" value="" placeholder="Auto-filled from CSV">
+        <input type="text" id="metaTeam" value="" placeholder="Auto-filled from game">
       </div>
       <div class="field-group">
         <label for="metaToss">Toss Won By (Shared)</label>
@@ -486,42 +524,19 @@
         <input type="text" id="metaScorers" value="" placeholder="e.g. electronic scored">
       </div>
     </div>
-
-    <h2>Match Library (Repo <code>data/seasons/</code>)</h2>
-    <div class="season-card">
-      <div class="field-row">
-        <div class="field-group">
-          <label for="libSeason">Season Folder</label>
-          <input type="text" id="libSeason" value="" placeholder="e.g. 2025-26">
-        </div>
-        <div class="field-group">
-          <label for="libTeam">Team Folder</label>
-          <input type="text" id="libTeam" value="" placeholder="Auto from Side 1">
-        </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label for="libSeason">Save Season Folder</label>
+        <input type="text" id="libSeason" value="" placeholder="e.g. 2026-27">
       </div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap;">
-        <button id="btnSaveToRepoFolder" class="btn-primary" type="button" style="flex:1; font-size:11px; padding:6px 8px;">Save to Repo Folder</button>
-        <button id="btnDownloadGameJson" class="btn-secondary" type="button" style="font-size:11px; padding:6px 8px;">Download Game .json</button>
-        <button id="btnLoadGameJson" class="btn-secondary" type="button" style="font-size:11px; padding:6px 8px;">Load .json</button>
-        <input type="file" id="gameJsonImportFile" accept=".json,application/json" style="display:none;">
+      <div class="field-group">
+        <label for="libTeam">Save Team Folder</label>
+        <input type="text" id="libTeam" value="" placeholder="Auto from Side 1">
       </div>
-      <div class="field-row" style="margin-top:2px;">
-        <div class="field-group">
-          <label for="libFilterSeason">Browse Season</label>
-          <select id="libFilterSeason"><option value="">All Seasons</option></select>
-        </div>
-        <div class="field-group">
-          <label for="libFilterTeam">Browse Team</label>
-          <select id="libFilterTeam"><option value="">All Teams</option></select>
-        </div>
-      </div>
-      <div id="libGameList" class="season-list"></div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap;">
-        <button id="btnLoadTeamToSeason" class="btn-secondary" type="button" style="flex:1; font-size:11px; padding:5px 8px;">Load Filtered Games to Season Book</button>
-        <a id="btnOpenLocalSync" href="/sync" target="_blank" class="btn-mini" style="display:none; padding:5px 8px; text-decoration:none; background:#dbeafe; color:#1d4ed8; border-color:#93c5fd;">Sync PlayCricket</a>
-        <a id="btnOpenLocalEnrich" href="/enrich" target="_blank" class="btn-mini" style="display:none; padding:5px 8px; text-decoration:none; background:#dcfce7; color:#166534; border-color:#86efac;">Submit Data</a>
-        <button id="btnRefreshRepoIndex" class="btn-mini" type="button" style="padding:5px 8px;">Refresh</button>
-      </div>
+    </div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <button id="btnSaveToRepoFolder" class="btn-primary" type="button" style="flex:1; font-size:11px; padding:6px 8px;">Save Changes to Library</button>
+      <button id="btnDownloadGameJson" class="btn-secondary" type="button" style="font-size:11px; padding:6px 8px;">Download .json</button>
     </div>
 
     <h2>Season Scorebook Builder</h2>
@@ -1145,20 +1160,25 @@ function saveSharedMeta() {
 function saveCurrentInputs() {
   const st = inningsStore[activeInnings];
   if (!st) return;
-  const newCsv = document.getElementById('csvInput').value;
-  if (newCsv !== st.csv) {
-    st.preSplit = false;
+  const csvEl = document.getElementById('csvInput');
+  if (csvEl) {
+    const newCsv = csvEl.value;
+    if (newCsv !== st.csv) st.preSplit = false;
+    st.csv = newCsv;
   }
-  st.csv = newCsv;
-  const rawSc = document.getElementById('scorecardInput').value;
-  const splitSc = trySplitCombinedScorecard(rawSc);
-  if (splitSc) {
-    inningsStore[1].scorecard = splitSc[0];
-    inningsStore[2].scorecard = splitSc[1];
-  } else {
-    st.scorecard = rawSc;
+  const scEl = document.getElementById('scorecardInput');
+  if (scEl) {
+    const rawSc = scEl.value;
+    const splitSc = trySplitCombinedScorecard(rawSc);
+    if (splitSc) {
+      inningsStore[1].scorecard = splitSc[0];
+      inningsStore[2].scorecard = splitSc[1];
+    } else {
+      st.scorecard = rawSc;
+    }
   }
-  st.playhqText = document.getElementById('playhqText').value;
+  const phqEl = document.getElementById('playhqText');
+  if (phqEl) st.playhqText = phqEl.value;
   st.matchFormat = document.getElementById('matchFormat').value;
   st.overRule = document.getElementById('overRule').value;
   st.dotFormat = document.getElementById('dotFormat').value;
@@ -1180,11 +1200,15 @@ function syncUIFromStore(num) {
 
   document.getElementById('bannerTeamName').textContent = sideName;
   document.getElementById('bannerSideNum').textContent = num;
-  document.getElementById('lblCsvSide').textContent = sideName;
+  const lblCsv = document.getElementById('lblCsvSide');
+  if (lblCsv) lblCsv.textContent = sideName;
 
-  document.getElementById('csvInput').value = st.csv || '';
-  document.getElementById('scorecardInput').value = st.scorecard || '';
-  document.getElementById('playhqText').value = st.playhqText || '';
+  const csvEl = document.getElementById('csvInput');
+  if (csvEl) csvEl.value = st.csv || '';
+  const scEl = document.getElementById('scorecardInput');
+  if (scEl) scEl.value = st.scorecard || '';
+  const phqEl = document.getElementById('playhqText');
+  if (phqEl) phqEl.value = st.playhqText || '';
   document.getElementById('matchFormat').value = st.matchFormat || 'auto';
   document.getElementById('overRule').value = st.overRule || 'auto';
   document.getElementById('dotFormat').value = st.dotFormat || 'grouped';
@@ -3483,52 +3507,8 @@ function exportPNG() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  const fileInput = document.getElementById('csvFile');
-  const btnRead = document.getElementById('btnLoadSelectedFile');
-  const dropZone = document.getElementById('csvDropZone');
-
-  if (fileInput) {
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files.length > 0) {
-        readSelectedFile(e.target.files[0]);
-      }
-    });
-  }
-  if (btnRead) {
-    btnRead.addEventListener('click', () => {
-      if (fileInput && fileInput.files && fileInput.files.length > 0) {
-        readSelectedFile(fileInput.files[0]);
-      } else {
-        setStatus('Click "Choose File" first to pick a CSV file.', true);
-      }
-    });
-  }
-
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
-    window.addEventListener(evtName, (e) => e.preventDefault(), false);
-  });
-  if (dropZone) {
-    dropZone.addEventListener('dragover', () => {
-      dropZone.style.borderColor = '#2563eb';
-      dropZone.style.background = '#eff6ff';
-    });
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.style.borderColor = '#9ca3af';
-      dropZone.style.background = '#f9fafb';
-    });
-    dropZone.addEventListener('drop', (e) => {
-      dropZone.style.borderColor = '#9ca3af';
-      dropZone.style.background = '#f9fafb';
-      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        readSelectedFile(e.dataTransfer.files[0]);
-      }
-    });
-  }
-
   document.getElementById('tab1').addEventListener('click', () => switchInnings(1));
   document.getElementById('tab2').addEventListener('click', () => switchInnings(2));
-  document.getElementById('btnStage1Sample').addEventListener('click', loadStage1Sample);
-  document.getElementById('btnClear').addEventListener('click', clearCurrentInnings);
   document.getElementById('btnExportPNG').addEventListener('click', exportPNG);
   document.getElementById('pdfPaperSize').addEventListener('change', updatePrintPageSize);
   document.getElementById('btnPrint').addEventListener('click', () => printScorebook());
@@ -3556,6 +3536,62 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('libFilterTeam').addEventListener('change', () => renderRepoLibrary());
   document.getElementById('btnLoadTeamToSeason').addEventListener('click', loadFilteredGamesToSeasonBook);
   document.getElementById('btnRefreshRepoIndex').addEventListener('click', refreshRepoIndex);
+
+  const btnRunSync = document.getElementById('btnRunInlineSync');
+  const btnStopSync = document.getElementById('btnStopInlineSync');
+  const syncLogEl = document.getElementById('syncLog');
+  if (btnStopSync) {
+    btnStopSync.addEventListener('click', async () => {
+      await fetch('/api/stop', { method: 'POST' }).catch(() => {});
+      if (syncLogEl) syncLogEl.textContent += '\n[Stopped by user]\n';
+    });
+  }
+  if (btnRunSync) {
+    btnRunSync.addEventListener('click', async () => {
+      const org = document.getElementById('syncOrg').value.trim();
+      const season = document.getElementById('syncSeason').value.trim();
+      const grade = document.getElementById('syncGrade').value.trim();
+      const team = document.getElementById('syncTeam').value.trim();
+      const comp = document.getElementById('syncComp').value.trim();
+      const importToLibrary = document.getElementById('syncAutoImport').checked;
+      const listOnly = document.getElementById('syncListOnly').checked;
+      if (!org || !season || (!grade && !team)) {
+        setStatus('Enter Association/Club, Season, and Grade or Team to fetch CSVs.', true);
+        return;
+      }
+      btnRunSync.disabled = true;
+      btnStopSync.disabled = false;
+      syncLogEl.style.display = 'block';
+      syncLogEl.textContent = 'Starting PlayCricket CSV fetch...\n';
+      setStatus('Fetching Ball-by-Ball CSVs from PlayCricket...', false);
+      try {
+        const resp = await fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ org, season, grade, team, comp, importToLibrary, listOnly, overwrite: false })
+        });
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let failed = !resp.ok;
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          syncLogEl.textContent += chunk;
+          syncLogEl.scrollTop = syncLogEl.scrollHeight;
+          if (chunk.includes('[SYNC_FAILED]')) failed = true;
+        }
+        await refreshRepoIndex();
+        setStatus(failed ? 'PlayCricket fetch finished with errors — see log.' : 'PlayCricket fetch complete! Match Library refreshed.', failed);
+      } catch (err) {
+        syncLogEl.textContent += '\nError: ' + err.message + '\n';
+        setStatus('Fetch error: ' + err.message, true);
+      } finally {
+        btnRunSync.disabled = false;
+        btnStopSync.disabled = true;
+      }
+    });
+  }
 
   document.getElementById('btnAddToSeason').addEventListener('click', addCurrentMatchToSeason);
   document.getElementById('btnPrintSeason').addEventListener('click', () => {
@@ -3607,8 +3643,8 @@ window.addEventListener('DOMContentLoaded', () => {
   fetch('/api/health').then(r => {
     if (r.ok) {
       localServerAvailable = true;
-      const btn = document.getElementById('btnOpenLocalSync');
-      if (btn) btn.style.display = 'inline-block';
+      const syncSec = document.getElementById('localSyncSection');
+      if (syncSec) syncSec.style.display = 'block';
       const btnEnrich = document.getElementById('btnOpenLocalEnrich');
       if (btnEnrich) btnEnrich.style.display = 'inline-block';
     }
@@ -3627,7 +3663,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updatePrintPageSize();
   syncUIFromStore(1);
   renderScorebook();
-  setStatus('Ready — select or drop a CSV file to populate teams and generate the scorebook.', false);
+  setStatus('Ready — select a game from the Match Library to view or print.', false);
 });
 </script>
 </body>

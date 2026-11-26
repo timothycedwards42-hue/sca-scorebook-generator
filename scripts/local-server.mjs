@@ -781,8 +781,11 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const { org, season, gradeOrTeam, comp, librarySeason, importToLibrary, listOnly, overwrite } = body;
-    if (!org || !season || !gradeOrTeam) {
+    const { org, season, grade, team, gradeOrTeam, comp, librarySeason, importToLibrary, listOnly, overwrite } = body;
+    const effGrade = (grade || '').trim();
+    const effTeam = (team || '').trim();
+    const effTarget = effTeam || effGrade || (gradeOrTeam || '').trim();
+    if (!org || !season || !effTarget) {
       res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end('Organisation, Season, and Grade/Team are required.\n[SYNC_FAILED]\n');
       return;
@@ -794,14 +797,16 @@ const server = http.createServer(async (req, res) => {
       'Transfer-Encoding': 'chunked'
     });
 
-    const outDir = path.join(repoRoot, 'downloads', slugify(season), slugify(gradeOrTeam));
+    const outDir = path.join(repoRoot, 'downloads', slugify(season), slugify(effTarget));
     const dlArgs = [
       path.join(repoRoot, 'scripts', 'download-playcricket-csvs.mjs'),
       '--org', org,
       '--season', season,
-      '--team', gradeOrTeam,
       '--out', outDir
     ];
+    if (effGrade) dlArgs.push('--grade', effGrade);
+    if (effTeam) dlArgs.push('--team', effTeam);
+    if (!effGrade && !effTeam && gradeOrTeam) dlArgs.push('--team', gradeOrTeam);
     if (listOnly) dlArgs.push('--list-only');
     if (overwrite) dlArgs.push('--overwrite');
 
@@ -815,14 +820,14 @@ const server = http.createServer(async (req, res) => {
 
     if (!listOnly && importToLibrary) {
       const libSeason = librarySeason || deriveLibrarySeason(season);
-      res.write(`\n=== Step 2: Importing CSVs into Match Library (data/seasons/${slugify(libSeason)}/${slugify(gradeOrTeam)}/) ===\n`);
+      res.write(`\n=== Step 2: Importing CSVs into Match Library (data/seasons/${slugify(libSeason)}/${slugify(effTarget)}/) ===\n`);
       const impArgs = [
         path.join(repoRoot, 'scripts', 'import-csvs-to-library.mjs'),
         '--dir', outDir,
         '--season', libSeason,
-        '--team', gradeOrTeam,
+        '--team', effTarget,
         '--club', org,
-        '--grade', gradeOrTeam
+        '--grade', effGrade || effTarget
       ];
       if (comp) impArgs.push('--comp', comp);
       const impCode = await runStep(process.execPath, impArgs, res);

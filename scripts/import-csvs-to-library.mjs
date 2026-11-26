@@ -312,7 +312,12 @@ function main() {
     const dtSuffix = date ? ` (${date})` : '';
     const title = `${rdPrefix}${team1} vs ${team2}${dtSuffix}`;
 
-    const opponent = team1.toLowerCase().includes('north shore') ? team2 : team1;
+    const teamWords = args.team.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+    const matchScore = (name) => {
+      const low = name.toLowerCase();
+      return teamWords.reduce((acc, w) => acc + (low.includes(w) ? 1 : 0), 0);
+    };
+    const opponent = matchScore(team1) >= matchScore(team2) ? team2 : team1;
     const rdSlug = round ? `rd${round.padStart(2, '0')}` : 'match';
     const oppSlug = slugify(opponent, 'opponent');
     const dateSlug = date ? `-${slugify(date, '')}` : '';
