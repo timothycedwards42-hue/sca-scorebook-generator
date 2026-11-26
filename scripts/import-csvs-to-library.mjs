@@ -176,7 +176,8 @@ function summarizeSideFromRows(sideNum, team, against, rows) {
       if (isWicket) {
         totalWickets += 1;
         bat.events.push(0);
-        const mDis = evRaw.match(/^(.+?)\s+dismissed$/i);
+        const evCleanForDis = evRaw.replace(/^(?:\d+\s*(?:runs?|b|lb|wd|nb)\s*,\s*)+/i, '').trim();
+        const mDis = evCleanForDis.match(/^(.+?)\s+dismissed$/i);
         const outName = mDis ? mDis[1].trim() : batter;
         if (!batters[outName]) {
           batters[outName] = { name: outName, runs: 0, balls: 0, howOut: 'out', bowlerOut: '', isDNB: false, events: [] };

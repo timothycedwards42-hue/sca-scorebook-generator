@@ -711,7 +711,7 @@ function parsePlayHQScorecard(text) {
 }
 
 function teamMatchScore(targetTeam, candidateName) {
-  const generic = new Set(['boys', 'girls', 'mixed', 'div', 'stage', 'shield', 'gee', 'team', 'club', 'cricket', 'u09', 'u10', 'u11', 'u12', 'u13', 'u14', 'u15', 'u16', 'u17', 'u18']);
+  const generic = new Set(['boys', 'girls', 'mixed', 'div', 'stage', 'shield', 'gee', 'team', 'teams', 'club', 'cricket', 'district', 'association', 'junior', 'rep', 'u09', 'u10', 'u11', 'u12', 'u13', 'u14', 'u15', 'u16', 'u17', 'u18']);
   const words = String(targetTeam || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
   const low = String(candidateName || '').toLowerCase();
   if (!low || words.length === 0) return 0;
@@ -836,11 +836,41 @@ function extractInningsStats(rawInn, parsedInn) {
   };
 }
 
+function detectCommonTeamName(fallbackTeamName, loadedGames) {
+  if (!loadedGames || loadedGames.length < 2) return fallbackTeamName;
+  const counts = {};
+  let fallbackHits = 0;
+  loadedGames.forEach(g => {
+    const r1 = (g.raw && g.raw.innings1) || {};
+    const r2 = (g.raw && g.raw.innings2) || {};
+    const t1 = (r1.team || (g.innings && g.innings[0] && g.innings[0].team) || '').trim();
+    const t2 = (r2.team || (g.innings && g.innings[1] && g.innings[1].team) || '').trim();
+    const seen = new Set();
+    [t1, t2].forEach(t => {
+      if (!t || /^opponent$/i.test(t)) return;
+      if (seen.has(t)) return;
+      seen.add(t);
+      counts[t] = (counts[t] || 0) + 1;
+    });
+    if (teamMatchScore(fallbackTeamName, t1) >= 1 || teamMatchScore(fallbackTeamName, t2) >= 1) {
+      fallbackHits += 1;
+    }
+  });
+  if (fallbackHits >= Math.ceil(loadedGames.length / 2)) return fallbackTeamName;
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (sorted.length > 0 && sorted[0][1] >= 2 && (sorted.length === 1 || sorted[0][1] > sorted[1][1])) {
+    return sorted[0][0];
+  }
+  return fallbackTeamName;
+}
+
 function aggregateSeason(teamName, seasonName, loadedGames) {
+  const effectiveTeam = detectCommonTeamName(teamName, loadedGames);
   const players = {};
   const ensurePlayer = (name) => {
-    const n = cleanPlayerName(name);
-    if (!n || n === 'Private Player') return null;
+    const cleaned = String(name || '').replace(/^\d+\s*(?:runs?|b|lb|wd|nb)\s*,\s*/i, '');
+    const n = cleanPlayerName(cleaned);
+    if (!n || n === 'Private Player' || /^\d+(?:b|lb|wd|nb)$/i.test(n)) return null;
     if (!players[n]) {
       players[n] = {
         name: n,
@@ -887,16 +917,20 @@ function aggregateSeason(teamName, seasonName, loadedGames) {
     const inn2 = extractInningsStats(r2, p2);
     const hasInnData = (inn) => inn && (inn.batters.length > 0 || inn.bowlers.length > 0 || inn.totalScore > 0);
 
-    const b1 = teamMatchScore(teamName, inn1.team);
-    const b2 = teamMatchScore(teamName, inn2.team);
-    const w1 = teamMatchScore(teamName, inn1.bowlingTeam);
-    const w2 = teamMatchScore(teamName, inn2.bowlingTeam);
+    const b1 = teamMatchScore(effectiveTeam, inn1.team);
+    const b2 = teamMatchScore(effectiveTeam, inn2.team);
+    const w1 = teamMatchScore(effectiveTeam, inn1.bowlingTeam);
+    const w2 = teamMatchScore(effectiveTeam, inn2.bowlingTeam);
 
     const batFirstScore = b1 + w2;
     const bowlFirstScore = b2 + w1;
 
     let ourBat = null, ourBowl = null;
-    if (batFirstScore > bowlFirstScore) {
+    if (!hasInnData(inn2) && hasInnData(inn1) && b1 < 1) {
+      // 1-innings washout where our team didn't bat (only opponent batted)
+      ourBat = null;
+      ourBowl = inn1;
+    } else if (batFirstScore > bowlFirstScore) {
       ourBat = hasInnData(inn1) ? inn1 : null;
       ourBowl = hasInnData(inn2) ? inn2 : null;
     } else if (bowlFirstScore > batFirstScore) {
