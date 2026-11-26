@@ -45,7 +45,7 @@ async function getLookupPage() {
   if (!lookupBrowser || !lookupBrowser.isConnected()) {
     lookupBrowser = await playwright.chromium.launch({ headless: true });
   }
-  const ctx = await lookupBrowser.newContext();
+  const ctx = await lookupBrowser.newContext({ viewport: { width: 1280, height: 1000 } });
   lookupPage = await ctx.newPage();
   await lookupPage.goto('https://play.cricket.com.au/stats?cat=ballByBall', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await lookupPage.locator('#stats-org-search').waitFor({ state: 'visible', timeout: 15000 });
@@ -56,26 +56,21 @@ async function searchPlayCricketOrgs(query) {
   const page = await getLookupPage();
   const clearBtn = page.getByRole('button', { name: 'Clear Search' });
   if (await clearBtn.isVisible().catch(() => false)) {
-    await clearBtn.click();
+    await clearBtn.click({ timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(200);
   }
   const searchBox = page.locator('#stats-org-search');
-  await searchBox.click();
+  await searchBox.click({ timeout: 5000 });
   await searchBox.fill(String(query || '').trim().slice(0, 20));
   const listbox = page.locator('[role="listbox"]:visible').first();
   await listbox.waitFor({ state: 'visible', timeout: 8000 });
   const opts = listbox.locator('[role="option"]:visible');
   await opts.first().waitFor({ state: 'visible', timeout: 8000 });
-  const count = await opts.count();
-  const results = [];
-  for (let i = 0; i < count; i++) {
-    const t = (await opts.nth(i).innerText()).trim();
-    if (t) results.push(t);
-  }
-  return results;
+  const rawTexts = await opts.allInnerTexts();
+  return rawTexts.map(t => t.trim()).filter(Boolean);
 }
 
-async function waitForEnabledControl(locator, timeout = 12000) {
+async function waitForEnabledControl(locator, timeout = 10000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
     if (await locator.isVisible().catch(() => false) && await locator.isEnabled().catch(() => false)) {
@@ -88,59 +83,68 @@ async function waitForEnabledControl(locator, timeout = 12000) {
 
 async function lookupOrgOptions(orgName, seasonName) {
   const page = await getLookupPage();
-  const clearBtn = page.getByRole('button', { name: 'Clear Search' });
-  if (await clearBtn.isVisible().catch(() => false)) {
-    await clearBtn.click();
-    await page.waitForTimeout(250);
-  }
-  const searchBox = page.locator('#stats-org-search');
-  await searchBox.click();
-  await searchBox.fill(String(orgName || '').trim().slice(0, 20));
-  const listbox = page.locator('[role="listbox"]:visible').first();
-  await listbox.waitFor({ state: 'visible', timeout: 10000 });
-  const orgOpts = listbox.locator('[role="option"]:visible');
-  await orgOpts.first().waitFor({ state: 'visible', timeout: 10000 });
-  const orgCount = await orgOpts.count();
+  const targetLow = String(orgName || '').trim().toLowerCase();
+
+  // First check if the org is already visible in the open search listbox from Search
   let clicked = false;
-  for (let i = 0; i < orgCount; i++) {
-    const t = (await orgOpts.nth(i).innerText()).trim();
-    if (t.toLowerCase() === orgName.trim().toLowerCase()) {
-      await orgOpts.nth(i).click();
+  const openListbox = page.locator('[role="listbox"]:visible').first();
+  if (await openListbox.isVisible().catch(() => false)) {
+    const openOpts = openListbox.locator('[role="option"]:visible');
+    const openTexts = (await openOpts.allInnerTexts()).map(t => t.trim());
+    const idx = openTexts.findIndex(t => t.toLowerCase() === targetLow);
+    if (idx >= 0) {
+      await openOpts.nth(idx).click({ force: true, timeout: 8000 });
       clicked = true;
-      break;
     }
   }
-  if (!clicked && orgCount > 0) await orgOpts.first().click();
+
+  if (!clicked) {
+    const clearBtn = page.getByRole('button', { name: 'Clear Search' });
+    if (await clearBtn.isVisible().catch(() => false)) {
+      await clearBtn.click({ force: true, timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(250);
+    }
+    const searchBox = page.locator('#stats-org-search');
+    await searchBox.click({ force: true, timeout: 5000 });
+    await searchBox.fill(String(orgName || '').trim().slice(0, 20));
+    await openListbox.waitFor({ state: 'visible', timeout: 10000 });
+    const orgOpts = openListbox.locator('[role="option"]:visible');
+    await orgOpts.first().waitFor({ state: 'visible', timeout: 10000 });
+    const orgTexts = (await orgOpts.allInnerTexts()).map(t => t.trim());
+    const idx = orgTexts.findIndex(t => t.toLowerCase() === targetLow);
+    await orgOpts.nth(idx >= 0 ? idx : 0).click({ force: true, timeout: 8000 });
+  }
+
+  await page.waitForTimeout(500);
 
   const readDropdown = async (labelName) => {
     const trigger = page.getByRole('button', { name: labelName, exact: true });
     const ready = await waitForEnabledControl(trigger, 10000);
     if (!ready) return { items: [], opts: null };
-    await trigger.click();
+    await trigger.click({ force: true, timeout: 8000 });
     const controlsId = await trigger.getAttribute('aria-controls').catch(() => null);
     const scope = controlsId && (await page.locator(`#${controlsId}`).count().catch(() => 0)) > 0
       ? page.locator(`#${controlsId}`)
       : page;
     const opts = scope.locator('[role="option"]:visible');
     await opts.first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
-    const c = await opts.count();
-    const items = [];
-    for (let i = 0; i < c; i++) {
-      const t = (await opts.nth(i).innerText()).trim();
-      if (t) items.push(t);
-    }
+    const items = (await opts.allInnerTexts()).map(t => t.trim());
     return { items, opts };
   };
 
   const seasonRes = await readDropdown('Season');
-  const seasons = seasonRes.items || [];
+  const seasons = seasonRes.items.filter(Boolean);
   let chosenSeason = '';
-  if (seasonRes.opts && seasons.length > 0) {
-    let sIdx = seasonName ? seasons.findIndex(s => s.toLowerCase().includes(seasonName.toLowerCase())) : 0;
-    if (sIdx < 0) sIdx = 0;
-    chosenSeason = seasons[sIdx];
-    await seasonRes.opts.nth(sIdx).click();
-    await page.waitForTimeout(800);
+  if (seasonRes.opts && seasonRes.items.length > 0) {
+    let sIdx = seasonName ? seasonRes.items.findIndex(s => s.toLowerCase().includes(seasonName.toLowerCase())) : -1;
+    if (sIdx < 0) sIdx = seasonRes.items.findIndex(Boolean);
+    if (sIdx >= 0) {
+      chosenSeason = seasonRes.items[sIdx];
+      await seasonRes.opts.nth(sIdx).click({ force: true, timeout: 8000 });
+      await page.waitForTimeout(600);
+    } else {
+      await page.keyboard.press('Escape').catch(() => {});
+    }
   } else {
     await page.keyboard.press('Escape').catch(() => {});
   }
@@ -148,7 +152,6 @@ async function lookupOrgOptions(orgName, seasonName) {
   let thirdLabel = 'Grade';
   const teamBtn = page.getByRole('button', { name: 'Team', exact: true });
   const gradeBtn = page.getByRole('button', { name: 'Grade', exact: true });
-  // Wait briefly for either Grade or Team dropdown to appear
   for (let w = 0; w < 25; w++) {
     if (await teamBtn.isVisible().catch(() => false)) { thirdLabel = 'Team'; break; }
     if (await gradeBtn.isVisible().catch(() => false)) { thirdLabel = 'Grade'; break; }
@@ -157,7 +160,7 @@ async function lookupOrgOptions(orgName, seasonName) {
 
   const thirdRes = await readDropdown(thirdLabel);
   await page.keyboard.press('Escape').catch(() => {});
-  return { seasons, chosenSeason, thirdLabel, thirdOptions: thirdRes.items || [] };
+  return { seasons, chosenSeason, thirdLabel, thirdOptions: thirdRes.items.filter(Boolean) };
 }
 
 function slugify(str, fallback = 'unknown') {
