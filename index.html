@@ -89,8 +89,61 @@
 
   header .actions {
     display: flex;
+    align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  header .actions a,
+  header .actions button,
+  header .actions select {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    text-decoration: none;
+    width: auto;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  header .actions select {
+    background: #334155;
+    color: #f8fafc;
+    border: 1px solid #475569;
+    font-weight: 500;
+    padding-right: 24px;
+    cursor: pointer;
+  }
+
+  header .actions a.btn-secondary,
+  header .actions button.btn-secondary {
+    background: #334155;
+    color: #f1f5f9;
+    border: 1px solid #475569;
+    cursor: pointer;
+  }
+
+  header .actions a.btn-secondary:hover,
+  header .actions button.btn-secondary:hover {
+    background: #475569;
+  }
+
+  header .actions button.btn-primary {
+    background: #2563eb;
+    color: #fff;
+    border: 1px solid #3b82f6;
+    cursor: pointer;
+  }
+
+  header .actions button.btn-primary:hover {
+    background: #1d4ed8;
   }
 
   button {
@@ -375,13 +428,13 @@
     <button id="tab2" class="tab-btn" type="button">Team 2</button>
   </div>
   <div class="actions">
-    <a href="stats.html" class="btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center;">Season Stats &amp; Report</a>
+    <a href="stats.html" class="btn-secondary">Season Stats &amp; Report</a>
     <button id="btnExportPNG" class="btn-secondary" type="button">Export Ultra-HD PNG</button>
-    <select id="pdfPaperSize" title="PDF Paper Size" style="width:auto; padding:6px 8px; font-size:12px; background:#334155; color:#fff; border:1px solid #475569;">
+    <select id="pdfPaperSize" title="PDF Paper Size">
       <option value="A4" selected>A4 Landscape</option>
       <option value="A3">A3 Landscape</option>
     </select>
-    <select id="printScope" title="What to Print / Save as PDF" style="width:auto; padding:6px 8px; font-size:12px; background:#334155; color:#fff; border:1px solid #475569;">
+    <select id="printScope" title="What to Print / Save as PDF">
       <option value="current">Current Side (1 pg)</option>
       <option value="match" selected>Both Innings (2 pgs)</option>
       <option value="season">Full Season Book</option>
