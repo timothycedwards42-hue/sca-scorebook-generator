@@ -475,7 +475,10 @@
     </div>
 
     <div id="localSyncSection" style="display:none;">
-      <h2>Fetch CSVs from PlayCricket</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <h2 style="margin:0;">Fetch CSVs from PlayCricket</h2>
+        <button id="btnClearSyncForm" class="btn-mini" type="button" title="Clear Association, Season, Grade, and all sync fields to start a new search">Clear</button>
+      </div>
       <div class="season-card">
         <div class="field-group">
           <label for="syncPresetSelect">Saved / Recent Syncs</label>
@@ -1688,20 +1691,23 @@ function parseScorecardView(text) {
     if (mode === 'bowling') {
       const fullName = cleanPlayerName(line);
       const bStats = lines.slice(i + 1, i + 9);
-      result.bowlers.push(fullName);
-      if (bStats.length >= 8) {
-        result.bowlerStats[fullName] = {
-          overs: bStats[0],
-          maidens: parseInt(bStats[1], 10) || 0,
-          runs: parseInt(bStats[2], 10) || 0,
-          wickets: parseInt(bStats[3], 10) || 0,
-          wides: parseInt(bStats[6], 10) || 0,
-          noBalls: parseInt(bStats[7], 10) || 0
-        };
-      }
       const parts = fullName.split(/\s+/);
       if (parts.length >= 2) {
         result.nameLookup[`${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`] = fullName;
+      }
+      if (bStats.length >= 8) {
+        const oversNum = parseFloat(bStats[0]) || 0;
+        const maidens = parseInt(bStats[1], 10) || 0;
+        const runs = parseInt(bStats[2], 10) || 0;
+        const wickets = parseInt(bStats[3], 10) || 0;
+        const wides = parseInt(bStats[6], 10) || 0;
+        const noBalls = parseInt(bStats[7], 10) || 0;
+        if (oversNum > 0 || wides > 0 || noBalls > 0 || runs > 0 || wickets > 0) {
+          result.bowlers.push(fullName);
+          result.bowlerStats[fullName] = { overs: bStats[0], maidens, runs, wickets, wides, noBalls };
+        }
+      } else {
+        result.bowlers.push(fullName);
       }
       i += 9;
       continue;
@@ -2871,12 +2877,43 @@ function renderScorebookTo(svg, st, meta) {
     }
   }
 
+  const addFittedBoxText = (x, yCenter, rawTxt, maxWidth, baseSize, minSize = 5.4) => {
+    const txt = String(rawTxt || '').trim();
+    if (!txt) return;
+    const estWidth = (s, sz) => s.length * sz * 0.56;
+    if (estWidth(txt, baseSize) <= maxWidth) {
+      addText(x, yCenter, txt, { size: baseSize, hand: true, anchor: 'start' });
+      return;
+    }
+    const singleSize = Math.max(minSize, Math.min(baseSize, maxWidth / (txt.length * 0.56)));
+    if (estWidth(txt, singleSize) <= maxWidth) {
+      addText(x, yCenter, txt, { size: +singleSize.toFixed(2), hand: true, anchor: 'start' });
+      return;
+    }
+    // Wrap into 2 left-aligned lines on word boundary and fit each line within maxWidth
+    const words = txt.split(/\s+/);
+    let line1 = '';
+    let line2 = '';
+    const half = txt.length / 2;
+    for (const w of words) {
+      if (!line1 || (line1.length + 1 + w.length <= half + 4 && !line2)) {
+        line1 = line1 ? `${line1} ${w}` : w;
+      } else {
+        line2 = line2 ? `${line2} ${w}` : w;
+      }
+    }
+    const longest = Math.max(line1.length, line2.length, 1);
+    const twoLineSize = Math.max(4.8, Math.min(baseSize - 1, maxWidth / (longest * 0.56)));
+    addText(x, yCenter - 4.2, line1, { size: +twoLineSize.toFixed(2), hand: true, anchor: 'start' });
+    if (line2) addText(x, yCenter + 4.2, line2, { size: +twoLineSize.toFixed(2), hand: true, anchor: 'start' });
+  };
+
   addText(86, 513.5, 'RESULT', { size: 7.5, bold: true });
-  addText(135, 513.5, m.result, { size: 9, hand: true });
+  addFittedBoxText(120, 513.5, m.result, 171, 8.2, 5.4);
   addLine(295, 502, 295, 525, 0.7);
   addText(299, 510, 'SCORERS', { size: 5.5, bold: true });
   addText(299, 517, 'NAMES', { size: 5.5, bold: true });
-  addText(355, 513.5, m.scorers, { size: 8.5, hand: true });
+  addFittedBoxText(330, 513.5, m.scorers, 111, 8.0, 5.2);
   addLine(445, 502, 445, 525, 0.7);
   addText(449, 510, 'UMPIRES', { size: 5.5, bold: true });
   addText(449, 517, 'NAMES', { size: 5.5, bold: true });
@@ -3954,6 +3991,28 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btnClearAllGrades')?.addEventListener('click', () => {
     document.querySelectorAll('.sync-grade-cb').forEach(cb => { cb.checked = false; });
+  });
+
+  document.getElementById('btnClearSyncForm')?.addEventListener('click', () => {
+    const presetSel = document.getElementById('syncPresetSelect');
+    if (presetSel) presetSel.value = '';
+    ['syncOrg', 'syncSeason', 'syncGrade', 'syncTeam', 'syncComp', 'syncSeasonFolder', 'syncTeamFolder'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    if (syncOrgResults) {
+      syncOrgResults.innerHTML = '';
+      syncOrgResults.style.display = 'none';
+    }
+    const bulkWrap = document.getElementById('syncGradeBulkWrap');
+    const bulkList = document.getElementById('syncGradeChecklist');
+    if (bulkList) bulkList.innerHTML = '';
+    if (bulkWrap) bulkWrap.style.display = 'none';
+    ['syncSeasonList', 'syncGradeList'].forEach(id => {
+      const dl = document.getElementById(id);
+      if (dl) dl.innerHTML = '';
+    });
+    if (syncOrgInput) syncOrgInput.focus();
   });
 
   const btnRunSync = document.getElementById('btnRunInlineSync');

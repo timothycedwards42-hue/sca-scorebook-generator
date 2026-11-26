@@ -653,8 +653,15 @@ function parsePlayHQScorecard(text) {
         const ms = rawD.match(/st:\s*(.+?)\s+b:\s*(.+)$/i);
         if (ms) stumper = cleanPlayerName(ms[1]);
       } else if (dLow.startsWith('run out')) {
+        let rawFielders = '';
         if (rawD.includes(':')) {
-          runOutFielders = rawD.split(':').slice(1).join(':').split(',').map(cleanPlayerName).filter(Boolean);
+          rawFielders = rawD.split(':').slice(1).join(':');
+        } else {
+          const mParen = rawD.match(/\(([^)]+)\)/);
+          if (mParen) rawFielders = mParen[1];
+        }
+        if (rawFielders) {
+          runOutFielders = rawFielders.split(',').map(cleanPlayerName).filter(Boolean);
         }
       }
 
@@ -666,16 +673,24 @@ function parsePlayHQScorecard(text) {
       const name = cleanPlayerName(line);
       const bStats = lines.slice(i + 1, i + 9);
       if (bStats.length >= 8) {
-        res.bowlers.push({
-          name,
-          overs: bStats[0],
-          balls: parseOversToBalls(bStats[0]),
-          maidens: parseInt(bStats[1], 10) || 0,
-          runs: parseInt(bStats[2], 10) || 0,
-          wickets: parseInt(bStats[3], 10) || 0,
-          wides: parseInt(bStats[6], 10) || 0,
-          noBalls: parseInt(bStats[7], 10) || 0
-        });
+        const balls = parseOversToBalls(bStats[0]);
+        const maidens = parseInt(bStats[1], 10) || 0;
+        const runs = parseInt(bStats[2], 10) || 0;
+        const wickets = parseInt(bStats[3], 10) || 0;
+        const wides = parseInt(bStats[6], 10) || 0;
+        const noBalls = parseInt(bStats[7], 10) || 0;
+        if (balls > 0 || wides > 0 || noBalls > 0 || runs > 0 || wickets > 0) {
+          res.bowlers.push({
+            name,
+            overs: bStats[0],
+            balls,
+            maidens,
+            runs,
+            wickets,
+            wides,
+            noBalls
+          });
+        }
         i += 9;
         continue;
       }

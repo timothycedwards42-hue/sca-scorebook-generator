@@ -1086,6 +1086,11 @@ const server = http.createServer(async (req, res) => {
         if (impCode !== 0) {
           res.write(`\nImporter exited with code ${impCode} for "${curTargetLabel}".\n`);
           anyFailed = true;
+        } else {
+          try {
+            fs.rmSync(outDir, { recursive: true, force: true });
+            res.write(`Cleaned up temporary downloads folder: ${path.relative(repoRoot, outDir)}\n`);
+          } catch {}
         }
       }
     }

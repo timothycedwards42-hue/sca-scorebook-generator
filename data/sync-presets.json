@@ -1,5 +1,225 @@
 [
   {
+    "label": "Hawkesbury U15-1 — Summer 2026/27",
+    "org": "Hawkesbury District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Hawkesbury U15-1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:37:22.061Z"
+  },
+  {
+    "label": "Hawkesbury U14-1 — Summer 2026/27",
+    "org": "Hawkesbury District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Hawkesbury U14-1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:35:53.325Z"
+  },
+  {
+    "label": "Hawkesbury U13-1 — Summer 2026/27",
+    "org": "Hawkesbury District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Hawkesbury U13-1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:33:55.900Z"
+  },
+  {
+    "label": "Hawkesbury U12-1 — Summer 2026/27",
+    "org": "Hawkesbury District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Hawkesbury U12-1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:32:05.258Z"
+  },
+  {
+    "label": "Hawkesbury U11-1 — Summer 2026/27",
+    "org": "Hawkesbury District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Hawkesbury U11-1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:30:36.352Z"
+  },
+  {
+    "label": "SSJCA U15 EG Weblin Shield — Summer 2026/27",
+    "org": "Sutherland Shire Junior Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "SSJCA U15 EG Weblin Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:27:37.053Z"
+  },
+  {
+    "label": "SSJCA U14 Harold Moore Shield — Summer 2026/27",
+    "org": "Sutherland Shire Junior Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "SSJCA U14 Harold Moore Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:26:07.375Z"
+  },
+  {
+    "label": "SSJCA U13 WS Gee Shield — Summer 2026/27",
+    "org": "Sutherland Shire Junior Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "SSJCA U13 WS Gee Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:24:09.636Z"
+  },
+  {
+    "label": "SSJCA U12 Arch Cawsey Shield — Summer 2026/27",
+    "org": "Sutherland Shire Junior Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "SSJCA U12 Arch Cawsey Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:22:40.495Z"
+  },
+  {
+    "label": "SSJCA U11 Colin Cooper Cup — Summer 2026/27",
+    "org": "Sutherland Shire Junior Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "SSJCA U11 Colin Cooper Cup",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:20:41.194Z"
+  },
+  {
+    "label": "C&WSCA U15s Div 1 — Summer 2026/27",
+    "org": "Canterbury & Western Suburbs Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "C&WSCA U15s Div 1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:17:19.045Z"
+  },
+  {
+    "label": "C&WSCA U14s Div 1 — Summer 2026/27",
+    "org": "Canterbury & Western Suburbs Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "C&WSCA U14s Div 1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:15:51.963Z"
+  },
+  {
+    "label": "C&WSCA U13s Div 1 — Summer 2026/27",
+    "org": "Canterbury & Western Suburbs Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "C&WSCA U13s Div 1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:14:23.870Z"
+  },
+  {
+    "label": "C&WSCA U12s Div 1 — Summer 2026/27",
+    "org": "Canterbury & Western Suburbs Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "C&WSCA U12s Div 1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:12:54.739Z"
+  },
+  {
+    "label": "C&WSCA U11s Div 1 — Summer 2026/27",
+    "org": "Canterbury & Western Suburbs Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "C&WSCA U11s Div 1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T20:11:24.753Z"
+  },
+  {
+    "label": "Parramatta Weblin Shield U15 — Summer 2026/27",
+    "org": "Parramatta District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Parramatta Weblin Shield U15",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T19:57:01.042Z"
+  },
+  {
+    "label": "Parramatta U13 - 1 Gee Shield — Summer 2026/27",
+    "org": "Parramatta District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Parramatta U13 - 1 Gee Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T19:56:52.413Z"
+  },
+  {
+    "label": "Parramatta U12 - 1 Cawsey Shield — Summer 2026/27",
+    "org": "Parramatta District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Parramatta U12 - 1 Cawsey Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T19:54:54.056Z"
+  },
+  {
+    "label": "Parramatta U11 Colin Cooper Cup — Summer 2026/27",
+    "org": "Parramatta District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Parramatta U11 Colin Cooper Cup",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T19:53:25.350Z"
+  },
+  {
+    "label": "Parramatta Moore Shield U14 — Summer 2026/27",
+    "org": "Parramatta District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Parramatta Moore Shield U14",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T19:51:28.087Z"
+  },
+  {
     "label": "North Shore U12/2 — Summer 2026/27",
     "org": "North Shore Junior Cricket Association - Rep Teams",
     "season": "Summer 2026/27",
@@ -64,17 +284,6 @@
     "librarySeason": "",
     "libraryTeam": "",
     "lastUsed": "2026-11-26T08:27:42.591Z"
-  },
-  {
-    "label": "Parramatta U13 - 1 Gee Shield — Summer 2026/27",
-    "org": "Parramatta District Cricket Association - Rep Teams",
-    "season": "Summer 2026/27",
-    "grade": "Parramatta U13 - 1 Gee Shield",
-    "team": "",
-    "comp": "",
-    "librarySeason": "",
-    "libraryTeam": "",
-    "lastUsed": "2026-11-26T08:22:54.341Z"
   },
   {
     "label": "Manly Warringah U13/1 — Summer 2026/27",

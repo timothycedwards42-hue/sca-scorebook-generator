@@ -30,6 +30,7 @@ function parseArgs(argv) {
     org: '',
     season: '',
     grade: '',
+    gradeIndex: -1,
     team: '',
     out: '',
     delay: 2000,
@@ -51,6 +52,7 @@ function parseArgs(argv) {
     else if (a === '--org' && argv[i + 1]) args.org = argv[++i];
     else if (a === '--season' && argv[i + 1]) args.season = argv[++i];
     else if (a === '--grade' && argv[i + 1]) args.grade = argv[++i];
+    else if (a === '--grade-index' && argv[i + 1]) args.gradeIndex = parseInt(argv[++i], 10);
     else if (a === '--team' && argv[i + 1]) args.team = argv[++i];
     else if (a === '--out' && argv[i + 1]) args.out = argv[++i];
     else if (a === '--delay' && argv[i + 1]) args.delay = Math.max(500, parseInt(argv[++i], 10) || 2000);
@@ -149,13 +151,17 @@ async function getDropdownScope(page, trigger) {
   return page;
 }
 
-async function selectCustomDropdown(page, labelName, query) {
+async function selectCustomDropdown(page, labelName, query, exactIdx = -1) {
   const trigger = page.getByRole('button', { name: labelName, exact: true });
   await waitForEnabled(trigger, 15000);
-  await trigger.click();
+  await trigger.click({ force: true, timeout: 10000 });
 
   const scope = await getDropdownScope(page, trigger);
   const { opts, texts } = await readOpenOptions(scope);
+  if (exactIdx >= 0 && exactIdx < texts.length) {
+    await opts.nth(exactIdx).click({ force: true, timeout: 10000 });
+    return texts[exactIdx];
+  }
   const chosen = findMatchingOption(texts, query);
   if (!chosen) {
     await page.keyboard.press('Escape').catch(() => {});
@@ -167,7 +173,7 @@ async function selectCustomDropdown(page, labelName, query) {
   }
 
   const idx = texts.indexOf(chosen);
-  await opts.nth(idx).click();
+  await opts.nth(idx).click({ force: true, timeout: 10000 });
   return chosen;
 }
 
@@ -357,6 +363,9 @@ async function scrapeMatchPage(matchPage, matchId) {
         const econ = cells[5] ?? '0.00';
         const wd = cells[6] ?? '0';
         const nb = cells[7] ?? '0';
+        if ((parseFloat(o) || 0) === 0 && (parseInt(r, 10) || 0) === 0 && (parseInt(w, 10) || 0) === 0 && (parseInt(wd, 10) || 0) === 0 && (parseInt(nb, 10) || 0) === 0) {
+          return;
+        }
         out.push(name, o, m, r, w, '0', econ, wd, nb);
       });
     }
@@ -507,7 +516,7 @@ async function main() {
 
     const chosenSeason = await selectCustomDropdown(page, 'Season', args.season);
     console.log(`Season:       ${chosenSeason}`);
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(1400);
 
     // Associations expose a "Grade" dropdown; Clubs expose a "Team" dropdown
     const gradeBtn = page.getByRole('button', { name: 'Grade', exact: true });
@@ -518,7 +527,7 @@ async function main() {
     if (hasTeamBtn && !hasGradeBtn) thirdLabel = 'Team';
 
     const thirdQuery = thirdLabel === 'Team' ? (args.team || args.grade) : (args.grade || args.team);
-    const chosenThird = await selectCustomDropdown(page, thirdLabel, thirdQuery);
+    const chosenThird = await selectCustomDropdown(page, thirdLabel, thirdQuery, args.gradeIndex);
     console.log(`${(thirdLabel + ':').padEnd(14)}${chosenThird}`);
     await page.waitForTimeout(1000);
 
