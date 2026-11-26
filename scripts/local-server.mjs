@@ -35,6 +35,114 @@ const MIME = {
 };
 
 let activeChild = null;
+let lookupBrowser = null;
+let lookupPage = null;
+let lookupBusy = false;
+
+async function getLookupPage() {
+  if (lookupPage && !lookupPage.isClosed()) return lookupPage;
+  const playwright = await import('playwright');
+  if (!lookupBrowser || !lookupBrowser.isConnected()) {
+    lookupBrowser = await playwright.chromium.launch({ headless: true });
+  }
+  const ctx = await lookupBrowser.newContext();
+  lookupPage = await ctx.newPage();
+  await lookupPage.goto('https://play.cricket.com.au/stats?cat=ballByBall', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await lookupPage.locator('#stats-org-search').waitFor({ state: 'visible', timeout: 15000 });
+  return lookupPage;
+}
+
+async function searchPlayCricketOrgs(query) {
+  const page = await getLookupPage();
+  const clearBtn = page.getByRole('button', { name: 'Clear Search' });
+  if (await clearBtn.isVisible().catch(() => false)) {
+    await clearBtn.click();
+    await page.waitForTimeout(200);
+  }
+  const searchBox = page.locator('#stats-org-search');
+  await searchBox.click();
+  await searchBox.fill(String(query || '').trim().slice(0, 20));
+  const listbox = page.locator('[role="listbox"]:visible').first();
+  await listbox.waitFor({ state: 'visible', timeout: 8000 });
+  const opts = listbox.locator('[role="option"]:visible');
+  await opts.first().waitFor({ state: 'visible', timeout: 8000 });
+  const count = await opts.count();
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    const t = (await opts.nth(i).innerText()).trim();
+    if (t) results.push(t);
+  }
+  return results;
+}
+
+async function lookupOrgOptions(orgName, seasonName) {
+  const page = await getLookupPage();
+  const clearBtn = page.getByRole('button', { name: 'Clear Search' });
+  if (await clearBtn.isVisible().catch(() => false)) {
+    await clearBtn.click();
+    await page.waitForTimeout(250);
+  }
+  const searchBox = page.locator('#stats-org-search');
+  await searchBox.click();
+  await searchBox.fill(String(orgName || '').trim().slice(0, 20));
+  const listbox = page.locator('[role="listbox"]:visible').first();
+  await listbox.waitFor({ state: 'visible', timeout: 8000 });
+  const orgOpts = listbox.locator('[role="option"]:visible');
+  const orgCount = await orgOpts.count();
+  let clicked = false;
+  for (let i = 0; i < orgCount; i++) {
+    const t = (await orgOpts.nth(i).innerText()).trim();
+    if (t.toLowerCase() === orgName.trim().toLowerCase()) {
+      await orgOpts.nth(i).click();
+      clicked = true;
+      break;
+    }
+  }
+  if (!clicked && orgCount > 0) await orgOpts.first().click();
+  await page.waitForTimeout(800);
+
+  const readDropdown = async (labelName) => {
+    const trigger = page.getByRole('button', { name: labelName, exact: true });
+    if (!(await trigger.isVisible().catch(() => false)) || !(await trigger.isEnabled().catch(() => false))) return [];
+    await trigger.click();
+    const controlsId = await trigger.getAttribute('aria-controls').catch(() => null);
+    const scope = controlsId && (await page.locator(`#${controlsId}`).count().catch(() => 0)) > 0
+      ? page.locator(`#${controlsId}`)
+      : page;
+    const opts = scope.locator('[role="option"]:visible');
+    await opts.first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+    const c = await opts.count();
+    const items = [];
+    for (let i = 0; i < c; i++) {
+      const t = (await opts.nth(i).innerText()).trim();
+      if (t) items.push(t);
+    }
+    return { items, opts };
+  };
+
+  const seasonRes = await readDropdown('Season');
+  const seasons = seasonRes.items || [];
+  if (seasonName && seasonRes.opts) {
+    const sIdx = seasons.findIndex(s => s.toLowerCase().includes(seasonName.toLowerCase()));
+    if (sIdx >= 0) {
+      await seasonRes.opts.nth(sIdx).click();
+      await page.waitForTimeout(800);
+    } else {
+      await page.keyboard.press('Escape').catch(() => {});
+    }
+  } else {
+    await page.keyboard.press('Escape').catch(() => {});
+  }
+
+  let thirdLabel = 'Grade';
+  const hasTeam = await page.getByRole('button', { name: 'Team', exact: true }).isVisible().catch(() => false);
+  const hasGrade = await page.getByRole('button', { name: 'Grade', exact: true }).isVisible().catch(() => false);
+  if (hasTeam && !hasGrade) thirdLabel = 'Team';
+
+  const thirdRes = await readDropdown(thirdLabel);
+  await page.keyboard.press('Escape').catch(() => {});
+  return { seasons, thirdLabel, thirdOptions: thirdRes.items || [] };
+}
 
 function slugify(str, fallback = 'unknown') {
   const s = String(str || '')
@@ -775,6 +883,61 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/lookup-orgs' && req.method === 'GET') {
+    const q = (urlObj.searchParams.get('q') || '').trim();
+    if (q.length < 2) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Enter at least 2 characters to search.' }));
+      return;
+    }
+    if (lookupBusy) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'A PlayCricket lookup is already in progress.' }));
+      return;
+    }
+    lookupBusy = true;
+    try {
+      const results = await searchPlayCricketOrgs(q);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, results }));
+    } catch (err) {
+      lookupPage = null;
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: err.message }));
+    } finally {
+      lookupBusy = false;
+    }
+    return;
+  }
+
+  if (pathname === '/api/lookup-options' && req.method === 'GET') {
+    const org = (urlObj.searchParams.get('org') || '').trim();
+    const season = (urlObj.searchParams.get('season') || '').trim();
+    if (!org) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Organisation is required.' }));
+      return;
+    }
+    if (lookupBusy) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'A PlayCricket lookup is already in progress.' }));
+      return;
+    }
+    lookupBusy = true;
+    try {
+      const data = await lookupOrgOptions(org, season);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, ...data }));
+    } catch (err) {
+      lookupPage = null;
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: err.message }));
+    } finally {
+      lookupBusy = false;
+    }
+    return;
+  }
+
   if (pathname === '/api/stop' && req.method === 'POST') {
     if (activeChild) {
       activeChild.kill('SIGTERM');
@@ -873,7 +1036,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (!listOnly && importToLibrary) {
-      res.write(`\n=== Step 2: Importing CSVs into Match Library (data/seasons/${slugify(folderSeason)}/${slugify(folderTeam)}/) ===\n`);
+      res.write(`\n=== Step 2: Importing CSVs into Match Library ===\n`);
       const impArgs = [
         path.join(repoRoot, 'scripts', 'import-csvs-to-library.mjs'),
         '--dir', outDir,
@@ -882,6 +1045,7 @@ const server = http.createServer(async (req, res) => {
         '--club', org,
         '--grade', effGrade || folderTeam
       ];
+      if ((libraryTeam || '').trim()) impArgs.push('--force-team');
       if (comp) impArgs.push('--comp', comp);
       const impCode = await runStep(process.execPath, impArgs, res);
       if (impCode !== 0) {

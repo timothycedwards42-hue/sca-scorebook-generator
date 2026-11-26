@@ -483,8 +483,12 @@
         </div>
         <div class="field-group">
           <label for="syncOrg">Association / Club</label>
-          <input type="text" id="syncOrg" list="syncOrgList" value="" placeholder="e.g. North Shore Junior Cricket Association">
+          <div style="display:flex; gap:5px;">
+            <input type="text" id="syncOrg" list="syncOrgList" value="" placeholder="Type name &amp; click Search..." style="flex:1;">
+            <button id="btnSearchOrgs" class="lib-action-btn" type="button" style="flex:0 0 auto; height:31px; padding:0 10px;" title="Search live organisations on play.cricket.com.au/stats">Search</button>
+          </div>
           <datalist id="syncOrgList"></datalist>
+          <div id="syncOrgResults" style="display:none; margin-top:5px; max-height:140px; overflow-y:auto; background:#fff; border:1px solid #cbd5e1; border-radius:5px;"></div>
         </div>
         <div class="field-row">
           <div class="field-group">
@@ -3787,6 +3791,81 @@ window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('syncComp').value = p.comp || '';
       document.getElementById('syncSeasonFolder').value = p.librarySeason || '';
       document.getElementById('syncTeamFolder').value = p.libraryTeam || '';
+    });
+  }
+
+  const btnSearchOrgs = document.getElementById('btnSearchOrgs');
+  const syncOrgInput = document.getElementById('syncOrg');
+  const syncOrgResults = document.getElementById('syncOrgResults');
+
+  async function runOrgSearch() {
+    const q = (syncOrgInput.value || '').trim();
+    if (q.length < 2) {
+      setStatus('Type at least 2 characters in Association / Club to search PlayCricket.', true);
+      return;
+    }
+    btnSearchOrgs.disabled = true;
+    btnSearchOrgs.textContent = '...';
+    syncOrgResults.style.display = 'block';
+    syncOrgResults.innerHTML = '<div style="padding:7px 9px; font-size:11px; color:#64748b;">Searching play.cricket.com.au...</div>';
+    try {
+      const resp = await fetch('/api/lookup-orgs?q=' + encodeURIComponent(q));
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'Search failed');
+      const items = data.results || [];
+      syncOrgResults.innerHTML = '';
+      if (items.length === 0) {
+        syncOrgResults.innerHTML = '<div style="padding:7px 9px; font-size:11px; color:#64748b;">No matching organisations found.</div>';
+        return;
+      }
+      items.forEach(orgName => {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding:6px 9px; font-size:11.5px; cursor:pointer; border-bottom:1px solid #f1f5f9; color:#0f172a;';
+        div.textContent = orgName;
+        div.onmouseenter = () => { div.style.background = '#eff6ff'; };
+        div.onmouseleave = () => { div.style.background = '#fff'; };
+        div.onclick = async () => {
+          syncOrgInput.value = orgName;
+          syncOrgResults.style.display = 'none';
+          setStatus(`Selected "${orgName}". Loading seasons & grades...`, false);
+          try {
+            const curS = (document.getElementById('syncSeason').value || '').trim();
+            const r2 = await fetch('/api/lookup-options?org=' + encodeURIComponent(orgName) + '&season=' + encodeURIComponent(curS));
+            const d2 = await r2.json();
+            if (r2.ok && d2.ok) {
+              const fillDl = (id, vals) => {
+                const dl = document.getElementById(id);
+                if (!dl) return;
+                dl.innerHTML = '';
+                Array.from(new Set(vals.filter(Boolean))).forEach(v => {
+                  const o = document.createElement('option');
+                  o.value = v;
+                  dl.appendChild(o);
+                });
+              };
+              if (d2.seasons && d2.seasons.length > 0) fillDl('syncSeasonList', d2.seasons);
+              if (d2.thirdOptions && d2.thirdOptions.length > 0) fillDl('syncGradeList', d2.thirdOptions);
+              setStatus(`Loaded ${d2.seasons?.length || 0} season(s) & ${d2.thirdOptions?.length || 0} ${d2.thirdLabel || 'Grade'}(s) into autocomplete.`, false);
+            }
+          } catch {}
+        };
+        syncOrgResults.appendChild(div);
+      });
+    } catch (err) {
+      syncOrgResults.innerHTML = `<div style="padding:7px 9px; font-size:11px; color:#b91c1c;">${err.message}</div>`;
+    } finally {
+      btnSearchOrgs.disabled = false;
+      btnSearchOrgs.textContent = 'Search';
+    }
+  }
+
+  if (btnSearchOrgs) btnSearchOrgs.addEventListener('click', runOrgSearch);
+  if (syncOrgInput) {
+    syncOrgInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runOrgSearch();
+      }
     });
   }
 

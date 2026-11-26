@@ -21,10 +21,11 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
 
 function parseArgs(argv) {
-  const args = { dir: '', season: '', team: '', comp: '', club: '', grade: '' };
+  const args = { dir: '', season: '', team: '', comp: '', club: '', grade: '', forceTeam: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--dir' && argv[i + 1]) args.dir = argv[++i];
+    if (a === '--force-team') args.forceTeam = true;
+    else if (a === '--dir' && argv[i + 1]) args.dir = argv[++i];
     else if (a === '--season' && argv[i + 1]) args.season = argv[++i];
     else if (a === '--team' && argv[i + 1]) args.team = argv[++i];
     else if (a === '--comp' && argv[i + 1]) args.comp = argv[++i];
@@ -32,6 +33,39 @@ function parseArgs(argv) {
     else if (a === '--grade' && argv[i + 1]) args.grade = argv[++i];
   }
   return args;
+}
+
+function inferCommonTeamFromCsvs(srcDir, csvFiles, fallbackTeam) {
+  if (csvFiles.length < 2) return fallbackTeam;
+  const counts = {};
+  for (const fileName of csvFiles) {
+    const raw = fs.readFileSync(path.join(srcDir, fileName), 'utf8').replace(/^\uFEFF/, '');
+    const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) continue;
+    const seen = new Set();
+    for (let i = 1; i < lines.length; i++) {
+      const parts = splitCSVLine(lines[i], ',');
+      if (parts.length < 4) continue;
+      const team = cleanInningsLabel(parts.slice(3).join(','));
+      if (!team || /^opponent$/i.test(team) || seen.has(team)) continue;
+      seen.add(team);
+      counts[team] = (counts[team] || 0) + 1;
+    }
+  }
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (sorted.length > 0 && sorted[0][1] >= 2 && (sorted.length === 1 || sorted[0][1] > sorted[1][1])) {
+    const inferred = sorted[0][0];
+    // Only replace fallbackTeam if fallbackTeam doesn't already share a distinctive (non-generic) word with inferred
+    const generic = new Set(['boys', 'girls', 'mixed', 'div', 'stage', 'shield', 'gee', 'team', 'teams', 'club', 'cricket', 'district', 'association', 'junior', 'rep', 'u09', 'u10', 'u11', 'u12', 'u13', 'u14', 'u15', 'u16', 'u17', 'u18']);
+    const fbWords = String(fallbackTeam || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !generic.has(w));
+    const infLow = inferred.toLowerCase();
+    const sharesDistinctive = fbWords.some(w => infLow.includes(w));
+    if (!sharesDistinctive) {
+      console.log(`Inferred actual team name "${inferred}" (appeared in ${sorted[0][1]}/${csvFiles.length} CSVs) instead of generic "${fallbackTeam}".`);
+      return inferred;
+    }
+  }
+  return fallbackTeam;
 }
 
 function slugify(str, fallback = 'unknown') {
@@ -259,6 +293,10 @@ function main() {
   if (csvFiles.length === 0) {
     console.error(`No .csv files found in ${srcDir}`);
     process.exit(1);
+  }
+
+  if (!args.forceTeam) {
+    args.team = inferCommonTeamFromCsvs(srcDir, csvFiles, args.team);
   }
 
   const seasonSlug = slugify(args.season, 'season');
