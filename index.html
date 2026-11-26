@@ -1424,6 +1424,26 @@ function parsePlayHQGranular(text) {
       else if (i + 2 < lines.length && lines[i + 2].includes(' to ')) toIdx = i + 2;
 
       if (toIdx !== -1) {
+        const toLine = lines[toIdx];
+        const colonIdx = toLine.indexOf(':');
+        if (colonIdx !== -1) {
+          // PlayCricket Ball-by-Ball format: "Bowler to Batter : outcome"
+          const descParts = [toLine.slice(colonIdx + 1).trim()];
+          let j = toIdx + 1;
+          while (
+            j < lines.length &&
+            !/^\d+\.\d+$/.test(lines[j]) &&
+            !/^(\d+|W|•|\d+\s*(Wd|NB|B|LB))$/i.test(lines[j]) &&
+            !/^\d+\s+RUNS?/i.test(lines[j]) &&
+            descParts.length < 3
+          ) {
+            descParts.push(lines[j]);
+            j++;
+          }
+          results[ball] = descParts.join(' ').toLowerCase();
+          i = j;
+          continue;
+        }
         const descParts = [];
         let j = toIdx + 1;
         while (j < lines.length && !/^\d+\.\d+$/.test(lines[j]) && descParts.length < 3) {
@@ -1487,20 +1507,21 @@ function parseScorecardView(text) {
         !/^fall of wickets$/i.test(lines[i]) &&
         !/\bbowling$/i.test(lines[i])
       ) {
-        const tok = lines[i].toUpperCase();
-        const mWd = tok.match(/^(\d+)WD$/);
-        const mNb = tok.match(/^(\d+)NB$/);
-        const mLb = tok.match(/^(\d+)LB$/);
-        const mB = tok.match(/^(\d+)B$/);
-        const mP = tok.match(/^(\d+)P$/);
-        if (mWd) result.extrasSummary.wd = parseInt(mWd[1], 10);
-        if (mNb) result.extrasSummary.nb = parseInt(mNb[1], 10);
-        if (mLb) result.extrasSummary.lb = parseInt(mLb[1], 10);
-        if (mB) result.extrasSummary.b = parseInt(mB[1], 10);
-        if (mP) {
-          result.extrasSummary.p = parseInt(mP[1], 10);
-          result.penaltyExtras = result.extrasSummary.p;
-          if (result.penaltyExtras > 0) result.hasStage1Markers = true;
+        for (const tok of lines[i].toUpperCase().split(/[\s,()]+/).filter(Boolean)) {
+          const mWd = tok.match(/^(\d+)WD$/);
+          const mNb = tok.match(/^(\d+)NB$/);
+          const mLb = tok.match(/^(\d+)LB$/);
+          const mB = tok.match(/^(\d+)B$/);
+          const mP = tok.match(/^(\d+)P$/);
+          if (mWd) result.extrasSummary.wd = parseInt(mWd[1], 10);
+          if (mNb) result.extrasSummary.nb = parseInt(mNb[1], 10);
+          if (mLb) result.extrasSummary.lb = parseInt(mLb[1], 10);
+          if (mB) result.extrasSummary.b = parseInt(mB[1], 10);
+          if (mP) {
+            result.extrasSummary.p = parseInt(mP[1], 10);
+            result.penaltyExtras = result.extrasSummary.p;
+            if (result.penaltyExtras > 0) result.hasStage1Markers = true;
+          }
         }
         i += 1;
       }
@@ -1627,8 +1648,15 @@ function parseScorecardView(text) {
         howOut = 'LBW';
         bowlerOut = bName;
       } else if (dLow.startsWith('run out')) {
-        const fielders = rawD.includes(':')
-          ? rawD.split(':').slice(1).join(':').split(',').map(s => cleanPlayerName(s)).filter(Boolean)
+        let rawFielders = '';
+        if (rawD.includes(':')) {
+          rawFielders = rawD.split(':').slice(1).join(':');
+        } else {
+          const mParen = rawD.match(/\(([^)]+)\)/);
+          if (mParen) rawFielders = mParen[1];
+        }
+        const fielders = rawFielders
+          ? rawFielders.split(',').map(s => cleanPlayerName(s)).filter(Boolean)
           : [];
         const surnames = fielders.map(f => getSurname(f)).join('/');
         howOut = surnames ? `run out(${surnames})` : 'run out';

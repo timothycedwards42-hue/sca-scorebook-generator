@@ -376,8 +376,37 @@ function main() {
         sidecar = JSON.parse(fs.readFileSync(sidecarPath, 'utf8'));
       } catch {}
     }
-    const scInn1 = (sidecar && sidecar.innings && sidecar.innings[0]) || {};
-    const scInn2 = (sidecar && sidecar.innings && sidecar.innings[1]) || {};
+    let scInn1 = (sidecar && sidecar.innings && sidecar.innings[0]) || {};
+    let scInn2 = (sidecar && sidecar.innings && sidecar.innings[1]) || {};
+
+    // PlayCricket's match page lists 2nd innings first (just like the CSV); align sidecar innings
+    // with b1/b2 by matching CSV batter surnames against each sidecar scorecard!
+    if (sidecar && Array.isArray(sidecar.innings) && sidecar.innings.length >= 2) {
+      const csvSurnames = (rows) => {
+        const set = new Set();
+        for (const r of rows || []) {
+          const m = String(r.outcome || '').match(/\bto\s+([^:,]+?)\s*:/i);
+          if (m) {
+            const last = m[1].trim().split(/\s+/).pop().toLowerCase();
+            if (last.length > 2) set.add(last);
+          }
+        }
+        return set;
+      };
+      const overlap = (surnames, text) => {
+        const low = String(text || '').toLowerCase();
+        let hits = 0;
+        for (const s of surnames) if (low.includes(s)) hits++;
+        return hits;
+      };
+      const b1S = csvSurnames(b1.rows);
+      const b2S = csvSurnames(b2.rows);
+      const straight = overlap(b1S, scInn1.scorecard) + overlap(b2S, scInn2.scorecard);
+      const flipped = overlap(b1S, scInn2.scorecard) + overlap(b2S, scInn1.scorecard);
+      if (flipped > straight) {
+        [scInn1, scInn2] = [scInn2, scInn1];
+      }
+    }
 
     // Replace generic "Innings 1 Batting" / "Opposition Bowling" headers with actual team names
     const fixHeaders = (scText, batTeam, bowlTeam) => {
