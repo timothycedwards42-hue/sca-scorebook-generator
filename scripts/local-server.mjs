@@ -982,13 +982,17 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const { org, season, grade, team, gradeOrTeam, comp, librarySeason, libraryTeam, importToLibrary, listOnly, overwrite } = body;
-    const effGrade = (grade || '').trim();
+    const { org, season, grade, grades, team, gradeOrTeam, comp, librarySeason, libraryTeam, importToLibrary, listOnly, overwrite } = body;
     const effTeam = (team || '').trim();
-    const effTarget = effTeam || effGrade || (gradeOrTeam || '').trim();
-    if (!org || !season || !effTarget) {
+    const gradeList = Array.isArray(grades) && grades.length > 0
+      ? grades.map(g => String(g || '').trim()).filter(Boolean)
+      : [(grade || '').trim()].filter(Boolean);
+    const singleFallback = effTeam || (gradeOrTeam || '').trim();
+    const targets = gradeList.length > 0 ? gradeList : (singleFallback ? [singleFallback] : []);
+
+    if (!org || !season || targets.length === 0) {
       res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Organisation, Season, and Grade/Team are required.\n[SYNC_FAILED]\n');
+      res.end('Organisation, Season, and at least one Grade/Team are required.\n[SYNC_FAILED]\n');
       return;
     }
 
@@ -999,82 +1003,97 @@ const server = http.createServer(async (req, res) => {
     });
 
     const folderSeason = (librarySeason || '').trim() || deriveLibrarySeason(season);
-    const folderTeam = (libraryTeam || '').trim() || effTarget;
+    const isBulk = targets.length > 1;
+    let anyFailed = false;
 
-    // Persist this sync configuration to data/sync-presets.json for 1-click reuse
-    try {
-      const presetsPath = path.join(repoRoot, 'data', 'sync-presets.json');
-      let presets = [];
-      if (fs.existsSync(presetsPath)) {
-        const parsed = JSON.parse(fs.readFileSync(presetsPath, 'utf8'));
-        if (Array.isArray(parsed)) presets = parsed;
+    for (let tIdx = 0; tIdx < targets.length; tIdx++) {
+      const curGrade = gradeList.length > 0 ? targets[tIdx] : '';
+      const curTargetLabel = effTeam || curGrade || targets[tIdx];
+      const folderTeam = (!isBulk && (libraryTeam || '').trim()) ? (libraryTeam || '').trim() : curTargetLabel;
+
+      if (isBulk) {
+        res.write(`\n==============================\n[${tIdx + 1}/${targets.length}] ${curTargetLabel}\n==============================\n`);
       }
-      const entry = {
-        label: `${folderTeam} — ${season}`,
-        org,
-        season,
-        grade: effGrade,
-        team: effTeam,
-        comp: (comp || '').trim(),
-        librarySeason: (librarySeason || '').trim(),
-        libraryTeam: (libraryTeam || '').trim(),
-        lastUsed: new Date().toISOString()
-      };
-      const idx = presets.findIndex(p =>
-        p.org.toLowerCase() === org.toLowerCase() &&
-        p.season.toLowerCase() === season.toLowerCase() &&
-        (p.grade || '').toLowerCase() === effGrade.toLowerCase() &&
-        (p.team || '').toLowerCase() === effTeam.toLowerCase()
-      );
-      if (idx >= 0) presets[idx] = entry;
-      else presets.unshift(entry);
-      presets.sort((a, b) => String(b.lastUsed || '').localeCompare(String(a.lastUsed || '')));
-      fs.mkdirSync(path.dirname(presetsPath), { recursive: true });
-      fs.writeFileSync(presetsPath, JSON.stringify(presets, null, 2) + '\n', 'utf8');
-    } catch {}
 
-    const outDir = path.join(repoRoot, 'downloads', slugify(folderSeason), slugify(folderTeam));
-    const dlArgs = [
-      path.join(repoRoot, 'scripts', 'download-playcricket-csvs.mjs'),
-      '--org', org,
-      '--season', season,
-      '--out', outDir
-    ];
-    if (effGrade) dlArgs.push('--grade', effGrade);
-    if (effTeam) dlArgs.push('--team', effTeam);
-    if (!effGrade && !effTeam && gradeOrTeam) dlArgs.push('--team', gradeOrTeam);
-    if (listOnly) dlArgs.push('--list-only');
-    if (overwrite) dlArgs.push('--overwrite');
+      // Persist this sync configuration to data/sync-presets.json for 1-click reuse
+      try {
+        const presetsPath = path.join(repoRoot, 'data', 'sync-presets.json');
+        let presets = [];
+        if (fs.existsSync(presetsPath)) {
+          const parsed = JSON.parse(fs.readFileSync(presetsPath, 'utf8'));
+          if (Array.isArray(parsed)) presets = parsed;
+        }
+        const entry = {
+          label: `${folderTeam} — ${season}`,
+          org,
+          season,
+          grade: curGrade,
+          team: effTeam,
+          comp: (comp || '').trim(),
+          librarySeason: (librarySeason || '').trim(),
+          libraryTeam: (!isBulk ? (libraryTeam || '').trim() : ''),
+          lastUsed: new Date().toISOString()
+        };
+        const idx = presets.findIndex(p =>
+          p.org.toLowerCase() === org.toLowerCase() &&
+          p.season.toLowerCase() === season.toLowerCase() &&
+          (p.grade || '').toLowerCase() === curGrade.toLowerCase() &&
+          (p.team || '').toLowerCase() === effTeam.toLowerCase()
+        );
+        if (idx >= 0) presets[idx] = entry;
+        else presets.unshift(entry);
+        presets.sort((a, b) => String(b.lastUsed || '').localeCompare(String(a.lastUsed || '')));
+        fs.mkdirSync(path.dirname(presetsPath), { recursive: true });
+        fs.writeFileSync(presetsPath, JSON.stringify(presets, null, 2) + '\n', 'utf8');
+      } catch {}
 
-    res.write(`=== Step 1: Downloading Ball-by-Ball CSVs ===\n`);
-    const dlCode = await runStep(process.execPath, dlArgs, res);
-    if (dlCode !== 0) {
-      res.write(`\nDownloader exited with code ${dlCode}.\n[SYNC_FAILED]\n`);
-      res.end();
-      return;
-    }
-
-    if (!listOnly && importToLibrary) {
-      res.write(`\n=== Step 2: Importing CSVs into Match Library ===\n`);
-      const impArgs = [
-        path.join(repoRoot, 'scripts', 'import-csvs-to-library.mjs'),
-        '--dir', outDir,
-        '--season', folderSeason,
-        '--team', folderTeam,
-        '--club', org,
-        '--grade', effGrade || folderTeam
+      const outDir = path.join(repoRoot, 'downloads', slugify(folderSeason), slugify(folderTeam));
+      const dlArgs = [
+        path.join(repoRoot, 'scripts', 'download-playcricket-csvs.mjs'),
+        '--org', org,
+        '--season', season,
+        '--out', outDir
       ];
-      if ((libraryTeam || '').trim()) impArgs.push('--force-team');
-      if (comp) impArgs.push('--comp', comp);
-      const impCode = await runStep(process.execPath, impArgs, res);
-      if (impCode !== 0) {
-        res.write(`\nImporter exited with code ${impCode}.\n[SYNC_FAILED]\n`);
-        res.end();
-        return;
+      if (curGrade) dlArgs.push('--grade', curGrade);
+      if (effTeam) dlArgs.push('--team', effTeam);
+      if (!curGrade && !effTeam) dlArgs.push('--team', curTargetLabel);
+      if (listOnly) dlArgs.push('--list-only');
+      if (overwrite) dlArgs.push('--overwrite');
+
+      res.write(`=== Step 1: Downloading Ball-by-Ball CSVs ===\n`);
+      const dlCode = await runStep(process.execPath, dlArgs, res);
+      if (dlCode !== 0) {
+        res.write(`\nDownloader exited with code ${dlCode} for "${curTargetLabel}".\n`);
+        anyFailed = true;
+        continue;
+      }
+
+      if (!listOnly && importToLibrary) {
+        res.write(`\n=== Step 2: Importing CSVs into Match Library ===\n`);
+        const impArgs = [
+          path.join(repoRoot, 'scripts', 'import-csvs-to-library.mjs'),
+          '--dir', outDir,
+          '--season', folderSeason,
+          '--team', folderTeam,
+          '--club', org,
+          '--grade', curGrade || folderTeam
+        ];
+        if (!isBulk && (libraryTeam || '').trim()) impArgs.push('--force-team');
+        if (overwrite) impArgs.push('--overwrite');
+        if (comp) impArgs.push('--comp', comp);
+        const impCode = await runStep(process.execPath, impArgs, res);
+        if (impCode !== 0) {
+          res.write(`\nImporter exited with code ${impCode} for "${curTargetLabel}".\n`);
+          anyFailed = true;
+        }
       }
     }
 
-    res.write(`\nAll done!\n`);
+    if (anyFailed) {
+      res.write(`\nFinished with some errors.\n[SYNC_FAILED]\n`);
+    } else {
+      res.write(`\nAll done!\n`);
+    }
     res.end();
     return;
   }

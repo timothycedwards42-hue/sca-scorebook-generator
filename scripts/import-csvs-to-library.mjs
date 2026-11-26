@@ -21,10 +21,11 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
 
 function parseArgs(argv) {
-  const args = { dir: '', season: '', team: '', comp: '', club: '', grade: '', forceTeam: false };
+  const args = { dir: '', season: '', team: '', comp: '', club: '', grade: '', forceTeam: false, overwrite: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--force-team') args.forceTeam = true;
+    else if (a === '--overwrite') args.overwrite = true;
     else if (a === '--dir' && argv[i + 1]) args.dir = argv[++i];
     else if (a === '--season' && argv[i + 1]) args.season = argv[++i];
     else if (a === '--team' && argv[i + 1]) args.team = argv[++i];
@@ -305,6 +306,7 @@ function main() {
   fs.mkdirSync(destDir, { recursive: true });
 
   let imported = 0;
+  let skippedExisting = 0;
 
   for (const fileName of csvFiles) {
     const fullPath = path.join(srcDir, fileName);
@@ -420,13 +422,21 @@ function main() {
     };
 
     const destPath = path.join(destDir, jsonFileName);
+    if (!args.overwrite && fs.existsSync(destPath)) {
+      console.log(`[NOTICE] Already in Match Library — ignored: ${path.relative(repoRoot, destPath)}`);
+      skippedExisting++;
+      continue;
+    }
     fs.writeFileSync(destPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
     console.log(`Imported: ${path.relative(repoRoot, destPath)} (${title})`);
     imported++;
   }
 
   execFileSync(process.execPath, [path.join(__dirname, 'rebuild-index.mjs')], { stdio: 'inherit' });
-  console.log(`\nDone! Imported ${imported} game(s) into data/seasons/${seasonSlug}/${teamSlug}/`);
+  console.log(`\nDone! Imported: ${imported}, Ignored (already in library): ${skippedExisting} in data/seasons/${seasonSlug}/${teamSlug}/`);
+  if (skippedExisting > 0) {
+    console.log(`[NOTICE] ${skippedExisting} game(s) already existed in the Match Library and were ignored.`);
+  }
 }
 
 main();

@@ -343,7 +343,7 @@ async function main() {
       const outFile = path.join(outDir, fileName);
 
       if (!args.overwrite && fs.existsSync(outFile)) {
-        console.log(`[${i + 1}/${matches.length}] Skipping (exists): ${fileName}`);
+        console.log(`[${i + 1}/${matches.length}] [NOTICE] Already downloaded — ignored: ${fileName}`);
         skipped++;
         continue;
       }
@@ -374,7 +374,10 @@ async function main() {
       }
     }
 
-    console.log(`\nDone! Downloaded: ${downloaded}, Skipped: ${skipped}, Failed: ${failed.length}`);
+    console.log(`\nDone! Downloaded: ${downloaded}, Ignored (already downloaded): ${skipped}, Failed: ${failed.length}`);
+    if (skipped > 0) {
+      console.log(`[NOTICE] ${skipped} CSV file(s) were already downloaded and ignored (pass --overwrite to re-download).`);
+    }
     if (failed.length > 0) {
       console.error('Failed matches:');
       failed.forEach(f => console.error(`  - ${f.matchName}: ${f.error}`));

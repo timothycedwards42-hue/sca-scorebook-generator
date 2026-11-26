@@ -502,6 +502,16 @@
             <datalist id="syncGradeList"></datalist>
           </div>
         </div>
+        <div id="syncGradeBulkWrap" style="display:none; background:#fff; border:1px solid #cbd5e1; border-radius:6px; padding:6px 8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span id="syncGradeBulkLabel" style="font-size:10.5px; font-weight:700; color:#334155;">Select Multiple Grades / Teams (Bulk Retrieve)</span>
+            <span style="display:flex; gap:6px;">
+              <button id="btnSelectAllGrades" type="button" class="btn-mini" style="font-size:9.5px;">All</button>
+              <button id="btnClearAllGrades" type="button" class="btn-mini" style="font-size:9.5px;">None</button>
+            </span>
+          </div>
+          <div id="syncGradeChecklist" style="max-height:125px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; font-size:11px;"></div>
+        </div>
         <div class="field-row">
           <div class="field-group">
             <label for="syncTeam">Team Filter (optional)</label>
@@ -3845,8 +3855,14 @@ window.addEventListener('DOMContentLoaded', () => {
               };
               if (d2.seasons && d2.seasons.length > 0) fillDl('syncSeasonList', d2.seasons);
               if (d2.chosenSeason) document.getElementById('syncSeason').value = d2.chosenSeason;
-              if (d2.thirdOptions && d2.thirdOptions.length > 0) fillDl('syncGradeList', d2.thirdOptions);
-              setStatus(`Loaded ${d2.seasons?.length || 0} season(s) & ${d2.thirdOptions?.length || 0} ${d2.thirdLabel || 'Grade'}(s) into autocomplete.`, false);
+              if (d2.thirdOptions && d2.thirdOptions.length > 0) {
+                fillDl('syncGradeList', d2.thirdOptions);
+                renderGradeChecklist(d2.thirdOptions, d2.thirdLabel || 'Grade / Team');
+              } else {
+                const bw = document.getElementById('syncGradeBulkWrap');
+                if (bw) bw.style.display = 'none';
+              }
+              setStatus(`Loaded ${d2.seasons?.length || 0} season(s) & ${d2.thirdOptions?.length || 0} ${d2.thirdLabel || 'Grade'}(s). Check one or more to bulk fetch.`, false);
             } else {
               setStatus(`Could not load seasons/grades: ${d2.error || 'Unknown error'}`, true);
             }
@@ -3874,6 +3890,41 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function renderGradeChecklist(options, labelText) {
+    const wrap = document.getElementById('syncGradeBulkWrap');
+    const list = document.getElementById('syncGradeChecklist');
+    const lbl = document.getElementById('syncGradeBulkLabel');
+    if (!wrap || !list) return;
+    list.innerHTML = '';
+    if (!options || options.length === 0) {
+      wrap.style.display = 'none';
+      return;
+    }
+    if (lbl) lbl.textContent = `Select ${labelText}s (${options.length} available — bulk retrieve)`;
+    options.forEach(opt => {
+      const row = document.createElement('label');
+      row.style.cssText = 'display:flex; align-items:center; gap:6px; margin:0; cursor:pointer; color:#0f172a; font-weight:500;';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'sync-grade-cb';
+      cb.value = opt;
+      cb.style.width = 'auto';
+      row.appendChild(cb);
+      const sp = document.createElement('span');
+      sp.textContent = opt;
+      row.appendChild(sp);
+      list.appendChild(row);
+    });
+    wrap.style.display = 'block';
+  }
+
+  document.getElementById('btnSelectAllGrades')?.addEventListener('click', () => {
+    document.querySelectorAll('.sync-grade-cb').forEach(cb => { cb.checked = true; });
+  });
+  document.getElementById('btnClearAllGrades')?.addEventListener('click', () => {
+    document.querySelectorAll('.sync-grade-cb').forEach(cb => { cb.checked = false; });
+  });
+
   const btnRunSync = document.getElementById('btnRunInlineSync');
   const btnStopSync = document.getElementById('btnStopInlineSync');
   const syncLogEl = document.getElementById('syncLog');
@@ -3888,30 +3939,47 @@ window.addEventListener('DOMContentLoaded', () => {
       const org = document.getElementById('syncOrg').value.trim();
       const season = document.getElementById('syncSeason').value.trim();
       const grade = document.getElementById('syncGrade').value.trim();
+      const checkedGrades = Array.from(document.querySelectorAll('.sync-grade-cb:checked')).map(cb => cb.value);
       const team = document.getElementById('syncTeam').value.trim();
       const comp = document.getElementById('syncComp').value.trim();
       const librarySeason = document.getElementById('syncSeasonFolder').value.trim();
       const libraryTeam = document.getElementById('syncTeamFolder').value.trim();
       const importToLibrary = document.getElementById('syncAutoImport').checked;
       const listOnly = document.getElementById('syncListOnly').checked;
-      if (!org || !season || (!grade && !team)) {
-        setStatus('Enter Association/Club, Season, and Grade or Team to fetch CSVs.', true);
+      if (!org || !season || (checkedGrades.length === 0 && !grade && !team)) {
+        setStatus('Enter Association/Club, Season, and select or type at least one Grade/Team.', true);
         return;
       }
       btnRunSync.disabled = true;
       btnStopSync.disabled = false;
       syncLogEl.style.display = 'block';
-      syncLogEl.textContent = 'Starting PlayCricket CSV fetch...\n';
+      syncLogEl.textContent = checkedGrades.length > 1
+        ? `Starting bulk PlayCricket CSV fetch for ${checkedGrades.length} grades/teams...\n`
+        : 'Starting PlayCricket CSV fetch...\n';
       setStatus('Fetching Ball-by-Ball CSVs from PlayCricket...', false);
       try {
         const resp = await fetch('/api/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ org, season, grade, team, gradeOrTeam: team || grade, comp, librarySeason, libraryTeam, importToLibrary, listOnly, overwrite: false })
+          body: JSON.stringify({
+            org,
+            season,
+            grade: checkedGrades.length === 0 ? grade : '',
+            grades: checkedGrades,
+            team,
+            gradeOrTeam: checkedGrades[0] || team || grade,
+            comp,
+            librarySeason,
+            libraryTeam,
+            importToLibrary,
+            listOnly,
+            overwrite: false
+          })
         });
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
         let failed = !resp.ok;
+        let hasIgnoredNotice = false;
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
@@ -3919,10 +3987,17 @@ window.addEventListener('DOMContentLoaded', () => {
           syncLogEl.textContent += chunk;
           syncLogEl.scrollTop = syncLogEl.scrollHeight;
           if (chunk.includes('[SYNC_FAILED]')) failed = true;
+          if (chunk.includes('[NOTICE]')) hasIgnoredNotice = true;
         }
         await refreshRepoIndex();
         await loadSyncPresets();
-        setStatus(failed ? 'PlayCricket fetch finished with errors — see log.' : 'PlayCricket fetch complete! Match Library refreshed.', failed);
+        if (failed) {
+          setStatus('PlayCricket fetch finished with errors — see log.', true);
+        } else if (hasIgnoredNotice) {
+          setStatus('Fetch complete! Some already-downloaded games were ignored — see log for details.', false);
+        } else {
+          setStatus('PlayCricket fetch complete! Match Library refreshed.', false);
+        }
       } catch (err) {
         syncLogEl.textContent += '\nError: ' + err.message + '\n';
         setStatus('Fetch error: ' + err.message, true);
