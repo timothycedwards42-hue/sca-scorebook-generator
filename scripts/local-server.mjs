@@ -226,8 +226,12 @@ const SYNC_PAGE_HTML = `<!DOCTYPE html>
         <input type="text" id="comp" value="NSJCA Rep Teams" placeholder="e.g. NSJCA Rep Teams">
       </div>
       <div>
-        <label for="librarySeason">Library Season Folder (optional)</label>
+        <label for="librarySeason">Library Season Folder Override (optional)</label>
         <input type="text" id="librarySeason" value="" placeholder="Auto-derived (e.g. 2026-27)">
+      </div>
+      <div>
+        <label for="libraryTeam">Library Team Folder Override (optional)</label>
+        <input type="text" id="libraryTeam" value="" placeholder="Auto from Grade/Team">
       </div>
     </div>
     <div class="checks">
@@ -283,6 +287,7 @@ const SYNC_PAGE_HTML = `<!DOCTYPE html>
       gradeOrTeam: document.getElementById('gradeOrTeam').value.trim(),
       comp: document.getElementById('comp').value.trim(),
       librarySeason: document.getElementById('librarySeason').value.trim(),
+      libraryTeam: document.getElementById('libraryTeam').value.trim(),
       importToLibrary: document.getElementById('importToLibrary').checked,
       listOnly: document.getElementById('listOnly').checked,
       overwrite: document.getElementById('overwrite').checked
@@ -781,7 +786,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const { org, season, grade, team, gradeOrTeam, comp, librarySeason, importToLibrary, listOnly, overwrite } = body;
+    const { org, season, grade, team, gradeOrTeam, comp, librarySeason, libraryTeam, importToLibrary, listOnly, overwrite } = body;
     const effGrade = (grade || '').trim();
     const effTeam = (team || '').trim();
     const effTarget = effTeam || effGrade || (gradeOrTeam || '').trim();
@@ -797,7 +802,9 @@ const server = http.createServer(async (req, res) => {
       'Transfer-Encoding': 'chunked'
     });
 
-    const outDir = path.join(repoRoot, 'downloads', slugify(season), slugify(effTarget));
+    const folderSeason = (librarySeason || '').trim() || deriveLibrarySeason(season);
+    const folderTeam = (libraryTeam || '').trim() || effTarget;
+    const outDir = path.join(repoRoot, 'downloads', slugify(folderSeason), slugify(folderTeam));
     const dlArgs = [
       path.join(repoRoot, 'scripts', 'download-playcricket-csvs.mjs'),
       '--org', org,
@@ -819,15 +826,14 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (!listOnly && importToLibrary) {
-      const libSeason = librarySeason || deriveLibrarySeason(season);
-      res.write(`\n=== Step 2: Importing CSVs into Match Library (data/seasons/${slugify(libSeason)}/${slugify(effTarget)}/) ===\n`);
+      res.write(`\n=== Step 2: Importing CSVs into Match Library (data/seasons/${slugify(folderSeason)}/${slugify(folderTeam)}/) ===\n`);
       const impArgs = [
         path.join(repoRoot, 'scripts', 'import-csvs-to-library.mjs'),
         '--dir', outDir,
-        '--season', libSeason,
-        '--team', effTarget,
+        '--season', folderSeason,
+        '--team', folderTeam,
         '--club', org,
-        '--grade', effGrade || effTarget
+        '--grade', effGrade || folderTeam
       ];
       if (comp) impArgs.push('--comp', comp);
       const impCode = await runStep(process.execPath, impArgs, res);

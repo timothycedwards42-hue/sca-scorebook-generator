@@ -448,6 +448,16 @@
             <input type="text" id="syncComp" value="" placeholder="e.g. NSJCA U10">
           </div>
         </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label for="syncSeasonFolder">Folder Season Override (opt.)</label>
+            <input type="text" id="syncSeasonFolder" value="" placeholder="Auto (e.g. 2026-27)">
+          </div>
+          <div class="field-group">
+            <label for="syncTeamFolder">Folder Team Override (opt.)</label>
+            <input type="text" id="syncTeamFolder" value="" placeholder="Auto from Grade/Team">
+          </div>
+        </div>
         <div style="display:flex; gap:12px; font-size:11px; color:#334155; flex-wrap:wrap;">
           <label style="display:flex; align-items:center; gap:4px; margin:0; cursor:pointer;">
             <input type="checkbox" id="syncAutoImport" checked style="width:auto;"> Import to Library
@@ -3597,6 +3607,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const grade = document.getElementById('syncGrade').value.trim();
       const team = document.getElementById('syncTeam').value.trim();
       const comp = document.getElementById('syncComp').value.trim();
+      const librarySeason = document.getElementById('syncSeasonFolder').value.trim();
+      const libraryTeam = document.getElementById('syncTeamFolder').value.trim();
       const importToLibrary = document.getElementById('syncAutoImport').checked;
       const listOnly = document.getElementById('syncListOnly').checked;
       if (!org || !season || (!grade && !team)) {
@@ -3612,7 +3624,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const resp = await fetch('/api/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ org, season, grade, team, gradeOrTeam: team || grade, comp, importToLibrary, listOnly, overwrite: false })
+          body: JSON.stringify({ org, season, grade, team, gradeOrTeam: team || grade, comp, librarySeason, libraryTeam, importToLibrary, listOnly, overwrite: false })
         });
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
