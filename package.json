@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "node scripts/local-server.mjs --open",
     "download-csvs": "node scripts/download-playcricket-csvs.mjs",
     "import-csvs": "node scripts/import-csvs-to-library.mjs",
     "rebuild-index": "node scripts/rebuild-index.mjs"
