@@ -761,6 +761,20 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/presets' && req.method === 'GET') {
+    const presetsPath = path.join(repoRoot, 'data', 'sync-presets.json');
+    let presets = [];
+    try {
+      if (fs.existsSync(presetsPath)) {
+        const parsed = JSON.parse(fs.readFileSync(presetsPath, 'utf8'));
+        if (Array.isArray(parsed)) presets = parsed;
+      }
+    } catch {}
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(presets));
+    return;
+  }
+
   if (pathname === '/api/stop' && req.method === 'POST') {
     if (activeChild) {
       activeChild.kill('SIGTERM');
@@ -804,6 +818,39 @@ const server = http.createServer(async (req, res) => {
 
     const folderSeason = (librarySeason || '').trim() || deriveLibrarySeason(season);
     const folderTeam = (libraryTeam || '').trim() || effTarget;
+
+    // Persist this sync configuration to data/sync-presets.json for 1-click reuse
+    try {
+      const presetsPath = path.join(repoRoot, 'data', 'sync-presets.json');
+      let presets = [];
+      if (fs.existsSync(presetsPath)) {
+        const parsed = JSON.parse(fs.readFileSync(presetsPath, 'utf8'));
+        if (Array.isArray(parsed)) presets = parsed;
+      }
+      const entry = {
+        label: `${folderTeam} — ${season}`,
+        org,
+        season,
+        grade: effGrade,
+        team: effTeam,
+        comp: (comp || '').trim(),
+        librarySeason: (librarySeason || '').trim(),
+        libraryTeam: (libraryTeam || '').trim(),
+        lastUsed: new Date().toISOString()
+      };
+      const idx = presets.findIndex(p =>
+        p.org.toLowerCase() === org.toLowerCase() &&
+        p.season.toLowerCase() === season.toLowerCase() &&
+        (p.grade || '').toLowerCase() === effGrade.toLowerCase() &&
+        (p.team || '').toLowerCase() === effTeam.toLowerCase()
+      );
+      if (idx >= 0) presets[idx] = entry;
+      else presets.unshift(entry);
+      presets.sort((a, b) => String(b.lastUsed || '').localeCompare(String(a.lastUsed || '')));
+      fs.mkdirSync(path.dirname(presetsPath), { recursive: true });
+      fs.writeFileSync(presetsPath, JSON.stringify(presets, null, 2) + '\n', 'utf8');
+    } catch {}
+
     const outDir = path.join(repoRoot, 'downloads', slugify(folderSeason), slugify(folderTeam));
     const dlArgs = [
       path.join(repoRoot, 'scripts', 'download-playcricket-csvs.mjs'),

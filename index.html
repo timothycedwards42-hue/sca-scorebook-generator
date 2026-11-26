@@ -425,17 +425,24 @@
       <h2>Fetch CSVs from PlayCricket</h2>
       <div class="season-card">
         <div class="field-group">
+          <label for="syncPresetSelect">Saved / Recent Syncs</label>
+          <select id="syncPresetSelect"><option value="">Choose a past sync to auto-fill...</option></select>
+        </div>
+        <div class="field-group">
           <label for="syncOrg">Association / Club</label>
-          <input type="text" id="syncOrg" value="North Shore Junior Cricket Association" placeholder="e.g. North Shore Junior Cricket Association">
+          <input type="text" id="syncOrg" list="syncOrgList" value="" placeholder="e.g. North Shore Junior Cricket Association">
+          <datalist id="syncOrgList"></datalist>
         </div>
         <div class="field-row">
           <div class="field-group">
             <label for="syncSeason">PlayCricket Season</label>
-            <input type="text" id="syncSeason" value="Summer 2026/27" placeholder="e.g. Summer 2026/27">
+            <input type="text" id="syncSeason" list="syncSeasonList" value="Summer 2026/27" placeholder="e.g. Summer 2026/27">
+            <datalist id="syncSeasonList"></datalist>
           </div>
           <div class="field-group">
             <label for="syncGrade">Grade (or Club Team)</label>
-            <input type="text" id="syncGrade" value="" placeholder="e.g. Saturday U10 North Stage 1">
+            <input type="text" id="syncGrade" list="syncGradeList" value="" placeholder="e.g. Saturday U10 North Stage 1">
+            <datalist id="syncGradeList"></datalist>
           </div>
         </div>
         <div class="field-row">
@@ -2510,18 +2517,63 @@ function renderScorebookTo(svg, st, meta) {
 
       if (!b.isDNB) {
         const seqStr = formatBatterEvents(b.events, dotMode);
-        const fontSize = dotMode === 'individual' && b.events.length > 35 ? 6.8 : 8.2;
+        const baseFontSize = dotMode === 'individual' && b.events.length > 35 ? 6.8 : 8.2;
         const howOutSize = b.howOut.length > 13 ? 7.0 : 8.8;
+        const maxLineW = 308;
 
         addText(168, yBot - 5.5, b.balls, { size: 7.5, hand: true, anchor: 'middle' });
-        const seqEl = addText(312, yMid - 1, seqStr, { size: fontSize, hand: true });
+
+        const measureEl = (el, str, sz) =>
+          (el && typeof el.getComputedTextLength === 'function')
+            ? el.getComputedTextLength()
+            : str.length * sz * 0.48;
+
+        let lastLineEndX = 312;
+        if (seqStr) {
+          const singleEl = addText(312, yMid - 1, seqStr, { size: baseFontSize, hand: true });
+          const singleW = measureEl(singleEl, seqStr, baseFontSize);
+
+          if (singleW <= maxLineW) {
+            lastLineEndX = 312 + singleW;
+          } else {
+            svg.removeChild(singleEl);
+            const parts = seqStr.split(' ');
+            const wrapSize = Math.min(baseFontSize, 7.6);
+            let line1 = '';
+            let splitIdx = 0;
+
+            const probeEl = addText(312, yTop + batRowH * 0.28, '', { size: wrapSize, hand: true });
+            for (let p = 0; p < parts.length; p++) {
+              const candidate = line1 ? `${line1} ${parts[p]}` : parts[p];
+              probeEl.textContent = candidate;
+              if (line1 && measureEl(probeEl, candidate, wrapSize) > maxLineW) {
+                probeEl.textContent = line1;
+                break;
+              }
+              line1 = candidate;
+              splitIdx = p + 1;
+            }
+
+            const line2 = parts.slice(splitIdx).join(' ');
+            if (line2) {
+              const l2El = addText(312, yTop + batRowH * 0.74, line2, { size: wrapSize, hand: true });
+              let l2W = measureEl(l2El, line2, wrapSize);
+              if (l2W > maxLineW) {
+                const shrunk = Math.max(5.0, wrapSize * (maxLineW / l2W));
+                l2El.setAttribute('font-size', shrunk);
+                l2W = measureEl(l2El, line2, shrunk);
+              }
+              lastLineEndX = 312 + l2W;
+            } else {
+              lastLineEndX = 312 + measureEl(probeEl, line1, wrapSize);
+            }
+          }
+        }
+
         const howOutLow = (b.howOut || '').trim().toLowerCase();
         const isOut = !data.isStage1 && howOutLow !== '' && !howOutLow.includes('not out');
         if (isOut) {
-          const textW = (seqEl && typeof seqEl.getComputedTextLength === 'function')
-            ? seqEl.getComputedTextLength()
-            : seqStr.length * fontSize * 0.45;
-          const xBase = Math.min(625, 312 + textW + 4);
+          const xBase = Math.min(625, lastLineEndX + 4);
           svg.appendChild(svgEl('polyline', {
             points: `${xBase},${yTop} ${xBase + 7},${yMid} ${xBase},${yBot}`,
             fill: 'none', stroke: '#64748b', 'stroke-width': 0.85,
@@ -3591,6 +3643,56 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnLoadTeamToSeason').addEventListener('click', loadFilteredGamesToSeasonBook);
   document.getElementById('btnRefreshRepoIndex').addEventListener('click', refreshRepoIndex);
 
+  let syncPresets = [];
+  async function loadSyncPresets() {
+    try {
+      const resp = await fetch('/api/presets?t=' + Date.now());
+      if (!resp.ok) return;
+      const list = await resp.json();
+      if (!Array.isArray(list)) return;
+      syncPresets = list;
+      const sel = document.getElementById('syncPresetSelect');
+      if (sel) {
+        sel.innerHTML = '<option value="">Choose a past sync to auto-fill...</option>';
+        list.forEach((p, i) => {
+          const o = document.createElement('option');
+          o.value = String(i);
+          o.textContent = p.label || `${p.team || p.grade} — ${p.season}`;
+          sel.appendChild(o);
+        });
+      }
+      const fillDatalist = (id, vals) => {
+        const dl = document.getElementById(id);
+        if (!dl) return;
+        dl.innerHTML = '';
+        Array.from(new Set(vals.filter(Boolean))).forEach(v => {
+          const o = document.createElement('option');
+          o.value = v;
+          dl.appendChild(o);
+        });
+      };
+      fillDatalist('syncOrgList', list.map(p => p.org));
+      fillDatalist('syncSeasonList', list.map(p => p.season));
+      fillDatalist('syncGradeList', list.map(p => p.grade));
+    } catch {}
+  }
+
+  const presetSel = document.getElementById('syncPresetSelect');
+  if (presetSel) {
+    presetSel.addEventListener('change', () => {
+      const idx = parseInt(presetSel.value, 10);
+      const p = syncPresets[idx];
+      if (!p) return;
+      document.getElementById('syncOrg').value = p.org || '';
+      document.getElementById('syncSeason').value = p.season || '';
+      document.getElementById('syncGrade').value = p.grade || '';
+      document.getElementById('syncTeam').value = p.team || '';
+      document.getElementById('syncComp').value = p.comp || '';
+      document.getElementById('syncSeasonFolder').value = p.librarySeason || '';
+      document.getElementById('syncTeamFolder').value = p.libraryTeam || '';
+    });
+  }
+
   const btnRunSync = document.getElementById('btnRunInlineSync');
   const btnStopSync = document.getElementById('btnStopInlineSync');
   const syncLogEl = document.getElementById('syncLog');
@@ -3638,6 +3740,7 @@ window.addEventListener('DOMContentLoaded', () => {
           if (chunk.includes('[SYNC_FAILED]')) failed = true;
         }
         await refreshRepoIndex();
+        await loadSyncPresets();
         setStatus(failed ? 'PlayCricket fetch finished with errors — see log.' : 'PlayCricket fetch complete! Match Library refreshed.', failed);
       } catch (err) {
         syncLogEl.textContent += '\nError: ' + err.message + '\n';
@@ -3703,6 +3806,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (syncSec) syncSec.style.display = 'block';
       const btnEnrich = document.getElementById('btnOpenLocalEnrich');
       if (btnEnrich) btnEnrich.style.display = 'inline-flex';
+      loadSyncPresets();
     }
   }).catch(() => {});
 
