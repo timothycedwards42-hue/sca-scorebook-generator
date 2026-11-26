@@ -300,6 +300,38 @@
   .btn-mini:hover { background: #e2e8f0; }
   .btn-mini-danger { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
   .btn-mini-danger:hover { background: #fee2e2; }
+  .lib-btn-grid {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+  }
+  .lib-action-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.1;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #1e293b;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .lib-action-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+  .lib-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .lib-action-btn-green {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #6ee7b7;
+  }
+  .lib-action-btn-green:hover { background: #d1fae5; }
 
   @media print {
     body { background: white; }
@@ -371,19 +403,19 @@
       <div class="field-row">
         <div class="field-group">
           <label for="libFilterSeason">Season</label>
-          <select id="libFilterSeason"><option value="">All Seasons</option></select>
+          <select id="libFilterSeason"><option value="">Select Season...</option></select>
         </div>
         <div class="field-group">
           <label for="libFilterTeam">Team</label>
-          <select id="libFilterTeam"><option value="">All Teams</option></select>
+          <select id="libFilterTeam" disabled><option value="">Select Team...</option></select>
         </div>
       </div>
       <div id="libGameList" class="season-list"></div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap;">
-        <button id="btnLoadTeamToSeason" class="btn-secondary" type="button" style="flex:1; font-size:11px; padding:5px 8px;">Load All to Season Book</button>
-        <a id="btnOpenLocalEnrich" href="/enrich" target="_blank" class="btn-mini" style="display:none; padding:5px 8px; text-decoration:none; background:#dcfce7; color:#166534; border-color:#86efac;">Submit Data</a>
-        <button id="btnLoadGameJson" class="btn-mini" type="button" style="padding:5px 8px;">Load .json</button>
-        <button id="btnRefreshRepoIndex" class="btn-mini" type="button" style="padding:5px 8px;">Refresh</button>
+      <button id="btnLoadTeamToSeason" class="lib-action-btn" type="button" style="width:100%; background:#f1f5f9;" disabled title="Add all games for the selected Season and Team into the Season Scorebook Builder below">Add All Team Games to Season Book</button>
+      <div class="lib-btn-grid">
+        <a id="btnOpenLocalEnrich" href="/enrich" target="_blank" class="lib-action-btn lib-action-btn-green" style="display:none;" title="Open the Submit &amp; Enrich page to paste PlayHQ Scorecard and Detailed Ball-by-Ball text into saved games">Add Scorecard / BBB</a>
+        <button id="btnLoadGameJson" class="lib-action-btn" type="button" title="Open a single saved game .json file from your computer">Open .json File</button>
+        <button id="btnRefreshRepoIndex" class="lib-action-btn" type="button" title="Reload the list of saved games from data/index.json">Refresh List</button>
         <input type="file" id="gameJsonImportFile" accept=".json,application/json" style="display:none;">
       </div>
     </div>
@@ -3316,17 +3348,15 @@ async function refreshRepoIndex() {
 function getFilteredRepoGames() {
   const sFilter = document.getElementById('libFilterSeason')?.value || '';
   const tFilter = document.getElementById('libFilterTeam')?.value || '';
-  return (repoIndex.games || []).filter(g => {
-    if (sFilter && g.season !== sFilter) return false;
-    if (tFilter && g.team !== tFilter) return false;
-    return true;
-  });
+  if (!sFilter || !tFilter) return [];
+  return (repoIndex.games || []).filter(g => g.season === sFilter && g.team === tFilter);
 }
 
 function renderRepoLibrary(fetchFailed) {
   const sSelect = document.getElementById('libFilterSeason');
   const tSelect = document.getElementById('libFilterTeam');
   const listEl = document.getElementById('libGameList');
+  const loadAllBtn = document.getElementById('btnLoadTeamToSeason');
   if (!sSelect || !tSelect || !listEl) return;
 
   const games = repoIndex.games || [];
@@ -3334,7 +3364,7 @@ function renderRepoLibrary(fetchFailed) {
   const prevT = tSelect.value;
 
   const seasons = Array.from(new Set(games.map(g => g.season).filter(Boolean))).sort().reverse();
-  sSelect.innerHTML = '<option value="">All Seasons</option>';
+  sSelect.innerHTML = '<option value="">Select Season...</option>';
   seasons.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s;
@@ -3344,8 +3374,11 @@ function renderRepoLibrary(fetchFailed) {
   if (seasons.includes(prevS)) sSelect.value = prevS;
 
   const curSeason = sSelect.value;
-  const teams = Array.from(new Set(games.filter(g => !curSeason || g.season === curSeason).map(g => g.team).filter(Boolean))).sort();
-  tSelect.innerHTML = '<option value="">All Teams</option>';
+  const teams = curSeason
+    ? Array.from(new Set(games.filter(g => g.season === curSeason).map(g => g.team).filter(Boolean))).sort()
+    : [];
+  tSelect.innerHTML = '<option value="">Select Team...</option>';
+  tSelect.disabled = !curSeason;
   teams.forEach(t => {
     const opt = document.createElement('option');
     opt.value = t;
@@ -3354,15 +3387,25 @@ function renderRepoLibrary(fetchFailed) {
   });
   if (teams.includes(prevT)) tSelect.value = prevT;
 
+  const curTeam = tSelect.value;
   const filtered = getFilteredRepoGames();
+  if (loadAllBtn) loadAllBtn.disabled = filtered.length === 0;
   listEl.innerHTML = '';
+
+  if (!curSeason || !curTeam) {
+    const prompt = document.createElement('div');
+    prompt.style.cssText = 'font-size:11px; color:#64748b; text-align:center; padding:8px 4px;';
+    prompt.textContent = fetchFailed
+      ? 'Start the local server (or open via GitHub Pages) to browse saved seasons, or click "Open .json File".'
+      : 'Select a Season and Team above to view saved games.';
+    listEl.appendChild(prompt);
+    return;
+  }
 
   if (filtered.length === 0) {
     const empty = document.createElement('div');
     empty.style.cssText = 'font-size:11px; color:#64748b; text-align:center; padding:6px 0;';
-    empty.textContent = fetchFailed
-      ? 'Open via GitHub Pages / local server to browse data/index.json, or click "Load .json" / "Save to Repo Folder".'
-      : 'No saved games in data/seasons/ yet.';
+    empty.textContent = 'No saved games for this Season and Team.';
     listEl.appendChild(empty);
     return;
   }
@@ -3646,7 +3689,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const syncSec = document.getElementById('localSyncSection');
       if (syncSec) syncSec.style.display = 'block';
       const btnEnrich = document.getElementById('btnOpenLocalEnrich');
-      if (btnEnrich) btnEnrich.style.display = 'inline-block';
+      if (btnEnrich) btnEnrich.style.display = 'inline-flex';
     }
   }).catch(() => {});
 
