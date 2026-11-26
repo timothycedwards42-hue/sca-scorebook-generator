@@ -5,7 +5,7 @@
   "season": "2026-27",
   "team": "North Shore 14s",
   "opponent": "Opponent",
-  "savedAt": "2026-11-26T08:34:33.887Z",
+  "savedAt": "2026-11-26T09:23:33.243Z",
   "match": {
     "comp": "",
     "club": "North Shore Junior Cricket Association - Rep Teams",
@@ -14,7 +14,7 @@
     "toss": "",
     "round": "1",
     "date": "27/09/2026",
-    "result": "",
+    "result": "ABANDONED",
     "scorers": "PlayCricket Ball-by-Ball CSV"
   },
   "innings": [
@@ -694,8 +694,8 @@
       "team": "North Shore 14s",
       "against": "Opponent",
       "csv": "Ball,Score,Outcome,Innings\n5.6,2--33,T Andrews to A Bandyala : 1 run,1st Innings - North Shore 14s\n5.5,2--32,T Andrews to A Bandyala : 4 runs,1st Innings - North Shore 14s\n5.4,2--28,T Andrews to A Bandyala : 4 runs,1st Innings - North Shore 14s\n5.3,2--24,T Andrews to A Bandyala : 4 runs,1st Innings - North Shore 14s\n5.2,2--20,T Andrews to A Bandyala : 4 runs,1st Innings - North Shore 14s\n5.1,2--16,T Andrews to A Bandyala : 4 runs,1st Innings - North Shore 14s\n4.6,2--12,J Cowan to H Carson : H Carson dismissed,1st Innings - North Shore 14s\n4.5,1--12,J Cowan to H Carson : No Run,1st Innings - North Shore 14s\n4.4,1--12,J Cowan to A Bandyala : 1 run,1st Innings - North Shore 14s\n4.3,1--11,J Cowan to H Carson : 1 run,1st Innings - North Shore 14s\n4.2,1--10,J Cowan to H Carson : No Run,1st Innings - North Shore 14s\n4.1,1--10,J Cowan to H Carson : No Run,1st Innings - North Shore 14s\n3.6,1--10,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n3.5,1--10,T Andrews to A Bandyala : 2 runs,1st Innings - North Shore 14s\n3.4,1--8,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n3.3,1--8,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n3.2,1--8,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n3.1,1--8,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n2.6,1--8,J Cowan to Z Meacock : Z Meacock dismissed,1st Innings - North Shore 14s\n2.5,0--8,J Cowan to Z Meacock : No Run,1st Innings - North Shore 14s\n2.4,0--8,J Cowan to Z Meacock : No Run,1st Innings - North Shore 14s\n2.3,0--8,J Cowan to Z Meacock : No Run,1st Innings - North Shore 14s\n2.2,0--8,J Cowan to Z Meacock : 2 runs,1st Innings - North Shore 14s\n2.1,0--6,J Cowan to Z Meacock : No Run,1st Innings - North Shore 14s\n1.6,0--6,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n1.5,0--6,T Andrews to A Bandyala : 4 runs,1st Innings - North Shore 14s\n1.4,0--2,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n1.3,0--2,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n1.2,0--2,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n1.1,0--2,T Andrews to A Bandyala : No Run,1st Innings - North Shore 14s\n0.6,0--2,J Cowan to Z Meacock : No Run,1st Innings - North Shore 14s\n0.5,0--2,J Cowan to A Bandyala : 1 run,1st Innings - North Shore 14s\n0.4,0--1,J Cowan to A Bandyala : No Run,1st Innings - North Shore 14s\n0.3,0--1,J Cowan to A Bandyala : No Run,1st Innings - North Shore 14s\n0.2,0--1,J Cowan to A Bandyala : No Run,1st Innings - North Shore 14s\n0.1,0--1,J Cowan to Z Meacock : 1 run,1st Innings - North Shore 14s",
-      "scorecard": "",
-      "playhqText": "",
+      "scorecard": "North Shore 14s Batting\nBatters\nR\nB\n4S\n6s\nSR\nZachary Meacock\nrun out (O Yim, C Draper)\n3\n8\n0\n0\n37.50\nAbhay Bandyala\nnot out\n29*\n23\n6\n0\n126.08\nHarry Carson\nc: O Rouse b: J Cowan\n1\n5\n0\n0\n20.00\nLachlan Adlam\nnot out\n0\n0\n0\n0\n0.00\nExtras\n0\nTotal\n6 Overs (Run Rate: 5.50)\nOpponent Bowling\nBowlers\nO\nM\nR\nW\nHT\nE\nWD\nNB\nJames Cowan\n3\n0\n6\n1\n0\n2.00\n0\n0\nThomas Andrews\n3\n0\n27\n0\n0\n9.00\n0\n0\nFielders\nCF\nCWK\nROU\nROA\nS\nCharlie Draper\n0\n0\n1\n0\n0\nOscar Rouse\n1\n0\n0\n0\n0\nOtto Yim\n0\n0\n1\n0\n0",
+      "playhqText": "Over 6\n\n21 RUNS\n\nOver 6. 21 runs. Bowler: Thomas Andrews. North Shore 14s: 33/2(rr 5.50)\n\n1\n\n5.6\n\nT Andrews to A Bandyala : 1 run\n\n4\n\n5.5\n\nT Andrews to A Bandyala : 4 runs\n\n4\n\n5.4\n\nT Andrews to A Bandyala : 4 runs\n\n4\n\n5.3\n\nT Andrews to A Bandyala : 4 runs\n\n4\n\n5.2\n\nT Andrews to A Bandyala : 4 runs\n\n4\n\n5.1\n\nT Andrews to A Bandyala : 4 runs\nOver 5\n\n2 RUNS, 1 WICKET\n\nOver 5. 2 runs. Bowler: James Cowan. North Shore 14s: 12/2(rr 2.40)\n\nW\n\n4.6\n\nOut! Caught. J Cowan to H Carson : H Carson dismissed\n\nHarry Carson\nc: Oscar Rouse, b: James Cowan\n\nR\n\n1\n\nB\n\n5\n\n4s\n\n0\n\n6s\n\n0\n\nSR\n\n20.00\n\n4.5\n\nJ Cowan to H Carson : No Run\n\n1\n\n4.4\n\nJ Cowan to A Bandyala : 1 run\n\n1\n\n4.3\n\nJ Cowan to H Carson : 1 run\n\n4.2\n\nJ Cowan to H Carson : No Run\n\n4.1\n\nJ Cowan to H Carson : No Run\nOver 4\n\n2 RUNS\n\nOver 4. 2 runs. Bowler: Thomas Andrews. North Shore 14s: 10/1(rr 2.50)\n3.6\n\nT Andrews to A Bandyala : No Run\n\n2\n\n3.5\n\nT Andrews to A Bandyala : 2 runs\n\n3.4\n\nT Andrews to A Bandyala : No Run\n\n3.3\n\nT Andrews to A Bandyala : No Run\n\n3.2\n\nT Andrews to A Bandyala : No Run\n\n3.1\n\nT Andrews to A Bandyala : No Run\nOver 3\n\n2 RUNS, 1 WICKET\n\nOver 3. 2 runs. Bowler: James Cowan. North Shore 14s: 8/1(rr 2.67)\n\nW\n\n2.6\n\nOut! Run Out. J Cowan to Z Meacock : Z Meacock dismissed\n\nZachary Meacock\nb: James Cowan\n\nR\n\n3\n\nB\n\n8\n\n4s\n\n0\n\n6s\n\n0\n\nSR\n\n37.50\n\n2.5\n\nJ Cowan to Z Meacock : No Run\n\n2.4\n\nJ Cowan to Z Meacock : No Run\n\n2.3\n\nJ Cowan to Z Meacock : No Run\n\n2\n\n2.2\n\nJ Cowan to Z Meacock : 2 runs\n\n2.1\n\nJ Cowan to Z Meacock : No Run\nOver 2\n\n4 RUNS\n\nOver 2. 4 runs. Bowler: Thomas Andrews. North Shore 14s: 6/0(rr 3.00)\n1.6\n\nT Andrews to A Bandyala : No Run\n\n4\n\n1.5\n\nT Andrews to A Bandyala : 4 runs\n\n1.4\n\nT Andrews to A Bandyala : No Run\n\n1.3\n\nT Andrews to A Bandyala : No Run\n\n1.2\n\nT Andrews to A Bandyala : No Run\n\n1.1\n\nT Andrews to A Bandyala : No Run\nOver 1\n\n2 RUNS\n\nOver 1. 2 runs. Bowler: James Cowan. North Shore 14s: 2/0(rr 2.00)\n0.6\n\nJ Cowan to Z Meacock : No Run\n\n1\n\n0.5\n\nJ Cowan to A Bandyala : 1 run\n\n0.4\n\nJ Cowan to A Bandyala : No Run\n\n0.3\n\nJ Cowan to A Bandyala : No Run\n\n0.2\n\nJ Cowan to A Bandyala : No Run\n\n1\n\n0.1\n\nJ Cowan to Z Meacock : 1 run",
       "matchFormat": "auto",
       "overRule": "auto",
       "dotFormat": "individual",
@@ -715,5 +715,6 @@
       "preSplit": true,
       "dismissalCount": 0
     }
-  }
+  },
+  "matchId": "b70e6d65-d5d0-4203-85fb-7cc2dee26db1"
 }

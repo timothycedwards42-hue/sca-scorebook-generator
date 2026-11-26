@@ -447,7 +447,9 @@ function main() {
       if (sidecar && (scInn1.scorecard || scInn2.scorecard)) {
         try {
           const existing = JSON.parse(fs.readFileSync(destPath, 'utf8'));
-          const alreadyEnriched = Boolean((existing.raw?.innings1?.scorecard || '').trim() || (existing.raw?.innings2?.scorecard || '').trim());
+          const needsInn2 = Boolean((existing.raw?.innings2?.csv || '').trim());
+          const alreadyEnriched = Boolean((existing.raw?.innings1?.scorecard || '').trim())
+            && (!needsInn2 || Boolean((existing.raw?.innings2?.scorecard || '').trim()));
           if (!alreadyEnriched) {
             existing.matchId = sidecar.matchId || existing.matchId || '';
             if (sidecar.result && existing.match && !existing.match.result) existing.match.result = sidecar.result;

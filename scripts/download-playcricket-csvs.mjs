@@ -37,6 +37,7 @@ function parseArgs(argv) {
     listOnly: false,
     overwrite: false,
     csvOnly: false,
+    scrapeMatch: '',
     help: false
   };
   for (let i = 0; i < argv.length; i++) {
@@ -46,6 +47,7 @@ function parseArgs(argv) {
     else if (a === '--list-only') args.listOnly = true;
     else if (a === '--overwrite') args.overwrite = true;
     else if (a === '--csv-only') args.csvOnly = true;
+    else if (a === '--scrape-match' && argv[i + 1]) args.scrapeMatch = argv[++i];
     else if (a === '--org' && argv[i + 1]) args.org = argv[++i];
     else if (a === '--season' && argv[i + 1]) args.season = argv[++i];
     else if (a === '--grade' && argv[i + 1]) args.grade = argv[++i];
@@ -247,8 +249,8 @@ async function downloadSingleMatch(page, matchName, outFile) {
 async function scrapeMatchPage(matchPage, matchId) {
   const baseUrl = `https://play.cricket.com.au/match/${matchId}`;
   await matchPage.goto(`${baseUrl}?tab=scorecard`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await matchPage.locator('table[aria-label="Batting players"]').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
-  await matchPage.waitForTimeout(800);
+  await matchPage.locator('table[aria-label="Batting players"]').first().waitFor({ state: 'visible', timeout: 25000 }).catch(() => {});
+  await matchPage.waitForTimeout(1000);
 
   // Extract match summary info (result / venue) from page header text
   const headerInfo = await matchPage.evaluate(() => {
@@ -271,7 +273,9 @@ async function scrapeMatchPage(matchPage, matchId) {
         if (!tbl) return [];
         const rows = [];
         tbl.querySelectorAll('tbody tr').forEach(tr => {
-          const cells = Array.from(tr.querySelectorAll('th, td')).map(td => (td.innerText || '').trim());
+          const cells = Array.from(tr.querySelectorAll('th, td'))
+            .filter(td => window.getComputedStyle(td).display !== 'none')
+            .map(td => (td.innerText || '').trim());
           if (cells.length > 0 && cells.some(Boolean)) rows.push(cells);
         });
         return rows;
@@ -281,7 +285,7 @@ async function scrapeMatchPage(matchPage, matchId) {
       const bowlRows = readTableRows('Bowling players');
       const fieldRows = readTableRows('Fielding players');
 
-      // Try to read team heading and total/extras text from the scorecard panel
+      // Try to read total/extras text from the scorecard panel
       const panelText = (document.querySelector('main')?.innerText || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       let totalLine = '';
       let oversLine = '';
@@ -296,9 +300,10 @@ async function scrapeMatchPage(matchPage, matchId) {
         }
       }
 
-      // Active radio label
-      const checkedRadio = document.querySelector('[role="radiogroup"] [role="radio"][aria-checked="true"]');
-      const radioLabel = checkedRadio ? (checkedRadio.innerText || '').trim() : '';
+      // Active innings radio label
+      const checkedRadio = document.querySelector('[role="radiogroup"] input[type="radio"]:checked, [role="radiogroup"] [role="radio"][aria-checked="true"]');
+      const radioContainer = checkedRadio ? (checkedRadio.closest('label') || checkedRadio) : null;
+      const radioLabel = radioContainer ? (radioContainer.innerText || checkedRadio.getAttribute('aria-label') || '').trim() : '';
 
       return { batRows, bowlRows, fieldRows, extrasLine, totalLine, oversLine, radioLabel };
     });
@@ -309,18 +314,30 @@ async function scrapeMatchPage(matchPage, matchId) {
     if (raw.batRows.length > 0) {
       out.push(`${batTeamName || 'Innings'} Batting`, 'Batters', 'R', 'B', '4S', '6s', 'SR');
       raw.batRows.forEach(cells => {
-        // Cell 0 usually has "Player Name\ndismissal text"
-        const firstLines = String(cells[0] || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-        const name = firstLines[0] || '';
-        const dismissal = firstLines.slice(1).join(' ') || 'not out';
+        // PlayCricket 1280px visible columns: [Name, Dismissal, R, B, 4s, 6s, SR]
+        // (If only 6 cells, Name+Dismissal are combined in cell 0)
+        let name = '';
+        let dismissal = '';
+        let statOffset = 2;
+        if (cells.length >= 7) {
+          name = String(cells[0] || '').split(/\r?\n/)[0].trim();
+          dismissal = String(cells[1] || '').replace(/\s+/g, ' ').trim();
+          statOffset = 2;
+        } else {
+          const firstLines = String(cells[0] || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+          name = firstLines[0] || '';
+          dismissal = firstLines.slice(1).join(' ');
+          statOffset = 1;
+        }
         if (!name || /^(extras|total)$/i.test(name)) return;
-        out.push(name, dismissal);
-        const r = cells[1] ?? '-';
-        const b = cells[2] ?? '-';
-        const f4 = cells[3] ?? '0';
-        const s6 = cells[4] ?? '0';
-        const sr = cells[5] ?? '0.00';
-        out.push(r, b, f4, s6, sr);
+        if (/^did not bat$/i.test(dismissal)) return;
+        if (!dismissal) dismissal = 'not out';
+        const r = cells[statOffset] ?? '-';
+        const b = cells[statOffset + 1] ?? '-';
+        const f4 = cells[statOffset + 2] ?? '0';
+        const s6 = cells[statOffset + 3] ?? '0';
+        const sr = cells[statOffset + 4] ?? '0.00';
+        out.push(name, dismissal, r, b, f4, s6, sr);
       });
       if (raw.extrasLine) out.push('Extras', raw.extrasLine);
       if (raw.totalLine) {
@@ -357,14 +374,23 @@ async function scrapeMatchPage(matchPage, matchId) {
     return out.join('\n');
   };
 
-  const radios = matchPage.locator('[role="radiogroup"] [role="radio"]');
-  const radioCount = Math.max(1, await radios.count().catch(() => 1));
+  const getInningsRadios = async () => {
+    const byRole = matchPage.getByRole('radio');
+    const c1 = await byRole.count().catch(() => 0);
+    if (c1 >= 2) return { locator: byRole, count: c1 };
+    const byLabel = matchPage.locator('[role="radiogroup"] label');
+    const c2 = await byLabel.count().catch(() => 0);
+    if (c2 >= 2) return { locator: byLabel, count: c2 };
+    return { locator: byRole, count: Math.max(1, c1) };
+  };
+
+  const scRadios = await getInningsRadios();
   const rawScorecards = [];
 
-  for (let idx = 0; idx < Math.min(radioCount, 2); idx++) {
-    if (radioCount > 1) {
-      await radios.nth(idx).click({ force: true, timeout: 8000 }).catch(() => {});
-      await matchPage.waitForTimeout(700);
+  for (let idx = 0; idx < Math.min(scRadios.count, 2); idx++) {
+    if (scRadios.count > 1) {
+      await scRadios.locator.nth(idx).click({ force: true, timeout: 8000 }).catch(() => {});
+      await matchPage.waitForTimeout(800);
     }
     rawScorecards.push(await extractCurrentScorecard());
   }
@@ -374,14 +400,13 @@ async function scrapeMatchPage(matchPage, matchId) {
   const bbbTab = matchPage.getByRole('tab', { name: /ball by ball/i });
   if (await bbbTab.isVisible().catch(() => false)) {
     await bbbTab.click({ force: true, timeout: 8000 }).catch(() => {});
-    await matchPage.waitForTimeout(900);
+    await matchPage.waitForTimeout(1000);
 
-    const bbbRadios = matchPage.locator('[role="radiogroup"] [role="radio"]');
-    const bbbRadioCount = Math.max(1, await bbbRadios.count().catch(() => 1));
-    for (let idx = 0; idx < Math.min(bbbRadioCount, 2); idx++) {
-      if (bbbRadioCount > 1) {
-        await bbbRadios.nth(idx).click({ force: true, timeout: 8000 }).catch(() => {});
-        await matchPage.waitForTimeout(700);
+    const bbbRadios = await getInningsRadios();
+    for (let idx = 0; idx < Math.min(bbbRadios.count, 2); idx++) {
+      if (bbbRadios.count > 1) {
+        await bbbRadios.locator.nth(idx).click({ force: true, timeout: 8000 }).catch(() => {});
+        await matchPage.waitForTimeout(800);
       }
       const bbbText = await matchPage.evaluate(() => {
         const articles = Array.from(document.querySelectorAll('article'));
@@ -428,10 +453,12 @@ async function main() {
     process.exit(0);
   }
 
-  args = await promptMissingArgs(args);
-  if (!args.org || !args.season || (!args.grade && !args.team)) {
-    console.error('Error: --org, --season, and --grade (or --team) are required. Run with --help for usage.');
-    process.exit(1);
+  if (!args.scrapeMatch) {
+    args = await promptMissingArgs(args);
+    if (!args.org || !args.season || (!args.grade && !args.team)) {
+      console.error('Error: --org, --season, and --grade (or --team) are required. Run with --help for usage.');
+      process.exit(1);
+    }
   }
 
   let playwright;
@@ -446,6 +473,22 @@ async function main() {
   const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 1000 } });
   const page = await context.newPage();
   const matchPage = await context.newPage();
+
+  if (args.scrapeMatch) {
+    try {
+      const scraped = await scrapeMatchPage(matchPage, args.scrapeMatch);
+      if (args.out) {
+        fs.mkdirSync(path.dirname(path.resolve(args.out)), { recursive: true });
+        fs.writeFileSync(path.resolve(args.out), JSON.stringify(scraped, null, 2) + '\n', 'utf8');
+        console.log(`Scraped ${args.scrapeMatch} -> ${args.out} (${scraped.innings.length} innings)`);
+      } else {
+        console.log(JSON.stringify(scraped, null, 2));
+      }
+    } finally {
+      await browser.close();
+    }
+    return;
+  }
 
   try {
     console.log(`Opening ${STATS_URL} ...`);

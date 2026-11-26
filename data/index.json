@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T08:35:37.849Z",
+  "updatedAt": "2026-11-26T09:26:24.113Z",
   "games": [
     {
       "id": "2026-27/bankstown-u13s/rd01-vs-fairfield-liverpool-u13-div-1-27-09-2026",
@@ -10,12 +10,12 @@
       "opponent": "Fairfield-Liverpool U13 DIV 1",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "Fairfield-Liverpool U13 DIV 1 won by 87 runs",
       "title": "Rd 1: Bankstown U13s vs Fairfield-Liverpool U13 DIV 1 (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:12:39.633Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:16:33.966Z"
     },
     {
       "id": "2026-27/bankstown-u13s/rd02-vs-blacktown-district-u13-1-11-10-2026",
@@ -25,12 +25,12 @@
       "opponent": "Blacktown District U13/1",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 134 runs",
       "title": "Rd 2: Bankstown U13s vs Blacktown District U13/1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:12:39.637Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:16:33.970Z"
     },
     {
       "id": "2026-27/bankstown-u13s/rd03-vs-cdca-u13-1-gee-shield-18-10-2026",
@@ -40,12 +40,12 @@
       "opponent": "CDCA U13/1 Gee Shield",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Bankstown U13s won by 3 runs",
       "title": "Rd 3: CDCA U13/1 Gee Shield vs Bankstown U13s (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:12:39.639Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:16:33.973Z"
     },
     {
       "id": "2026-27/bankstown-u13s/rd04-vs-hornsby-ku-ring-gai-hills-district-u13-1-25-10-2026",
@@ -55,12 +55,12 @@
       "opponent": "Hornsby Ku-ring-gai & Hills District U13/1",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 182 runs",
       "title": "Rd 4: Bankstown U13s vs Hornsby Ku-ring-gai & Hills District U13/1 (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:12:39.640Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:16:33.976Z"
     },
     {
       "id": "2026-27/bankstown-u13s/rd05-vs-inner-west-harbour-u13-1-01-11-2026",
@@ -70,12 +70,12 @@
       "opponent": "Inner West Harbour U13- 1",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Inner West Harbour U13- 1 won by 5 wickets",
       "title": "Rd 5: Inner West Harbour U13- 1 vs Bankstown U13s (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:12:39.642Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:16:33.978Z"
     },
     {
       "id": "2026-27/bankstown-u13s/rd06-vs-hawkesbury-u13-1-08-11-2026",
@@ -85,12 +85,12 @@
       "opponent": "Hawkesbury U13-1",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "Hawkesbury U13-1 won by 48 runs",
       "title": "Rd 6: Bankstown U13s vs Hawkesbury U13-1 (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:12:39.643Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:16:33.980Z"
     },
     {
       "id": "2026-27/bankstown-u13s/rd07-vs-manly-warringah-u13-1-15-11-2026",
@@ -100,12 +100,12 @@
       "opponent": "Manly Warringah U13/1",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 37 runs",
       "title": "Rd 7: Bankstown U13s vs Manly Warringah U13/1 (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:12:39.645Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:16:33.983Z"
     },
     {
       "id": "2026-27/bankstown-u13s/rd08-vs-northern-district-u13-1-22-11-2026",
@@ -115,12 +115,12 @@
       "opponent": "Northern District U13/1",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "Bankstown U13s won by 3 wickets",
       "title": "Rd 8: Bankstown U13s vs Northern District U13/1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:12:39.647Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:16:33.985Z"
     },
     {
       "id": "2026-27/blacktown-district-u13-1/rd01-vs-hornsby-ku-ring-gai-hills-district-u13-1-27-09-2026",
@@ -130,11 +130,11 @@
       "opponent": "Hornsby Ku-ring-gai & Hills District U13/1",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "ABANDONED",
       "title": "Rd 1: Hornsby Ku-ring-gai & Hills District U13/1 vs Blacktown District U13/1 (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
+      "hasScorecard": true,
+      "hasBallByBall": true,
       "savedAt": "2026-11-26T05:06:34.282Z"
     },
     {
@@ -145,12 +145,12 @@
       "opponent": "Bankstown U13s",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 134 runs",
       "title": "Rd 2: Bankstown U13s vs Blacktown District U13/1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T05:06:34.287Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.359Z"
     },
     {
       "id": "2026-27/blacktown-district-u13-1/rd03-vs-sejca-u13-boys-gee-shield-18-10-2026",
@@ -160,12 +160,12 @@
       "opponent": "SEJCA U13 Boys Gee Shield",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 89 runs",
       "title": "Rd 3: SEJCA U13 Boys Gee Shield vs Blacktown District U13/1 (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T05:06:34.289Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.362Z"
     },
     {
       "id": "2026-27/blacktown-district-u13-1/rd04-vs-u13-div-1-st-george-gee-25-10-2026",
@@ -175,12 +175,12 @@
       "opponent": "U13 Div 1 St George GEE",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 10 wickets",
       "title": "Rd 4: Blacktown District U13/1 vs U13 Div 1 St George GEE (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T05:06:34.291Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.364Z"
     },
     {
       "id": "2026-27/blacktown-district-u13-1/rd05-vs-parramatta-u13-div-1-01-11-2026",
@@ -190,12 +190,12 @@
       "opponent": "Parramatta U13 Div 1",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 71 runs",
       "title": "Rd 5: Parramatta U13 Div 1 vs Blacktown District U13/1 (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T05:06:34.293Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.367Z"
     },
     {
       "id": "2026-27/blacktown-district-u13-1/rd06-vs-northern-district-u13-1-08-11-2026",
@@ -205,12 +205,12 @@
       "opponent": "Northern District U13/1",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 282 runs",
       "title": "Rd 6: Northern District U13/1 vs Blacktown District U13/1 (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T05:06:34.295Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.370Z"
     },
     {
       "id": "2026-27/blacktown-district-u13-1/rd07-vs-inner-west-harbour-u13-1-15-11-2026",
@@ -220,12 +220,12 @@
       "opponent": "Inner West Harbour U13- 1",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 59 runs",
       "title": "Rd 7: Inner West Harbour U13- 1 vs Blacktown District U13/1 (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T05:06:34.296Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.372Z"
     },
     {
       "id": "2026-27/blacktown-district-u13-1/rd08-vs-north-shore-u13-gee-22-11-2026",
@@ -235,12 +235,12 @@
       "opponent": "North Shore U13 Gee",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 136 runs",
       "title": "Rd 8: North Shore U13 Gee vs Blacktown District U13/1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T05:06:34.298Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.375Z"
     },
     {
       "id": "2026-27/cdca-u13-1-gee-shield/rd01-vs-c-wsca-u13s-div-1-27-09-2026",
@@ -250,12 +250,12 @@
       "opponent": "C&WSCA U13s Div 1",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "CDCA U13/1 Gee Shield won by 25 runs",
       "title": "Rd 1: C&WSCA U13s Div 1 vs CDCA U13/1 Gee Shield (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:16:18.961Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.521Z"
     },
     {
       "id": "2026-27/cdca-u13-1-gee-shield/rd02-vs-hawkesbury-u13-1-11-10-2026",
@@ -265,12 +265,12 @@
       "opponent": "Hawkesbury U13-1",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "CDCA U13/1 Gee Shield won by 1 wickets",
       "title": "Rd 2: CDCA U13/1 Gee Shield vs Hawkesbury U13-1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:16:18.965Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.526Z"
     },
     {
       "id": "2026-27/cdca-u13-1-gee-shield/rd03-vs-bankstown-u13s-18-10-2026",
@@ -280,12 +280,12 @@
       "opponent": "Bankstown U13s",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Bankstown U13s won by 3 runs",
       "title": "Rd 3: CDCA U13/1 Gee Shield vs Bankstown U13s (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:16:18.968Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.529Z"
     },
     {
       "id": "2026-27/cdca-u13-1-gee-shield/rd04-vs-northern-district-u13-1-25-10-2026",
@@ -295,12 +295,12 @@
       "opponent": "Northern District U13/1",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "CDCA U13/1 Gee Shield won by 66 runs",
       "title": "Rd 4: Northern District U13/1 vs CDCA U13/1 Gee Shield (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:16:18.970Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.531Z"
     },
     {
       "id": "2026-27/cdca-u13-1-gee-shield/rd05-vs-manly-warringah-u13-1-01-11-2026",
@@ -310,12 +310,12 @@
       "opponent": "Manly Warringah U13/1",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 8 wickets",
       "title": "Rd 5: Manly Warringah U13/1 vs CDCA U13/1 Gee Shield (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:16:18.972Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.534Z"
     },
     {
       "id": "2026-27/cdca-u13-1-gee-shield/rd06-vs-hornsby-ku-ring-gai-hills-district-u13-1-08-11-2026",
@@ -325,12 +325,12 @@
       "opponent": "Hornsby Ku-ring-gai & Hills District U13/1",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 9 wickets",
       "title": "Rd 6: Hornsby Ku-ring-gai & Hills District U13/1 vs CDCA U13/1 Gee Shield (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:16:18.974Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:26:23.196Z"
     },
     {
       "id": "2026-27/cdca-u13-1-gee-shield/rd07-vs-sejca-u13-boys-gee-shield-15-11-2026",
@@ -340,12 +340,12 @@
       "opponent": "SEJCA U13 Boys Gee Shield",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "SEJCA U13 Boys Gee Shield won by 9 wickets",
       "title": "Rd 7: SEJCA U13 Boys Gee Shield vs CDCA U13/1 Gee Shield (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:16:18.975Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.537Z"
     },
     {
       "id": "2026-27/cdca-u13-1-gee-shield/rd08-vs-fairfield-liverpool-u13-div-1-22-11-2026",
@@ -355,12 +355,12 @@
       "opponent": "Fairfield-Liverpool U13 DIV 1",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "CDCA U13/1 Gee Shield won by 4 wickets",
       "title": "Rd 8: CDCA U13/1 Gee Shield vs Fairfield-Liverpool U13 DIV 1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:16:18.977Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.539Z"
     },
     {
       "id": "2026-27/fairfield-liverpool-u13-div-1/rd01-vs-bankstown-u13s-27-09-2026",
@@ -370,12 +370,12 @@
       "opponent": "Bankstown U13s",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "Fairfield-Liverpool U13 DIV 1 won by 87 runs",
       "title": "Rd 1: Bankstown U13s vs Fairfield-Liverpool U13 DIV 1 (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:31:31.014Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.697Z"
     },
     {
       "id": "2026-27/fairfield-liverpool-u13-div-1/rd02-vs-u13-div-1-st-george-gee-11-10-2026",
@@ -385,12 +385,12 @@
       "opponent": "U13 Div 1 St George GEE",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "Fairfield-Liverpool U13 DIV 1 won by 7 wickets",
       "title": "Rd 2: Fairfield-Liverpool U13 DIV 1 vs U13 Div 1 St George GEE (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:31:31.018Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.701Z"
     },
     {
       "id": "2026-27/fairfield-liverpool-u13-div-1/rd03-vs-hawkesbury-u13-1-18-10-2026",
@@ -400,12 +400,12 @@
       "opponent": "Hawkesbury U13-1",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Hawkesbury U13-1 won by 4 wickets",
       "title": "Rd 3: Hawkesbury U13-1 vs Fairfield-Liverpool U13 DIV 1 (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:31:31.020Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:26:23.363Z"
     },
     {
       "id": "2026-27/fairfield-liverpool-u13-div-1/rd04-vs-u13-1-nepean-dca-25-10-2026",
@@ -415,12 +415,12 @@
       "opponent": "U13.1 Nepean DCA",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "Fairfield-Liverpool U13 DIV 1 won by 60 runs",
       "title": "Rd 4: U13.1 Nepean DCA vs Fairfield-Liverpool U13 DIV 1 (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:31:31.022Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.705Z"
     },
     {
       "id": "2026-27/fairfield-liverpool-u13-div-1/rd05-vs-ssjca-u13-ws-gee-shield-01-11-2026",
@@ -430,12 +430,12 @@
       "opponent": "SSJCA U13 WS Gee Shield",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Fairfield-Liverpool U13 DIV 1 won by 9 wickets",
       "title": "Rd 5: Fairfield-Liverpool U13 DIV 1 vs SSJCA U13 WS Gee Shield (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:31:31.023Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.707Z"
     },
     {
       "id": "2026-27/fairfield-liverpool-u13-div-1/rd06-vs-parramatta-u13-div-1-08-11-2026",
@@ -445,12 +445,12 @@
       "opponent": "Parramatta U13 Div 1",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "Fairfield-Liverpool U13 DIV 1 won by 83 runs",
       "title": "Rd 6: Parramatta U13 Div 1 vs Fairfield-Liverpool U13 DIV 1 (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:31:31.025Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.710Z"
     },
     {
       "id": "2026-27/fairfield-liverpool-u13-div-1/rd07-vs-hornsby-ku-ring-gai-hills-district-u13-1-15-11-2026",
@@ -460,12 +460,12 @@
       "opponent": "Hornsby Ku-ring-gai & Hills District U13/1",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 4 wickets",
       "title": "Rd 7: Hornsby Ku-ring-gai & Hills District U13/1 vs Fairfield-Liverpool U13 DIV 1 (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:31:31.027Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.712Z"
     },
     {
       "id": "2026-27/fairfield-liverpool-u13-div-1/rd08-vs-cdca-u13-1-gee-shield-22-11-2026",
@@ -475,12 +475,12 @@
       "opponent": "CDCA U13/1 Gee Shield",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "CDCA U13/1 Gee Shield won by 4 wickets",
       "title": "Rd 8: CDCA U13/1 Gee Shield vs Fairfield-Liverpool U13 DIV 1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:31:31.028Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.715Z"
     },
     {
       "id": "2026-27/hornsby-ku-ring-gai-hills-district-u13-1/rd01-vs-opponent-27-09-2026",
@@ -490,12 +490,12 @@
       "opponent": "Opponent",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "ABANDONED",
       "title": "Rd 1: Hornsby Ku-ring-gai & Hills District U13/1 vs Opponent (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:28:28.950Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.872Z"
     },
     {
       "id": "2026-27/hornsby-ku-ring-gai-hills-district-u13-1/rd02-vs-u13-1-nepean-dca-11-10-2026",
@@ -505,12 +505,12 @@
       "opponent": "U13.1 Nepean DCA",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 199 runs",
       "title": "Rd 2: U13.1 Nepean DCA vs Hornsby Ku-ring-gai & Hills District U13/1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:28:28.954Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.876Z"
     },
     {
       "id": "2026-27/hornsby-ku-ring-gai-hills-district-u13-1/rd03-vs-u13-div-1-st-george-gee-18-10-2026",
@@ -520,12 +520,12 @@
       "opponent": "U13 Div 1 St George GEE",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 228 runs",
       "title": "Rd 3: U13 Div 1 St George GEE vs Hornsby Ku-ring-gai & Hills District U13/1 (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:28:28.956Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.878Z"
     },
     {
       "id": "2026-27/hornsby-ku-ring-gai-hills-district-u13-1/rd04-vs-bankstown-u13s-25-10-2026",
@@ -535,12 +535,12 @@
       "opponent": "Bankstown U13s",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 182 runs",
       "title": "Rd 4: Bankstown U13s vs Hornsby Ku-ring-gai & Hills District U13/1 (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:28:28.957Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.881Z"
     },
     {
       "id": "2026-27/hornsby-ku-ring-gai-hills-district-u13-1/rd05-vs-sejca-u13-boys-gee-shield-01-11-2026",
@@ -550,12 +550,12 @@
       "opponent": "SEJCA U13 Boys Gee Shield",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 7 wickets",
       "title": "Rd 5: Hornsby Ku-ring-gai & Hills District U13/1 vs SEJCA U13 Boys Gee Shield (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:28:28.959Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.883Z"
     },
     {
       "id": "2026-27/hornsby-ku-ring-gai-hills-district-u13-1/rd06-vs-cdca-u13-1-gee-shield-08-11-2026",
@@ -565,12 +565,12 @@
       "opponent": "CDCA U13/1 Gee Shield",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 9 wickets",
       "title": "Rd 6: Hornsby Ku-ring-gai & Hills District U13/1 vs CDCA U13/1 Gee Shield (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:28:28.960Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.885Z"
     },
     {
       "id": "2026-27/hornsby-ku-ring-gai-hills-district-u13-1/rd07-vs-fairfield-liverpool-u13-div-1-15-11-2026",
@@ -580,12 +580,12 @@
       "opponent": "Fairfield-Liverpool U13 DIV 1",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 4 wickets",
       "title": "Rd 7: Hornsby Ku-ring-gai & Hills District U13/1 vs Fairfield-Liverpool U13 DIV 1 (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:28:28.962Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.887Z"
     },
     {
       "id": "2026-27/hornsby-ku-ring-gai-hills-district-u13-1/rd08-vs-inner-west-harbour-u13-1-22-11-2026",
@@ -595,12 +595,12 @@
       "opponent": "Inner West Harbour U13- 1",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 29 runs",
       "title": "Rd 8: Inner West Harbour U13- 1 vs Hornsby Ku-ring-gai & Hills District U13/1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:28:28.964Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:32.890Z"
     },
     {
       "id": "2026-27/manly-warringah-u13-1/rd01-vs-parramatta-u13-div-1-27-09-2026",
@@ -610,12 +610,12 @@
       "opponent": "Parramatta U13 Div 1",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 7 wickets",
       "title": "Rd 1: Manly Warringah U13/1 vs Parramatta U13 Div 1 (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:22:27.454Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.055Z"
     },
     {
       "id": "2026-27/manly-warringah-u13-1/rd02-vs-ssjca-u13-ws-gee-shield-11-10-2026",
@@ -625,12 +625,12 @@
       "opponent": "SSJCA U13 WS Gee Shield",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "SSJCA U13 WS Gee Shield won by 9 runs",
       "title": "Rd 2: Manly Warringah U13/1 vs SSJCA U13 WS Gee Shield (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:22:27.458Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.059Z"
     },
     {
       "id": "2026-27/manly-warringah-u13-1/rd03-vs-northern-district-u13-1-18-10-2026",
@@ -640,12 +640,12 @@
       "opponent": "Northern District U13/1",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 128 runs",
       "title": "Rd 3: Northern District U13/1 vs Manly Warringah U13/1 (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:22:27.460Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.062Z"
     },
     {
       "id": "2026-27/manly-warringah-u13-1/rd04-vs-hawkesbury-u13-1-25-10-2026",
@@ -655,12 +655,12 @@
       "opponent": "Hawkesbury U13-1",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 2 wickets",
       "title": "Rd 4: Manly Warringah U13/1 vs Hawkesbury U13-1 (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:22:27.462Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.065Z"
     },
     {
       "id": "2026-27/manly-warringah-u13-1/rd05-vs-cdca-u13-1-gee-shield-01-11-2026",
@@ -670,12 +670,12 @@
       "opponent": "CDCA U13/1 Gee Shield",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 8 wickets",
       "title": "Rd 5: Manly Warringah U13/1 vs CDCA U13/1 Gee Shield (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:22:27.464Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.067Z"
     },
     {
       "id": "2026-27/manly-warringah-u13-1/rd06-vs-north-shore-u13-gee-08-11-2026",
@@ -685,12 +685,12 @@
       "opponent": "North Shore U13 Gee",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 55 runs (Custom Target Score)",
       "title": "Rd 6: North Shore U13 Gee vs Manly Warringah U13/1 (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:22:27.466Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.069Z"
     },
     {
       "id": "2026-27/manly-warringah-u13-1/rd07-vs-bankstown-u13s-15-11-2026",
@@ -700,12 +700,12 @@
       "opponent": "Bankstown U13s",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 37 runs",
       "title": "Rd 7: Bankstown U13s vs Manly Warringah U13/1 (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:22:27.467Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.072Z"
     },
     {
       "id": "2026-27/manly-warringah-u13-1/rd08-vs-sejca-u13-boys-gee-shield-22-11-2026",
@@ -715,12 +715,12 @@
       "opponent": "SEJCA U13 Boys Gee Shield",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 65 runs",
       "title": "Rd 8: SEJCA U13 Boys Gee Shield vs Manly Warringah U13/1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:22:27.469Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.075Z"
     },
     {
       "id": "2026-27/mosman-u10-boland/rd01-vs-sijcc-carey-u10-mixed-19-09-2026",
@@ -835,12 +835,12 @@
       "opponent": "Opponent",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "ABANDONED",
       "title": "Rd 1: North Shore 14s vs Opponent (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:34:33.887Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.243Z"
     },
     {
       "id": "2026-27/north-shore-14s/rd02-vs-hawkesbury-u14-1-11-10-2026",
@@ -850,12 +850,12 @@
       "opponent": "Hawkesbury U14-1",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "North Shore 14s won by 7 wickets",
       "title": "Rd 2: North Shore 14s vs Hawkesbury U14-1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:34:33.890Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.247Z"
     },
     {
       "id": "2026-27/north-shore-14s/rd03-vs-parramatta-u14-div-1-18-10-2026",
@@ -865,12 +865,12 @@
       "opponent": "Parramatta U14 Div 1",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Parramatta U14 Div 1 won by 32 runs",
       "title": "Rd 3: North Shore 14s vs Parramatta U14 Div 1 (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:34:33.893Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.250Z"
     },
     {
       "id": "2026-27/north-shore-14s/rd04-vs-northern-district-u14-25-10-2026",
@@ -880,12 +880,12 @@
       "opponent": "Northern District U14",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "Northern District U14 won by 34 runs",
       "title": "Rd 4: North Shore 14s vs Northern District U14 (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:34:33.895Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.253Z"
     },
     {
       "id": "2026-27/north-shore-14s/rd05-vs-bankstown-u14s-01-11-2026",
@@ -895,12 +895,12 @@
       "opponent": "Bankstown U14s",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "North Shore 14s won by 27 runs",
       "title": "Rd 5: Bankstown U14s vs North Shore 14s (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:34:33.897Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.256Z"
     },
     {
       "id": "2026-27/north-shore-14s/rd06-vs-manly-warringah-u14-08-11-2026",
@@ -910,12 +910,12 @@
       "opponent": "Manly Warringah U14",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "North Shore 14s won by 7 wickets (DLS Method)",
       "title": "Rd 6: North Shore 14s vs Manly Warringah U14 (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:34:33.900Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.259Z"
     },
     {
       "id": "2026-27/north-shore-14s/rd07-vs-blacktown-district-u14-1-15-11-2026",
@@ -925,12 +925,12 @@
       "opponent": "Blacktown District U14/1",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "Blacktown District U14/1 won by 3 wickets",
       "title": "Rd 7: Blacktown District U14/1 vs North Shore 14s (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:34:33.901Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.261Z"
     },
     {
       "id": "2026-27/north-shore-14s/rd08-vs-u14-1-nepean-dca-22-11-2026",
@@ -940,12 +940,12 @@
       "opponent": "U14.1 Nepean DCA",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "U14.1 Nepean DCA won by 6 wickets",
       "title": "Rd 8: U14.1 Nepean DCA vs North Shore 14s (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:34:33.903Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.264Z"
     },
     {
       "id": "2026-27/north-shore-15s/rd01-vs-opponent-27-09-2026",
@@ -955,12 +955,12 @@
       "opponent": "Opponent",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "ABANDONED",
       "title": "Rd 1: Inner West Harbour U15 vs Opponent (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:35:37.743Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.425Z"
     },
     {
       "id": "2026-27/north-shore-15s/rd02-vs-hornsby-ku-ring-gai-hills-district-u15-1-11-10-2026",
@@ -970,12 +970,12 @@
       "opponent": "Hornsby Ku-ring-gai & Hills District U15/1",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "North Shore 15s won by 3 wickets",
       "title": "Rd 2: North Shore 15s vs Hornsby Ku-ring-gai & Hills District U15/1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:35:37.747Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.430Z"
     },
     {
       "id": "2026-27/north-shore-15s/rd03-vs-fairfield-liverpool-u15-div-1-18-10-2026",
@@ -985,12 +985,12 @@
       "opponent": "Fairfield-Liverpool U15 DIV 1",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Fairfield-Liverpool U15 DIV 1 won by 4 wickets",
       "title": "Rd 3: Fairfield-Liverpool U15 DIV 1 vs North Shore 15s (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:35:37.750Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:26:23.536Z"
     },
     {
       "id": "2026-27/north-shore-15s/rd04-vs-bankstown-u15s-25-10-2026",
@@ -1000,12 +1000,12 @@
       "opponent": "Bankstown U15s",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "North Shore 15s won by 148 runs",
       "title": "Rd 4: Bankstown U15s vs North Shore 15s (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:35:37.752Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.434Z"
     },
     {
       "id": "2026-27/north-shore-15s/rd05-vs-parramatta-u15-div-1-01-11-2026",
@@ -1015,12 +1015,12 @@
       "opponent": "Parramatta U15 Div 1",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Parramatta U15 Div 1 won by 4 wickets",
       "title": "Rd 5: Parramatta U15 Div 1 vs North Shore 15s (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:35:37.754Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.437Z"
     },
     {
       "id": "2026-27/north-shore-15s/rd06-vs-u15-1-nepean-dca-08-11-2026",
@@ -1030,12 +1030,12 @@
       "opponent": "U15.1 Nepean DCA",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "North Shore 15s won by 4 wickets (DLS Method)",
       "title": "Rd 6: North Shore 15s vs U15.1 Nepean DCA (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:35:37.756Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.440Z"
     },
     {
       "id": "2026-27/north-shore-15s/rd07-vs-manly-warringah-u15-15-11-2026",
@@ -1045,12 +1045,12 @@
       "opponent": "Manly Warringah U15",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "North Shore 15s won by 6 wickets",
       "title": "Rd 7: North Shore 15s vs Manly Warringah U15 (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:35:37.758Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.442Z"
     },
     {
       "id": "2026-27/north-shore-15s/rd08-vs-c-wsca-u15s-div-1-22-11-2026",
@@ -1060,12 +1060,132 @@
       "opponent": "C&WSCA U15s Div 1",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "North Shore 15s won by 5 wickets",
       "title": "Rd 8: North Shore 15s vs C&WSCA U15s Div 1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:35:37.760Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.445Z"
+    },
+    {
+      "id": "2026-27/north-shore-u12-cawsey/rd01-vs-opponent-27-09-2026",
+      "path": "data/seasons/2026-27/north-shore-u12-cawsey/rd01-vs-opponent-27-09-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U12 Cawsey",
+      "opponent": "Opponent",
+      "round": "1",
+      "date": "27/09/2026",
+      "result": "ABANDONED",
+      "title": "Rd 1: SEJCA U12 Cawsey Shield vs Opponent (27/09/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.610Z"
+    },
+    {
+      "id": "2026-27/north-shore-u12-cawsey/rd02-vs-hornsby-ku-ring-gai-hills-district-u12-1-11-10-2026",
+      "path": "data/seasons/2026-27/north-shore-u12-cawsey/rd02-vs-hornsby-ku-ring-gai-hills-district-u12-1-11-10-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U12 Cawsey",
+      "opponent": "Hornsby Ku-ring-gai & Hills District U12/1",
+      "round": "2",
+      "date": "11/10/2026",
+      "result": "North Shore U12 Cawsey won by 2 wickets",
+      "title": "Rd 2: North Shore U12 Cawsey vs Hornsby Ku-ring-gai & Hills District U12/1 (11/10/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.615Z"
+    },
+    {
+      "id": "2026-27/north-shore-u12-cawsey/rd03-vs-hawkesbury-u12-1-18-10-2026",
+      "path": "data/seasons/2026-27/north-shore-u12-cawsey/rd03-vs-hawkesbury-u12-1-18-10-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U12 Cawsey",
+      "opponent": "Hawkesbury U12-1",
+      "round": "3",
+      "date": "18/10/2026",
+      "result": "North Shore U12 Cawsey won by 79 runs",
+      "title": "Rd 3: Hawkesbury U12-1 vs North Shore U12 Cawsey (18/10/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.618Z"
+    },
+    {
+      "id": "2026-27/north-shore-u12-cawsey/rd04-vs-manly-warringah-u12-1-25-10-2026",
+      "path": "data/seasons/2026-27/north-shore-u12-cawsey/rd04-vs-manly-warringah-u12-1-25-10-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U12 Cawsey",
+      "opponent": "Manly Warringah U12/1",
+      "round": "4",
+      "date": "25/10/2026",
+      "result": "North Shore U12 Cawsey won by 5 wickets",
+      "title": "Rd 4: North Shore U12 Cawsey vs Manly Warringah U12/1 (25/10/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.621Z"
+    },
+    {
+      "id": "2026-27/north-shore-u12-cawsey/rd05-vs-parramatta-u12-div-1-01-11-2026",
+      "path": "data/seasons/2026-27/north-shore-u12-cawsey/rd05-vs-parramatta-u12-div-1-01-11-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U12 Cawsey",
+      "opponent": "Parramatta U12 Div 1",
+      "round": "5",
+      "date": "01/11/2026",
+      "result": "North Shore U12 Cawsey won by 9 wickets",
+      "title": "Rd 5: North Shore U12 Cawsey vs Parramatta U12 Div 1 (01/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.623Z"
+    },
+    {
+      "id": "2026-27/north-shore-u12-cawsey/rd06-vs-u12-div-1-st-george-cawsey-08-11-2026",
+      "path": "data/seasons/2026-27/north-shore-u12-cawsey/rd06-vs-u12-div-1-st-george-cawsey-08-11-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U12 Cawsey",
+      "opponent": "U12 Div 1 St George CAWSEY",
+      "round": "6",
+      "date": "08/11/2026",
+      "result": "North Shore U12 Cawsey won by 14 runs",
+      "title": "Rd 6: U12 Div 1 St George CAWSEY vs North Shore U12 Cawsey (08/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:26:23.716Z"
+    },
+    {
+      "id": "2026-27/north-shore-u12-cawsey/rd07-vs-inner-west-harbour-u12-1-15-11-2026",
+      "path": "data/seasons/2026-27/north-shore-u12-cawsey/rd07-vs-inner-west-harbour-u12-1-15-11-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U12 Cawsey",
+      "opponent": "Inner West Harbour U12- 1",
+      "round": "7",
+      "date": "15/11/2026",
+      "result": "North Shore U12 Cawsey won by 8 wickets",
+      "title": "Rd 7: North Shore U12 Cawsey vs Inner West Harbour U12- 1 (15/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.626Z"
+    },
+    {
+      "id": "2026-27/north-shore-u12-cawsey/rd08-vs-c-wsca-u12s-div-1-22-11-2026",
+      "path": "data/seasons/2026-27/north-shore-u12-cawsey/rd08-vs-c-wsca-u12s-div-1-22-11-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U12 Cawsey",
+      "opponent": "C&WSCA U12s Div 1",
+      "round": "8",
+      "date": "22/11/2026",
+      "result": "North Shore U12 Cawsey won by 42 runs",
+      "title": "Rd 8: C&WSCA U12s Div 1 vs North Shore U12 Cawsey (22/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.629Z"
     },
     {
       "id": "2026-27/north-shore-u13-1/rd01-vs-sejca-u13-boys-gee-shield-27-09-2026",
@@ -1195,12 +1315,12 @@
       "opponent": "Inner West Harbour U13- 1",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "Northern District U13/1 won by 6 wickets",
       "title": "Rd 1: Northern District U13/1 vs Inner West Harbour U13- 1 (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:19:18.091Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.798Z"
     },
     {
       "id": "2026-27/northern-district-u13-1/rd02-vs-north-shore-u13-gee-11-10-2026",
@@ -1210,12 +1330,12 @@
       "opponent": "North Shore U13 Gee",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "North Shore U13 Gee won by 4 wickets",
       "title": "Rd 2: North Shore U13 Gee vs Northern District U13/1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:19:18.094Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.803Z"
     },
     {
       "id": "2026-27/northern-district-u13-1/rd03-vs-manly-warringah-u13-1-18-10-2026",
@@ -1225,12 +1345,12 @@
       "opponent": "Manly Warringah U13/1",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 128 runs",
       "title": "Rd 3: Northern District U13/1 vs Manly Warringah U13/1 (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:19:18.096Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.806Z"
     },
     {
       "id": "2026-27/northern-district-u13-1/rd04-vs-cdca-u13-1-gee-shield-25-10-2026",
@@ -1240,12 +1360,12 @@
       "opponent": "CDCA U13/1 Gee Shield",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "CDCA U13/1 Gee Shield won by 66 runs",
       "title": "Rd 4: Northern District U13/1 vs CDCA U13/1 Gee Shield (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:19:18.099Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.809Z"
     },
     {
       "id": "2026-27/northern-district-u13-1/rd05-vs-hawkesbury-u13-1-01-11-2026",
@@ -1255,12 +1375,12 @@
       "opponent": "Hawkesbury U13-1",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Hawkesbury U13-1 won by 139 runs",
       "title": "Rd 5: Northern District U13/1 vs Hawkesbury U13-1 (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:19:18.101Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.812Z"
     },
     {
       "id": "2026-27/northern-district-u13-1/rd06-vs-blacktown-district-u13-1-08-11-2026",
@@ -1270,12 +1390,12 @@
       "opponent": "Blacktown District U13/1",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 282 runs",
       "title": "Rd 6: Northern District U13/1 vs Blacktown District U13/1 (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:19:18.103Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.814Z"
     },
     {
       "id": "2026-27/northern-district-u13-1/rd07-vs-ssjca-u13-ws-gee-shield-15-11-2026",
@@ -1285,12 +1405,12 @@
       "opponent": "SSJCA U13 WS Gee Shield",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "SSJCA U13 WS Gee Shield won by 7 wickets",
       "title": "Rd 7: SSJCA U13 WS Gee Shield vs Northern District U13/1 (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:19:18.105Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.817Z"
     },
     {
       "id": "2026-27/northern-district-u13-1/rd08-vs-bankstown-u13s-22-11-2026",
@@ -1300,12 +1420,12 @@
       "opponent": "Bankstown U13s",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "Bankstown U13s won by 3 wickets",
       "title": "Rd 8: Bankstown U13s vs Northern District U13/1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:19:18.106Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.819Z"
     },
     {
       "id": "2026-27/parramatta-u13-1-gee-shield/rd01-vs-manly-warringah-u13-1-27-09-2026",
@@ -1315,12 +1435,12 @@
       "opponent": "Manly Warringah U13/1",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 7 wickets",
       "title": "Rd 1: Manly Warringah U13/1 vs Parramatta U13 Div 1 (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:23:35.654Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.985Z"
     },
     {
       "id": "2026-27/parramatta-u13-1-gee-shield/rd02-vs-inner-west-harbour-u13-1-11-10-2026",
@@ -1330,12 +1450,12 @@
       "opponent": "Inner West Harbour U13- 1",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "Inner West Harbour U13- 1 won by 4 wickets",
       "title": "Rd 2: Inner West Harbour U13- 1 vs Parramatta U13 Div 1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:23:35.659Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.990Z"
     },
     {
       "id": "2026-27/parramatta-u13-1-gee-shield/rd03-vs-u13-1-nepean-dca-18-10-2026",
@@ -1345,12 +1465,12 @@
       "opponent": "U13.1 Nepean DCA",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Parramatta U13 Div 1 won by 8 wickets",
       "title": "Rd 3: Parramatta U13 Div 1 vs U13.1 Nepean DCA (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:23:35.660Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.992Z"
     },
     {
       "id": "2026-27/parramatta-u13-1-gee-shield/rd04-vs-north-shore-u13-gee-25-10-2026",
@@ -1360,12 +1480,12 @@
       "opponent": "North Shore U13 Gee",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "Parramatta U13 Div 1 won by 8 wickets",
       "title": "Rd 4: Parramatta U13 Div 1 vs North Shore U13 Gee (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:23:35.661Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.994Z"
     },
     {
       "id": "2026-27/parramatta-u13-1-gee-shield/rd05-vs-blacktown-district-u13-1-01-11-2026",
@@ -1375,12 +1495,12 @@
       "opponent": "Blacktown District U13/1",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 71 runs",
       "title": "Rd 5: Parramatta U13 Div 1 vs Blacktown District U13/1 (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:23:35.663Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.996Z"
     },
     {
       "id": "2026-27/parramatta-u13-1-gee-shield/rd06-vs-fairfield-liverpool-u13-div-1-08-11-2026",
@@ -1390,12 +1510,12 @@
       "opponent": "Fairfield-Liverpool U13 DIV 1",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "Fairfield-Liverpool U13 DIV 1 won by 83 runs",
       "title": "Rd 6: Parramatta U13 Div 1 vs Fairfield-Liverpool U13 DIV 1 (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:23:35.665Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:33.999Z"
     },
     {
       "id": "2026-27/parramatta-u13-1-gee-shield/rd07-vs-hawkesbury-u13-1-15-11-2026",
@@ -1405,12 +1525,12 @@
       "opponent": "Hawkesbury U13-1",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "Parramatta U13 Div 1 won by 4 wickets",
       "title": "Rd 7: Parramatta U13 Div 1 vs Hawkesbury U13-1 (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:23:35.666Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.002Z"
     },
     {
       "id": "2026-27/parramatta-u13-1-gee-shield/rd08-vs-c-wsca-u13s-div-1-22-11-2026",
@@ -1420,12 +1540,12 @@
       "opponent": "C&WSCA U13s Div 1",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "Parramatta U13 Div 1 won by 77 runs",
       "title": "Rd 8: C&WSCA U13s Div 1 vs Parramatta U13 Div 1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T08:23:35.668Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.005Z"
     },
     {
       "id": "2026-27/sejca-u13-boys-gee-shield/rd01-vs-opponent-27-09-2026",
@@ -1435,12 +1555,12 @@
       "opponent": "Opponent",
       "round": "1",
       "date": "27/09/2026",
-      "result": "",
+      "result": "ABANDONED",
       "title": "Rd 1: SEJCA U13 Boys Gee Shield vs Opponent (27/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T07:55:04.775Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.174Z"
     },
     {
       "id": "2026-27/sejca-u13-boys-gee-shield/rd02-vs-c-wsca-u13s-div-1-11-10-2026",
@@ -1450,12 +1570,12 @@
       "opponent": "C&WSCA U13s Div 1",
       "round": "2",
       "date": "11/10/2026",
-      "result": "",
+      "result": "SEJCA U13 Boys Gee Shield won by 8 wickets",
       "title": "Rd 2: SEJCA U13 Boys Gee Shield vs C&WSCA U13s Div 1 (11/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T07:55:04.778Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:26:23.892Z"
     },
     {
       "id": "2026-27/sejca-u13-boys-gee-shield/rd03-vs-blacktown-district-u13-1-18-10-2026",
@@ -1465,12 +1585,12 @@
       "opponent": "Blacktown District U13/1",
       "round": "3",
       "date": "18/10/2026",
-      "result": "",
+      "result": "Blacktown District U13/1 won by 89 runs",
       "title": "Rd 3: SEJCA U13 Boys Gee Shield vs Blacktown District U13/1 (18/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T07:55:04.780Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.180Z"
     },
     {
       "id": "2026-27/sejca-u13-boys-gee-shield/rd04-vs-inner-west-harbour-u13-1-25-10-2026",
@@ -1480,12 +1600,12 @@
       "opponent": "Inner West Harbour U13- 1",
       "round": "4",
       "date": "25/10/2026",
-      "result": "",
+      "result": "SEJCA U13 Boys Gee Shield won by 15 runs",
       "title": "Rd 4: Inner West Harbour U13- 1 vs SEJCA U13 Boys Gee Shield (25/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T07:55:04.782Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.183Z"
     },
     {
       "id": "2026-27/sejca-u13-boys-gee-shield/rd05-vs-hornsby-ku-ring-gai-hills-district-u13-1-01-11-2026",
@@ -1495,12 +1615,12 @@
       "opponent": "Hornsby Ku-ring-gai & Hills District U13/1",
       "round": "5",
       "date": "01/11/2026",
-      "result": "",
+      "result": "Hornsby Ku-ring-gai & Hills District U13/1 won by 7 wickets",
       "title": "Rd 5: Hornsby Ku-ring-gai & Hills District U13/1 vs SEJCA U13 Boys Gee Shield (01/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T07:55:04.784Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.185Z"
     },
     {
       "id": "2026-27/sejca-u13-boys-gee-shield/rd06-vs-u13-1-nepean-dca-08-11-2026",
@@ -1510,12 +1630,12 @@
       "opponent": "U13.1 Nepean DCA",
       "round": "6",
       "date": "08/11/2026",
-      "result": "",
+      "result": "SEJCA U13 Boys Gee Shield won by 22 runs",
       "title": "Rd 6: U13.1 Nepean DCA vs SEJCA U13 Boys Gee Shield (08/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T07:55:04.785Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.187Z"
     },
     {
       "id": "2026-27/sejca-u13-boys-gee-shield/rd07-vs-cdca-u13-1-gee-shield-15-11-2026",
@@ -1525,12 +1645,12 @@
       "opponent": "CDCA U13/1 Gee Shield",
       "round": "7",
       "date": "15/11/2026",
-      "result": "",
+      "result": "SEJCA U13 Boys Gee Shield won by 9 wickets",
       "title": "Rd 7: SEJCA U13 Boys Gee Shield vs CDCA U13/1 Gee Shield (15/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T07:55:04.786Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:23:34.189Z"
     },
     {
       "id": "2026-27/sejca-u13-boys-gee-shield/rd08-vs-manly-warringah-u13-1-22-11-2026",
@@ -1540,12 +1660,12 @@
       "opponent": "Manly Warringah U13/1",
       "round": "8",
       "date": "22/11/2026",
-      "result": "",
+      "result": "Manly Warringah U13/1 won by 65 runs",
       "title": "Rd 8: SEJCA U13 Boys Gee Shield vs Manly Warringah U13/1 (22/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T07:55:04.788Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T09:26:23.903Z"
     }
   ]
 }
