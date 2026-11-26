@@ -3844,10 +3844,15 @@ window.addEventListener('DOMContentLoaded', () => {
                 });
               };
               if (d2.seasons && d2.seasons.length > 0) fillDl('syncSeasonList', d2.seasons);
+              if (d2.chosenSeason) document.getElementById('syncSeason').value = d2.chosenSeason;
               if (d2.thirdOptions && d2.thirdOptions.length > 0) fillDl('syncGradeList', d2.thirdOptions);
               setStatus(`Loaded ${d2.seasons?.length || 0} season(s) & ${d2.thirdOptions?.length || 0} ${d2.thirdLabel || 'Grade'}(s) into autocomplete.`, false);
+            } else {
+              setStatus(`Could not load seasons/grades: ${d2.error || 'Unknown error'}`, true);
             }
-          } catch {}
+          } catch (err) {
+            setStatus(`Could not load seasons/grades: ${err.message}`, true);
+          }
         };
         syncOrgResults.appendChild(div);
       });

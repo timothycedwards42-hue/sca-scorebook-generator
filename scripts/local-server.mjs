@@ -75,6 +75,17 @@ async function searchPlayCricketOrgs(query) {
   return results;
 }
 
+async function waitForEnabledControl(locator, timeout = 12000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    if (await locator.isVisible().catch(() => false) && await locator.isEnabled().catch(() => false)) {
+      return true;
+    }
+    await new Promise(r => setTimeout(r, 200));
+  }
+  return false;
+}
+
 async function lookupOrgOptions(orgName, seasonName) {
   const page = await getLookupPage();
   const clearBtn = page.getByRole('button', { name: 'Clear Search' });
@@ -86,8 +97,9 @@ async function lookupOrgOptions(orgName, seasonName) {
   await searchBox.click();
   await searchBox.fill(String(orgName || '').trim().slice(0, 20));
   const listbox = page.locator('[role="listbox"]:visible').first();
-  await listbox.waitFor({ state: 'visible', timeout: 8000 });
+  await listbox.waitFor({ state: 'visible', timeout: 10000 });
   const orgOpts = listbox.locator('[role="option"]:visible');
+  await orgOpts.first().waitFor({ state: 'visible', timeout: 10000 });
   const orgCount = await orgOpts.count();
   let clicked = false;
   for (let i = 0; i < orgCount; i++) {
@@ -99,11 +111,11 @@ async function lookupOrgOptions(orgName, seasonName) {
     }
   }
   if (!clicked && orgCount > 0) await orgOpts.first().click();
-  await page.waitForTimeout(800);
 
   const readDropdown = async (labelName) => {
     const trigger = page.getByRole('button', { name: labelName, exact: true });
-    if (!(await trigger.isVisible().catch(() => false)) || !(await trigger.isEnabled().catch(() => false))) return [];
+    const ready = await waitForEnabledControl(trigger, 10000);
+    if (!ready) return { items: [], opts: null };
     await trigger.click();
     const controlsId = await trigger.getAttribute('aria-controls').catch(() => null);
     const scope = controlsId && (await page.locator(`#${controlsId}`).count().catch(() => 0)) > 0
@@ -122,26 +134,30 @@ async function lookupOrgOptions(orgName, seasonName) {
 
   const seasonRes = await readDropdown('Season');
   const seasons = seasonRes.items || [];
-  if (seasonName && seasonRes.opts) {
-    const sIdx = seasons.findIndex(s => s.toLowerCase().includes(seasonName.toLowerCase()));
-    if (sIdx >= 0) {
-      await seasonRes.opts.nth(sIdx).click();
-      await page.waitForTimeout(800);
-    } else {
-      await page.keyboard.press('Escape').catch(() => {});
-    }
+  let chosenSeason = '';
+  if (seasonRes.opts && seasons.length > 0) {
+    let sIdx = seasonName ? seasons.findIndex(s => s.toLowerCase().includes(seasonName.toLowerCase())) : 0;
+    if (sIdx < 0) sIdx = 0;
+    chosenSeason = seasons[sIdx];
+    await seasonRes.opts.nth(sIdx).click();
+    await page.waitForTimeout(800);
   } else {
     await page.keyboard.press('Escape').catch(() => {});
   }
 
   let thirdLabel = 'Grade';
-  const hasTeam = await page.getByRole('button', { name: 'Team', exact: true }).isVisible().catch(() => false);
-  const hasGrade = await page.getByRole('button', { name: 'Grade', exact: true }).isVisible().catch(() => false);
-  if (hasTeam && !hasGrade) thirdLabel = 'Team';
+  const teamBtn = page.getByRole('button', { name: 'Team', exact: true });
+  const gradeBtn = page.getByRole('button', { name: 'Grade', exact: true });
+  // Wait briefly for either Grade or Team dropdown to appear
+  for (let w = 0; w < 25; w++) {
+    if (await teamBtn.isVisible().catch(() => false)) { thirdLabel = 'Team'; break; }
+    if (await gradeBtn.isVisible().catch(() => false)) { thirdLabel = 'Grade'; break; }
+    await page.waitForTimeout(200);
+  }
 
   const thirdRes = await readDropdown(thirdLabel);
   await page.keyboard.press('Escape').catch(() => {});
-  return { seasons, thirdLabel, thirdOptions: thirdRes.items || [] };
+  return { seasons, chosenSeason, thirdLabel, thirdOptions: thirdRes.items || [] };
 }
 
 function slugify(str, fallback = 'unknown') {
