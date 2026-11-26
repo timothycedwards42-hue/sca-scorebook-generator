@@ -1,7 +1,127 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T04:52:13.917Z",
+  "updatedAt": "2026-11-26T05:31:26.932Z",
   "games": [
+    {
+      "id": "2026-27/gee-shield/rd01-vs-opponent-27-09-2026",
+      "path": "data/seasons/2026-27/gee-shield/rd01-vs-opponent-27-09-2026.json",
+      "season": "2026-27",
+      "team": "Gee Shield",
+      "opponent": "Opponent",
+      "round": "1",
+      "date": "27/09/2026",
+      "result": "",
+      "title": "Rd 1: Hornsby Ku-ring-gai & Hills District U13/1 vs Opponent (27/09/2026)",
+      "hasCsv": true,
+      "hasScorecard": false,
+      "hasBallByBall": false,
+      "savedAt": "2026-11-26T05:06:34.282Z"
+    },
+    {
+      "id": "2026-27/gee-shield/rd02-vs-blacktown-district-u13-1-11-10-2026",
+      "path": "data/seasons/2026-27/gee-shield/rd02-vs-blacktown-district-u13-1-11-10-2026.json",
+      "season": "2026-27",
+      "team": "Gee Shield",
+      "opponent": "Blacktown District U13/1",
+      "round": "2",
+      "date": "11/10/2026",
+      "result": "",
+      "title": "Rd 2: Bankstown U13s vs Blacktown District U13/1 (11/10/2026)",
+      "hasCsv": true,
+      "hasScorecard": false,
+      "hasBallByBall": false,
+      "savedAt": "2026-11-26T05:06:34.287Z"
+    },
+    {
+      "id": "2026-27/gee-shield/rd03-vs-blacktown-district-u13-1-18-10-2026",
+      "path": "data/seasons/2026-27/gee-shield/rd03-vs-blacktown-district-u13-1-18-10-2026.json",
+      "season": "2026-27",
+      "team": "Gee Shield",
+      "opponent": "Blacktown District U13/1",
+      "round": "3",
+      "date": "18/10/2026",
+      "result": "",
+      "title": "Rd 3: SEJCA U13 Boys Gee Shield vs Blacktown District U13/1 (18/10/2026)",
+      "hasCsv": true,
+      "hasScorecard": false,
+      "hasBallByBall": false,
+      "savedAt": "2026-11-26T05:06:34.289Z"
+    },
+    {
+      "id": "2026-27/gee-shield/rd04-vs-blacktown-district-u13-1-25-10-2026",
+      "path": "data/seasons/2026-27/gee-shield/rd04-vs-blacktown-district-u13-1-25-10-2026.json",
+      "season": "2026-27",
+      "team": "Gee Shield",
+      "opponent": "Blacktown District U13/1",
+      "round": "4",
+      "date": "25/10/2026",
+      "result": "",
+      "title": "Rd 4: Blacktown District U13/1 vs U13 Div 1 St George GEE (25/10/2026)",
+      "hasCsv": true,
+      "hasScorecard": false,
+      "hasBallByBall": false,
+      "savedAt": "2026-11-26T05:06:34.291Z"
+    },
+    {
+      "id": "2026-27/gee-shield/rd05-vs-blacktown-district-u13-1-01-11-2026",
+      "path": "data/seasons/2026-27/gee-shield/rd05-vs-blacktown-district-u13-1-01-11-2026.json",
+      "season": "2026-27",
+      "team": "Gee Shield",
+      "opponent": "Blacktown District U13/1",
+      "round": "5",
+      "date": "01/11/2026",
+      "result": "",
+      "title": "Rd 5: Parramatta U13 Div 1 vs Blacktown District U13/1 (01/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": false,
+      "hasBallByBall": false,
+      "savedAt": "2026-11-26T05:06:34.293Z"
+    },
+    {
+      "id": "2026-27/gee-shield/rd06-vs-blacktown-district-u13-1-08-11-2026",
+      "path": "data/seasons/2026-27/gee-shield/rd06-vs-blacktown-district-u13-1-08-11-2026.json",
+      "season": "2026-27",
+      "team": "Gee Shield",
+      "opponent": "Blacktown District U13/1",
+      "round": "6",
+      "date": "08/11/2026",
+      "result": "",
+      "title": "Rd 6: Northern District U13/1 vs Blacktown District U13/1 (08/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": false,
+      "hasBallByBall": false,
+      "savedAt": "2026-11-26T05:06:34.295Z"
+    },
+    {
+      "id": "2026-27/gee-shield/rd07-vs-blacktown-district-u13-1-15-11-2026",
+      "path": "data/seasons/2026-27/gee-shield/rd07-vs-blacktown-district-u13-1-15-11-2026.json",
+      "season": "2026-27",
+      "team": "Gee Shield",
+      "opponent": "Blacktown District U13/1",
+      "round": "7",
+      "date": "15/11/2026",
+      "result": "",
+      "title": "Rd 7: Inner West Harbour U13- 1 vs Blacktown District U13/1 (15/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": false,
+      "hasBallByBall": false,
+      "savedAt": "2026-11-26T05:06:34.296Z"
+    },
+    {
+      "id": "2026-27/gee-shield/rd08-vs-blacktown-district-u13-1-22-11-2026",
+      "path": "data/seasons/2026-27/gee-shield/rd08-vs-blacktown-district-u13-1-22-11-2026.json",
+      "season": "2026-27",
+      "team": "Gee Shield",
+      "opponent": "Blacktown District U13/1",
+      "round": "8",
+      "date": "22/11/2026",
+      "result": "",
+      "title": "Rd 8: North Shore U13 Gee vs Blacktown District U13/1 (22/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": false,
+      "hasBallByBall": false,
+      "savedAt": "2026-11-26T05:06:34.298Z"
+    },
     {
       "id": "2026-27/mosman-u10-boland/rd01-vs-sijcc-carey-u10-mixed-19-09-2026",
       "path": "data/seasons/2026-27/mosman-u10-boland/rd01-vs-sijcc-carey-u10-mixed-19-09-2026.json",
@@ -13,9 +133,9 @@
       "result": "",
       "title": "Rd 1: Mosman U10 Boland vs SIJCC Carey U10 Mixed (19/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T03:25:30.163Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T05:22:40.721Z"
     },
     {
       "id": "2026-27/mosman-u10-boland/rd02-vs-ns-u10-mixed-cummins-26-09-2026",
@@ -28,9 +148,9 @@
       "result": "",
       "title": "Rd 2: NS U10 Mixed Cummins # vs Mosman U10 Boland (26/09/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T03:25:30.167Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T05:24:18.899Z"
     },
     {
       "id": "2026-27/mosman-u10-boland/rd03-vs-mosman-u10-cummins-17-10-2026",
@@ -43,9 +163,9 @@
       "result": "",
       "title": "Rd 3: Mosman U10 Boland vs Mosman U10 Cummins (17/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T03:25:30.168Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T05:25:51.015Z"
     },
     {
       "id": "2026-27/mosman-u10-boland/rd04-vs-mosman-u10-mccabe-24-10-2026",
@@ -58,9 +178,9 @@
       "result": "",
       "title": "Rd 4: Mosman U10 Boland vs Mosman U10 McCabe (24/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T03:25:30.169Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T05:27:12.482Z"
     },
     {
       "id": "2026-27/mosman-u10-boland/rd05-vs-gordon-u10-thunder-31-10-2026",
@@ -73,9 +193,9 @@
       "result": "",
       "title": "Rd 5: Gordon U10 Thunder vs Mosman U10 Boland (31/10/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T03:25:30.170Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T05:28:37.019Z"
     },
     {
       "id": "2026-27/mosman-u10-boland/rd06-vs-gordon-u10-renegades-07-11-2026",
@@ -88,9 +208,9 @@
       "result": "",
       "title": "Rd 6: Mosman U10 Boland vs Gordon U10 Renegades (07/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T03:25:30.172Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T05:30:01.598Z"
     },
     {
       "id": "2026-27/mosman-u10-boland/rd07-vs-mosman-u10-mccabe-14-11-2026",
@@ -103,9 +223,9 @@
       "result": "",
       "title": "Rd 7: Mosman U10 Boland vs Mosman U10 McCabe (14/11/2026)",
       "hasCsv": true,
-      "hasScorecard": false,
-      "hasBallByBall": false,
-      "savedAt": "2026-11-26T03:25:30.173Z"
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-26T05:31:26.831Z"
     },
     {
       "id": "2026-27/north-shore-u13-1/rd01-vs-sejca-u13-boys-gee-shield-27-09-2026",

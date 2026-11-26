@@ -1735,12 +1735,18 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granular
     dismissedBatter = resolveNameFn(mDis[1].trim());
   }
 
-  if (ev.includes('dismissed') || ev.includes('out') || desc.includes('out') || desc.includes('was run out') || desc.includes('was caught') || desc.includes('was bowled') || desc.includes('was stumped')) {
+  const evNoNotOut = ev.replace(/\bnot\s+out\b/g, '');
+  const descNoNotOut = desc.replace(/\bnot\s+out\b/g, '');
+  if (
+    ev.includes('dismissed') ||
+    /\bout\b/.test(evNoNotOut) ||
+    /\bwas\s+(run[\s-]out|caught|bowled|stumped|lbw|dismissed)\b|\b(run[\s-]out|hit\s+wicket|dismissed)\b/.test(descNoNotOut)
+  ) {
     isWicket = true;
-    if (dismissedBatter !== batter || ev.includes('run out') || ev.includes('run-out') || desc.includes('run out') || desc.includes('run-out')) wicketKind = 'run out';
-    else if (desc.includes('stumped')) wicketKind = 'stumped';
-    else if (desc.includes('caught')) wicketKind = 'caught';
-    else if (desc.includes('lbw')) wicketKind = 'LBW';
+    if (dismissedBatter !== batter || ev.includes('run out') || ev.includes('run-out') || descNoNotOut.includes('run out') || descNoNotOut.includes('run-out')) wicketKind = 'run out';
+    else if (descNoNotOut.includes('stumped')) wicketKind = 'stumped';
+    else if (descNoNotOut.includes('caught')) wicketKind = 'caught';
+    else if (descNoNotOut.includes('lbw')) wicketKind = 'LBW';
     else wicketKind = 'bowled';
   }
 
@@ -2517,7 +2523,7 @@ function renderScorebookTo(svg, st, meta) {
 
       if (!b.isDNB) {
         const seqStr = formatBatterEvents(b.events, dotMode);
-        const baseFontSize = dotMode === 'individual' && b.events.length > 35 ? 6.8 : 8.2;
+        const baseFontSize = 8.2;
         const howOutSize = b.howOut.length > 13 ? 7.0 : 8.8;
         const maxLineW = 308;
 
@@ -2538,7 +2544,7 @@ function renderScorebookTo(svg, st, meta) {
           } else {
             svg.removeChild(singleEl);
             const parts = seqStr.split(' ');
-            const wrapSize = Math.min(baseFontSize, 7.6);
+            const wrapSize = baseFontSize;
             let line1 = '';
             let splitIdx = 0;
 
