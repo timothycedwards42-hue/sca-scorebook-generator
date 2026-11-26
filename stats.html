@@ -539,7 +539,7 @@ function formatBallsToOvers(balls) {
 
 function parsePlayHQScorecard(text) {
   const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  const res = { battingTeam: '', bowlingTeam: '', batters: [], bowlers: [], totalScore: 0, totalWickets: 0, totalOvers: 0 };
+  const res = { battingTeam: '', bowlingTeam: '', batters: [], bowlers: [], fielders: [], totalScore: 0, totalWickets: 0, totalOvers: 0 };
   let mode = '';
   let i = 0;
 
@@ -559,7 +559,13 @@ function parsePlayHQScorecard(text) {
       while (i < lines.length && /^(o|m|r|w|ht|e|wd|nb)$/i.test(lines[i])) i++;
       continue;
     }
-    if (/^(extras|total|fall of wickets|fielders)$/i.test(line)) {
+    if (/^fielders$/i.test(line)) {
+      mode = 'fielders';
+      i += 1;
+      while (i < lines.length && /^(cf|cwk|rou|roa|s)$/i.test(lines[i])) i++;
+      continue;
+    }
+    if (/^(extras|total|fall of wickets)$/i.test(line)) {
       if (/^total$/i.test(line)) {
         i++;
         while (i < lines.length && !/^(fall of wickets|fielders)$/i.test(lines[i]) && !/\bbowling$/i.test(lines[i])) {
@@ -649,6 +655,28 @@ function parsePlayHQScorecard(text) {
       continue;
     }
 
+    if (mode === 'fielders') {
+      const name = cleanPlayerName(line.replace(/\s*\(c\)\s*$/i, ''));
+      const fStats = lines.slice(i + 1, i + 6);
+      if (fStats.length >= 5 && fStats.every(v => /^\d+$/.test(v))) {
+        const cf = parseInt(fStats[0], 10) || 0;
+        const cwk = parseInt(fStats[1], 10) || 0;
+        const rou = parseInt(fStats[2], 10) || 0;
+        const roa = parseInt(fStats[3], 10) || 0;
+        const st = parseInt(fStats[4], 10) || 0;
+        res.fielders.push({
+          name,
+          catches: cf + cwk,
+          runOuts: rou + roa,
+          stumpings: st
+        });
+        i += 6;
+        continue;
+      }
+      i++;
+      continue;
+    }
+
     i++;
   }
   return res;
@@ -725,7 +753,8 @@ function extractInningsStats(rawInn, parsedInn) {
       totalWickets,
       totalOvers,
       batters: sc.batters,
-      bowlers: sc.bowlers
+      bowlers: sc.bowlers,
+      fielders: sc.fielders || []
     };
   }
   const p = parsedInn || { batters: [], bowlers: [], totalScore: 0, totalWickets: 0, totalOvers: 0 };
@@ -774,7 +803,8 @@ function extractInningsStats(rawInn, parsedInn) {
     totalWickets: p.totalWickets || 0,
     totalOvers: p.totalOvers || 0,
     batters,
-    bowlers
+    bowlers,
+    fielders: []
   };
 }
 
@@ -923,20 +953,31 @@ function aggregateSeason(teamName, seasonName, loadedGames) {
         }
       });
 
-      ourBowl.batters.forEach(b => {
-        if (b.catcher) {
-          const pl = ensurePlayer(b.catcher);
-          if (pl) { pl.matches.add(gameKey); pl.catches += 1; }
-        }
-        if (b.stumper) {
-          const pl = ensurePlayer(b.stumper);
-          if (pl) { pl.matches.add(gameKey); pl.stumpings += 1; }
-        }
-        (b.runOutFielders || []).forEach(f => {
-          const pl = ensurePlayer(f);
-          if (pl) { pl.matches.add(gameKey); pl.runOuts += 1; }
+      if (ourBowl.fielders && ourBowl.fielders.length > 0) {
+        ourBowl.fielders.forEach(f => {
+          const pl = ensurePlayer(f.name);
+          if (!pl) return;
+          pl.matches.add(gameKey);
+          pl.catches += f.catches || 0;
+          pl.runOuts += f.runOuts || 0;
+          pl.stumpings += f.stumpings || 0;
         });
-      });
+      } else {
+        ourBowl.batters.forEach(b => {
+          if (b.catcher) {
+            const pl = ensurePlayer(b.catcher);
+            if (pl) { pl.matches.add(gameKey); pl.catches += 1; }
+          }
+          if (b.stumper) {
+            const pl = ensurePlayer(b.stumper);
+            if (pl) { pl.matches.add(gameKey); pl.stumpings += 1; }
+          }
+          (b.runOutFielders || []).forEach(f => {
+            const pl = ensurePlayer(f);
+            if (pl) { pl.matches.add(gameKey); pl.runOuts += 1; }
+          });
+        });
+      }
     }
 
     const usedSc = (ourBat && ourBat.source === 'scorecard') || (ourBowl && ourBowl.source === 'scorecard');
