@@ -1,5 +1,102 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T02:13:21.891Z",
-  "games": []
+  "updatedAt": "2026-11-26T02:37:48.797Z",
+  "games": [
+    {
+      "id": "2026-27/north-shore-u13-1/rd01-vs-sejca-u13-boys-gee-shield-27-09-2026",
+      "path": "data/seasons/2026-27/north-shore-u13-1/rd01-vs-sejca-u13-boys-gee-shield-27-09-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U13/1",
+      "opponent": "SEJCA U13 Boys Gee Shield",
+      "round": "1",
+      "date": "27/09/2026",
+      "result": "",
+      "title": "Rd 1: SEJCA U13 Boys Gee Shield vs Opponent (27/09/2026)",
+      "savedAt": "2026-11-26T02:37:48.736Z"
+    },
+    {
+      "id": "2026-27/north-shore-u13-1/rd02-vs-northern-district-u13-1-11-10-2026",
+      "path": "data/seasons/2026-27/north-shore-u13-1/rd02-vs-northern-district-u13-1-11-10-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U13/1",
+      "opponent": "Northern District U13/1",
+      "round": "2",
+      "date": "11/10/2026",
+      "result": "",
+      "title": "Rd 2: North Shore U13 Gee vs Northern District U13/1 (11/10/2026)",
+      "savedAt": "2026-11-26T02:37:48.741Z"
+    },
+    {
+      "id": "2026-27/north-shore-u13-1/rd03-vs-ssjca-u13-ws-gee-shield-18-10-2026",
+      "path": "data/seasons/2026-27/north-shore-u13-1/rd03-vs-ssjca-u13-ws-gee-shield-18-10-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U13/1",
+      "opponent": "SSJCA U13 WS Gee Shield",
+      "round": "3",
+      "date": "18/10/2026",
+      "result": "",
+      "title": "Rd 3: North Shore U13 Gee vs SSJCA U13 WS Gee Shield (18/10/2026)",
+      "savedAt": "2026-11-26T02:37:48.743Z"
+    },
+    {
+      "id": "2026-27/north-shore-u13-1/rd04-vs-parramatta-u13-div-1-25-10-2026",
+      "path": "data/seasons/2026-27/north-shore-u13-1/rd04-vs-parramatta-u13-div-1-25-10-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U13/1",
+      "opponent": "Parramatta U13 Div 1",
+      "round": "4",
+      "date": "25/10/2026",
+      "result": "",
+      "title": "Rd 4: Parramatta U13 Div 1 vs North Shore U13 Gee (25/10/2026)",
+      "savedAt": "2026-11-26T02:37:48.745Z"
+    },
+    {
+      "id": "2026-27/north-shore-u13-1/rd05-vs-u13-div-1-st-george-gee-01-11-2026",
+      "path": "data/seasons/2026-27/north-shore-u13-1/rd05-vs-u13-div-1-st-george-gee-01-11-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U13/1",
+      "opponent": "U13 Div 1 St George GEE",
+      "round": "5",
+      "date": "01/11/2026",
+      "result": "",
+      "title": "Rd 5: North Shore U13 Gee vs U13 Div 1 St George GEE (01/11/2026)",
+      "savedAt": "2026-11-26T02:37:48.746Z"
+    },
+    {
+      "id": "2026-27/north-shore-u13-1/rd06-vs-manly-warringah-u13-1-08-11-2026",
+      "path": "data/seasons/2026-27/north-shore-u13-1/rd06-vs-manly-warringah-u13-1-08-11-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U13/1",
+      "opponent": "Manly Warringah U13/1",
+      "round": "6",
+      "date": "08/11/2026",
+      "result": "",
+      "title": "Rd 6: North Shore U13 Gee vs Manly Warringah U13/1 (08/11/2026)",
+      "savedAt": "2026-11-26T02:37:48.748Z"
+    },
+    {
+      "id": "2026-27/north-shore-u13-1/rd07-vs-c-wsca-u13s-div-1-15-11-2026",
+      "path": "data/seasons/2026-27/north-shore-u13-1/rd07-vs-c-wsca-u13s-div-1-15-11-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U13/1",
+      "opponent": "C&WSCA U13s Div 1",
+      "round": "7",
+      "date": "15/11/2026",
+      "result": "",
+      "title": "Rd 7: North Shore U13 Gee vs C&WSCA U13s Div 1 (15/11/2026)",
+      "savedAt": "2026-11-26T02:37:48.750Z"
+    },
+    {
+      "id": "2026-27/north-shore-u13-1/rd08-vs-blacktown-district-u13-1-22-11-2026",
+      "path": "data/seasons/2026-27/north-shore-u13-1/rd08-vs-blacktown-district-u13-1-22-11-2026.json",
+      "season": "2026-27",
+      "team": "North Shore U13/1",
+      "opponent": "Blacktown District U13/1",
+      "round": "8",
+      "date": "22/11/2026",
+      "result": "",
+      "title": "Rd 8: North Shore U13 Gee vs Blacktown District U13/1 (22/11/2026)",
+      "savedAt": "2026-11-26T02:37:48.752Z"
+    }
+  ]
 }
