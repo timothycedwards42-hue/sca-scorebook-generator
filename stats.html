@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Season Stats &amp; Coach's Report — SCA Digital Scorebook</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  header {
+    background: #1e293b;
+    color: #fff;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  header select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #475569;
+    background: #334155;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+  header button, header a {
+    border: none;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-secondary { background: #334155; color: #e2e8f0; }
+  .btn-secondary:hover { background: #475569; }
+  .btn-green { background: #059669; color: #fff; }
+  .btn-green:hover { background: #047857; }
+  .btn-light {
+    background: #fff;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-light:hover { background: #f8fafc; border-color: #94a3b8; }
+
+  main {
+    max-width: 1220px;
+    margin: 20px auto;
+    padding: 0 16px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .empty-banner {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 36px 20px;
+    text-align: center;
+    color: #475569;
+    font-size: 14px;
+  }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .kpi-card {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  .kpi-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-bottom: 2px solid #cbd5e1;
+    padding-bottom: 8px;
+  }
+  .tab-btn {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #334155;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab-btn:hover { background: #f8fafc; }
+  .tab-btn.active {
+    background: #1e293b;
+    color: #fff;
+    border-color: #1e293b;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .card-header h2 {
+    margin: 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #1e293b;
+  }
+
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  th, td {
+    padding: 7px 9px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: right;
+    white-space: nowrap;
+  }
+  th:first-child, td:first-child { text-align: left; }
+  th {
+    background: #f8fafc;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { background: #e2e8f0; }
+  tr:hover td { background: #f8fafc; }
+  td.player-name { font-weight: 600; color: #0f172a; }
+  .num-strong { font-weight: 700; color: #1d4ed8; }
+
+  .player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .player-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .player-card h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+  }
+  .p-stat-row {
+    font-size: 12px;
+    color: #334155;
+    line-height: 1.45;
+  }
+  .p-stat-row strong { color: #0f172a; }
+  .p-rounds {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .report-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .report-section label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 4px;
+  }
+  .report-section input[type="text"],
+  .report-section textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .report-section textarea { min-height: 110px; resize: vertical; }
+  .highlights-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    font-size: 12.5px;
+  }
+  .player-note-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .player-note-row textarea {
+    min-height: 48px;
+    font-size: 12px;
+  }
+  .toast {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    background: #0f172a;
+    color: #fff;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #166534;
+  }
+  .badge.csv-only { background: #fef3c7; color: #92400e; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .print-only-header { display: none; }
+
+  @media print {
+    @page { size: A4 portrait; margin: 12mm; }
+    body { background: #fff; }
+    header, .tabs, .no-print, .toast { display: none !important; }
+    main { margin: 0; padding: 0; max-width: none; }
+    .print-only-header {
+      display: block;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+    }
+    .print-only-header h1 { margin: 0; font-size: 20px; }
+    .print-only-header p { margin: 4px 0 0; font-size: 12px; color: #475569; }
+    .tab-panel { display: block !important; page-break-inside: avoid; }
+    #panel-players { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #cbd5e1; margin-bottom: 12px; }
+    .report-section textarea, .report-section input[type="text"] {
+      border: none;
+      padding: 2px 0;
+      resize: none;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Season Stats &amp; Coach's Report</h1>
+  <div class="header-controls">
+    <select id="selSeason"><option value="">Select Season...</option></select>
+    <select id="selTeam" disabled><option value="">Select Team...</option></select>
+    <button id="btnCopyAI" class="btn-green" type="button" disabled title="Copy a structured season summary to paste into an AI for polishing your coach's report">Copy AI Summary</button>
+    <button id="btnPrintReport" class="btn-primary" type="button" disabled>Print / Save PDF</button>
+    <a href="/" class="btn-secondary">← Back to Scorebook</a>
+  </div>
+</header>
+
+<main>
+  <div id="printHeader" class="print-only-header">
+    <h1 id="printTitle">Season Report</h1>
+    <p id="printSubtitle"></p>
+  </div>
+
+  <div id="emptyState" class="empty-banner">
+    Select a <strong>Season</strong> and <strong>Team</strong> in the top bar to generate season averages, player cards, and your Coach's Report.
+  </div>
+
+  <div id="contentArea" style="display:none; flex-direction:column; gap:16px;">
+    <div id="kpiGrid" class="kpi-grid"></div>
+
+    <div class="tabs no-print">
+      <button class="tab-btn active" data-tab="report" type="button">Coach's Report</button>
+      <button class="tab-btn" data-tab="batting" type="button">Batting Averages</button>
+      <button class="tab-btn" data-tab="bowling" type="button">Bowling Averages</button>
+      <button class="tab-btn" data-tab="fielding" type="button">Fielding</button>
+      <button class="tab-btn" data-tab="matches" type="button">Match-by-Match</button>
+      <button class="tab-btn" data-tab="players" type="button">Player Cards</button>
+    </div>
+
+    <div id="panel-report" class="tab-panel active">
+      <div class="card report-section">
+        <div class="card-header">
+          <h2>Coach's Season Report</h2>
+          <div class="no-print" style="display:flex; gap:6px;">
+            <button id="btnExportMarkdown" class="btn-light" type="button">Download Markdown (.md)</button>
+          </div>
+        </div>
+        <div>
+          <label for="reportTitleInput">Report Title</label>
+          <input type="text" id="reportTitleInput" placeholder="e.g. North Shore U13/1 — 2026-27 Season Coach's Report">
+        </div>
+        <div>
+          <label for="coachOverview">Coach's Season Overview &amp; Reflection (saved automatically in your browser)</label>
+          <textarea id="coachOverview" placeholder="Write your season overview, team growth highlights, memorable moments, and thank-yous..."></textarea>
+        </div>
+        <div>
+          <label>Season Highlights (Auto-Calculated)</label>
+          <div id="highlightsBox" class="highlights-box"></div>
+        </div>
+        <div>
+          <label>Player-by-Player Notes (Optional — included in printed PDF &amp; Markdown export)</label>
+          <div id="playerNotesList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-batting" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>Batting Statistics</h2>
+          <button id="btnExportBatCsv" class="btn-light no-print" type="button">Export Batting CSV</button>
+        </div>
+        <div class="table-wrap"><table id="tblBatting"></table></div>
+      </div>
+    </div>
+
+    <div id="panel-bowling" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>Bowling Statistics</h2>
+          <button id="btnExportBowlCsv" class="btn-light no-print" type="button">Export Bowling CSV</button>
+        </div>
+        <div class="table-wrap"><table id="tblBowling"></table></div>
+      </div>
+    </div>
+
+    <div id="panel-fielding" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>Fielding Statistics</h2>
+          <button id="btnExportFieldCsv" class="btn-light no-print" type="button">Export Fielding CSV</button>
+        </div>
+        <div class="table-wrap"><table id="tblFielding"></table></div>
+      </div>
+    </div>
+
+    <div id="panel-matches" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>Match-by-Match Results</h2>
+        </div>
+        <div class="table-wrap"><table id="tblMatches"></table></div>
+      </div>
+    </div>
+
+    <div id="panel-players" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>Player Season Cards</h2>
+        </div>
+        <div id="playerGrid" class="player-grid"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let indexData = { games: [] };
+let currentSeason = '';
+let currentTeam = '';
+let aggData = null;
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function cleanPlayerName(raw) {
+  const trimmed = String(raw || '').trim();
+  if (!trimmed) return '';
+  if (/^\*+$/.test(trimmed) || trimmed.toLowerCase() === 'private player') return 'Private Player';
+  return trimmed.split(/\s+/).map(part => {
+    if (part === part.toUpperCase() && part.length > 2) {
+      return part.charAt(0) + part.slice(1).toLowerCase();
+    }
+    return part;
+  }).join(' ');
+}
+
+function parseOversToBalls(ovStr) {
+  const s = String(ovStr || '0').trim();
+  if (!s) return 0;
+  const parts = s.split('.');
+  const full = parseInt(parts[0], 10) || 0;
+  const rem = parts[1] ? (parseInt(parts[1], 10) || 0) : 0;
+  return full * 6 + rem;
+}
+
+function formatBallsToOvers(balls) {
+  const full = Math.floor(balls / 6);
+  const rem = balls % 6;
+  return rem === 0 ? `${full}` : `${full}.${rem}`;
+}
+
+function parsePlayHQScorecard(text) {
+  const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const res = { battingTeam: '', bowlingTeam: '', batters: [], bowlers: [], totalScore: 0, totalWickets: 0, totalOvers: 0 };
+  let mode = '';
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/\bbatting$/i.test(line) && i + 1 < lines.length && /^batters$/i.test(lines[i + 1])) {
+      res.battingTeam = line.replace(/\s+batting$/i, '').trim();
+      mode = 'batting';
+      i += 2;
+      while (i < lines.length && /^(r|b|4s|6s|sr)$/i.test(lines[i])) i++;
+      continue;
+    }
+    if (/\bbowling$/i.test(line) && i + 1 < lines.length && /^bowlers$/i.test(lines[i + 1])) {
+      res.bowlingTeam = line.replace(/\s+bowling$/i, '').trim();
+      mode = 'bowling';
+      i += 2;
+      while (i < lines.length && /^(o|m|r|w|ht|e|wd|nb)$/i.test(lines[i])) i++;
+      continue;
+    }
+    if (/^(extras|total|fall of wickets|fielders)$/i.test(line)) {
+      if (/^total$/i.test(line)) {
+        i++;
+        while (i < lines.length && !/^(fall of wickets|fielders)$/i.test(lines[i]) && !/\bbowling$/i.test(lines[i])) {
+          const m = lines[i].match(/^(\d+)\/(\d+)/);
+          if (m) {
+            res.totalWickets = parseInt(m[1], 10) || 0;
+            res.totalScore = parseInt(m[2], 10) || 0;
+          }
+          const ov = lines[i].match(/\(([\d.]+)\s*overs?\)/i);
+          if (ov) res.totalOvers = parseFloat(ov[1]) || 0;
+          i++;
+        }
+        continue;
+      }
+      mode = '';
+      i++;
+      continue;
+    }
+
+    if (mode === 'batting') {
+      const name = cleanPlayerName(line);
+      i++;
+      const dLines = [];
+      while (i < lines.length && !/^(\d+\*?|-|\d+\.\d+)$/.test(lines[i]) && !/^(extras|total|fall of wickets)$/i.test(lines[i]) && !/\bbowling$/i.test(lines[i])) {
+        dLines.push(lines[i]);
+        i++;
+      }
+      const vals = [];
+      while (i < lines.length && vals.length < 5 && /^(\d+\*?|-|\d+\.\d+)$/.test(lines[i])) {
+        vals.push(lines[i]);
+        i++;
+      }
+      const rawD = dLines.join(' ');
+      const dLow = rawD.toLowerCase();
+      const isDNB = dLow.includes('did not bat');
+      const isNotOut = isDNB || dLow.includes('not out') || dLow.includes('retired');
+
+      let runs = 0, balls = 0, fours = 0, sixes = 0;
+      if (vals.length === 5) {
+        runs = vals[0] !== '-' ? parseInt(vals[0].replace('*', ''), 10) || 0 : 0;
+        balls = vals[1] !== '-' ? parseInt(vals[1], 10) || 0 : 0;
+        fours = vals[2] !== '-' ? parseInt(vals[2], 10) || 0 : 0;
+        sixes = vals[3] !== '-' ? parseInt(vals[3], 10) || 0 : 0;
+      } else if (vals.length === 4) {
+        balls = vals[0] !== '-' ? parseInt(vals[0], 10) || 0 : 0;
+        fours = vals[1] !== '-' ? parseInt(vals[1], 10) || 0 : 0;
+        sixes = vals[2] !== '-' ? parseInt(vals[2], 10) || 0 : 0;
+      }
+
+      let catcher = '', stumper = '', runOutFielders = [];
+      if (dLow.startsWith('c&b:')) {
+        catcher = cleanPlayerName(rawD.split(':').slice(1).join(':'));
+      } else if (dLow.includes('c:') && dLow.includes('b:')) {
+        const mc = rawD.match(/c:\s*(.+?)\s+b:\s*(.+)$/i);
+        if (mc) catcher = cleanPlayerName(mc[1]);
+      } else if (dLow.startsWith('st:') && dLow.includes('b:')) {
+        const ms = rawD.match(/st:\s*(.+?)\s+b:\s*(.+)$/i);
+        if (ms) stumper = cleanPlayerName(ms[1]);
+      } else if (dLow.startsWith('run out')) {
+        if (rawD.includes(':')) {
+          runOutFielders = rawD.split(':').slice(1).join(':').split(',').map(cleanPlayerName).filter(Boolean);
+        }
+      }
+
+      res.batters.push({ name, runs, balls, fours, sixes, rawD, isDNB, isNotOut, catcher, stumper, runOutFielders });
+      continue;
+    }
+
+    if (mode === 'bowling') {
+      const name = cleanPlayerName(line);
+      const bStats = lines.slice(i + 1, i + 9);
+      if (bStats.length >= 8) {
+        res.bowlers.push({
+          name,
+          overs: bStats[0],
+          balls: parseOversToBalls(bStats[0]),
+          maidens: parseInt(bStats[1], 10) || 0,
+          runs: parseInt(bStats[2], 10) || 0,
+          wickets: parseInt(bStats[3], 10) || 0,
+          wides: parseInt(bStats[6], 10) || 0,
+          noBalls: parseInt(bStats[7], 10) || 0
+        });
+        i += 9;
+        continue;
+      }
+      i++;
+      continue;
+    }
+
+    i++;
+  }
+  return res;
+}
+
+function teamMatchScore(targetTeam, candidateName) {
+  const words = String(targetTeam || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+  const low = String(candidateName || '').toLowerCase();
+  if (!low || words.length === 0) return 0;
+  let score = 0;
+  words.forEach(w => { if (low.includes(w)) score += 1; });
+  return score;
+}
+
+function extractInningsStats(rawInn, parsedInn) {
+  const hasSc = rawInn && (rawInn.scorecard || '').trim().length > 0;
+  if (hasSc) {
+    const sc = parsePlayHQScorecard(rawInn.scorecard);
+    const totalScore = sc.totalScore || (parsedInn ? parsedInn.totalScore : 0);
+    const totalWickets = sc.totalWickets || (parsedInn ? parsedInn.totalWickets : 0);
+    const totalOvers = sc.totalOvers || (parsedInn ? parsedInn.totalOvers : 0);
+    return {
+      source: 'scorecard',
+      team: sc.battingTeam || (rawInn.team || (parsedInn && parsedInn.team) || ''),
+      totalScore,
+      totalWickets,
+      totalOvers,
+      batters: sc.batters,
+      bowlers: sc.bowlers
+    };
+  }
+  const p = parsedInn || { batters: [], bowlers: [], totalScore: 0, totalWickets: 0, totalOvers: 0 };
+  const batters = (p.batters || []).map(b => {
+    const ev = b.events || [];
+    const fours = ev.filter(x => x === 4).length;
+    const sixes = ev.filter(x => x === 6).length;
+    const hLow = String(b.howOut || '').toLowerCase();
+    const isNotOut = !!b.isDNB || hLow === '' || hLow.includes('not out') || hLow.includes('retired');
+    return {
+      name: cleanPlayerName(b.name),
+      runs: b.runs || 0,
+      balls: b.balls || 0,
+      fours,
+      sixes,
+      rawD: b.howOut || '',
+      isDNB: !!b.isDNB,
+      isNotOut,
+      catcher: '',
+      stumper: '',
+      runOutFielders: []
+    };
+  });
+  const bowlers = (p.bowlers || []).map(bw => ({
+    name: cleanPlayerName(bw.name),
+    overs: bw.overs || '0',
+    balls: parseOversToBalls(bw.overs),
+    maidens: bw.maidens || 0,
+    runs: bw.runs || 0,
+    wickets: bw.wickets || 0,
+    wides: bw.wides || 0,
+    noBalls: bw.noBalls || 0
+  }));
+  return {
+    source: 'csv',
+    team: (rawInn && rawInn.team) || p.team || '',
+    totalScore: p.totalScore || 0,
+    totalWickets: p.totalWickets || 0,
+    totalOvers: p.totalOvers || 0,
+    batters,
+    bowlers
+  };
+}
+
+function aggregateSeason(teamName, seasonName, loadedGames) {
+  const players = {};
+  const ensurePlayer = (name) => {
+    const n = cleanPlayerName(name);
+    if (!n || n === 'Private Player') return null;
+    if (!players[n]) {
+      players[n] = {
+        name: n,
+        matches: new Set(),
+        batInn: 0,
+        batNO: 0,
+        batRuns: 0,
+        batBalls: 0,
+        bat4s: 0,
+        bat6s: 0,
+        batHS: -1,
+        batHSNotOut: false,
+        bat25s: 0,
+        bat50s: 0,
+        bowlBalls: 0,
+        bowlMaidens: 0,
+        bowlRuns: 0,
+        bowlWkts: 0,
+        bowlWides: 0,
+        bowlNB: 0,
+        bestBowlW: -1,
+        bestBowlR: 9999,
+        catches: 0,
+        runOuts: 0,
+        stumpings: 0,
+        roundLog: []
+      };
+    }
+    return players[n];
+  };
+
+  const matchRows = [];
+  let teamRunsFor = 0, teamBallsFor = 0, teamRunsAgainst = 0, teamBallsAgainst = 0, teamWktsTaken = 0;
+  let highestTeamScore = -1, highestTeamLabel = '';
+
+  loadedGames.forEach((g, idx) => {
+    const r1 = (g.raw && g.raw.innings1) || {};
+    const r2 = (g.raw && g.raw.innings2) || {};
+    const p1 = (g.innings && g.innings[0]) || null;
+    const p2 = (g.innings && g.innings[1]) || null;
+
+    const inn1 = extractInningsStats(r1, p1);
+    const inn2 = extractInningsStats(r2, p2);
+
+    const s1 = teamMatchScore(teamName, inn1.team);
+    const s2 = teamMatchScore(teamName, inn2.team);
+
+    let ourBat = null, ourBowl = null;
+    if (s1 > s2) {
+      ourBat = inn1;
+      ourBowl = inn2.batters.length > 0 || inn2.bowlers.length > 0 ? inn2 : null;
+    } else if (s2 > s1) {
+      ourBat = inn2.batters.length > 0 || inn2.bowlers.length > 0 ? inn2 : null;
+      ourBowl = inn1;
+    } else {
+      // Fallback: if inn1 is clearly opponent (e.g. 1-innings washout where opponent batted)
+      ourBat = inn1;
+      ourBowl = inn2.batters.length > 0 || inn2.bowlers.length > 0 ? inn2 : null;
+    }
+
+    const roundLbl = (g.match && g.match.round) ? `Rd ${g.match.round}` : `G${idx + 1}`;
+    const oppName = (ourBowl && ourBowl.team && ourBowl.team !== 'Opponent') ? ourBowl.team : (g.opponent || 'Opponent');
+    const gameKey = g.id || `${idx}`;
+
+    const ourScoreStr = ourBat && (ourBat.totalScore > 0 || ourBat.batters.length > 0)
+      ? `${ourBat.totalWickets}/${ourBat.totalScore} (${ourBat.totalOvers})`
+      : 'Did not bat';
+    const oppScoreStr = ourBowl && (ourBowl.totalScore > 0 || ourBowl.batters.length > 0)
+      ? `${ourBowl.totalWickets}/${ourBowl.totalScore} (${ourBowl.totalOvers})`
+      : 'Did not bat';
+
+    if (ourBat && ourBat.totalScore > 0) {
+      teamRunsFor += ourBat.totalScore;
+      teamBallsFor += parseOversToBalls(ourBat.totalOvers);
+      if (ourBat.totalScore > highestTeamScore) {
+        highestTeamScore = ourBat.totalScore;
+        highestTeamLabel = `${ourBat.totalWickets}/${ourBat.totalScore} vs ${oppName} (${roundLbl})`;
+      }
+    }
+    if (ourBowl && ourBowl.totalScore > 0) {
+      teamRunsAgainst += ourBowl.totalScore;
+      teamBallsAgainst += parseOversToBalls(ourBowl.totalOvers);
+    }
+
+    // Batting stats (ourBat.batters)
+    if (ourBat) {
+      ourBat.batters.forEach(b => {
+        const pl = ensurePlayer(b.name);
+        if (!pl) return;
+        pl.matches.add(gameKey);
+        if (!b.isDNB) {
+          pl.batInn += 1;
+          if (b.isNotOut) pl.batNO += 1;
+          pl.batRuns += b.runs;
+          pl.batBalls += b.balls;
+          pl.bat4s += b.fours;
+          pl.bat6s += b.sixes;
+          if (b.runs >= 50) pl.bat50s += 1;
+          else if (b.runs >= 25) pl.bat25s += 1;
+          if (b.runs > pl.batHS || (b.runs === pl.batHS && b.isNotOut && !pl.batHSNotOut)) {
+            pl.batHS = b.runs;
+            pl.batHSNotOut = b.isNotOut;
+          }
+          pl.roundLog.push(`${roundLbl}: ${b.runs}${b.isNotOut ? '*' : ''}`);
+        }
+      });
+    }
+
+    // Bowling & Fielding stats (ourBowl.bowlers & ourBowl.batters dismissals)
+    if (ourBowl) {
+      ourBowl.bowlers.forEach(bw => {
+        const pl = ensurePlayer(bw.name);
+        if (!pl) return;
+        pl.matches.add(gameKey);
+        pl.bowlBalls += bw.balls;
+        pl.bowlMaidens += bw.maidens;
+        pl.bowlRuns += bw.runs;
+        pl.bowlWkts += bw.wickets;
+        pl.bowlWides += bw.wides;
+        pl.bowlNB += bw.noBalls;
+        teamWktsTaken += bw.wickets;
+        if (bw.wickets > pl.bestBowlW || (bw.wickets === pl.bestBowlW && bw.runs < pl.bestBowlR)) {
+          pl.bestBowlW = bw.wickets;
+          pl.bestBowlR = bw.runs;
+        }
+        if (bw.wickets > 0) {
+          pl.roundLog.push(`${roundLbl}: ${bw.wickets}/${bw.runs}`);
+        }
+      });
+
+      ourBowl.batters.forEach(b => {
+        if (b.catcher) {
+          const pl = ensurePlayer(b.catcher);
+          if (pl) { pl.matches.add(gameKey); pl.catches += 1; }
+        }
+        if (b.stumper) {
+          const pl = ensurePlayer(b.stumper);
+          if (pl) { pl.matches.add(gameKey); pl.stumpings += 1; }
+        }
+        (b.runOutFielders || []).forEach(f => {
+          const pl = ensurePlayer(f);
+          if (pl) { pl.matches.add(gameKey); pl.runOuts += 1; }
+        });
+      });
+    }
+
+    const usedSc = (ourBat && ourBat.source === 'scorecard') || (ourBowl && ourBowl.source === 'scorecard');
+    matchRows.push({
+      round: roundLbl,
+      date: (g.match && g.match.date) || '',
+      opponent: oppName,
+      ourScore: ourScoreStr,
+      oppScore: oppScoreStr,
+      result: (g.match && g.match.result) || '',
+      source: usedSc ? 'Scorecard + CSV' : 'CSV only'
+    });
+  });
+
+  const playerList = Object.values(players).map(p => {
+    const dismissals = p.batInn - p.batNO;
+    const batAvg = dismissals > 0 ? p.batRuns / dismissals : (p.batRuns > 0 ? p.batRuns : 0);
+    const batSR = p.batBalls > 0 ? (p.batRuns / p.batBalls) * 100 : 0;
+    const bowlAvg = p.bowlWkts > 0 ? p.bowlRuns / p.bowlWkts : null;
+    const bowlEcon = p.bowlBalls > 0 ? p.bowlRuns / (p.bowlBalls / 6) : null;
+    const bowlSR = p.bowlWkts > 0 ? p.bowlBalls / p.bowlWkts : null;
+    return {
+      ...p,
+      matchCount: p.matches.size,
+      batAvg,
+      batAvgDisplay: dismissals > 0 ? batAvg.toFixed(2) : (p.batInn > 0 ? '—' : '—'),
+      batSR,
+      batSRDisplay: p.batBalls > 0 ? batSR.toFixed(1) : '—',
+      batHSDisplay: p.batHS >= 0 ? `${p.batHS}${p.batHSNotOut ? '*' : ''}` : '—',
+      bowlOversDisplay: formatBallsToOvers(p.bowlBalls),
+      bowlAvg,
+      bowlAvgDisplay: bowlAvg !== null ? bowlAvg.toFixed(2) : '—',
+      bowlEcon,
+      bowlEconDisplay: bowlEcon !== null ? bowlEcon.toFixed(2) : '—',
+      bowlSR,
+      bowlSRDisplay: bowlSR !== null ? bowlSR.toFixed(1) : '—',
+      bestBowlDisplay: p.bestBowlW >= 0 ? `${p.bestBowlW}/${p.bestBowlR}` : '—',
+      fieldTotal: p.catches + p.runOuts + p.stumpings
+    };
+  });
+
+  return {
+    season: seasonName,
+    team: teamName,
+    matches: matchRows,
+    players: playerList,
+    summary: {
+      played: matchRows.length,
+      teamRunsFor,
+      teamRunsAgainst,
+      teamWktsTaken,
+      highestTeamLabel: highestTeamLabel || '—',
+      teamRunRate: teamBallsFor > 0 ? (teamRunsFor / (teamBallsFor / 6)).toFixed(2) : '—',
+      teamBowlEcon: teamBallsAgainst > 0 ? (teamRunsAgainst / (teamBallsAgainst / 6)).toFixed(2) : '—'
+    }
+  };
+}
+
+function notesStorageKey() {
+  return `sca_coach_notes_v1_${currentSeason}_${currentTeam}`;
+}
+
+function loadCoachNotes() {
+  try {
+    return JSON.parse(localStorage.getItem(notesStorageKey()) || '{}');
+  } catch { return {}; }
+}
+
+function saveCoachNotes(notes) {
+  try {
+    localStorage.setItem(notesStorageKey(), JSON.stringify(notes));
+  } catch {}
+}
+
+function renderAll(data) {
+  aggData = data;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('contentArea').style.display = 'flex';
+  document.getElementById('btnCopyAI').disabled = false;
+  document.getElementById('btnPrintReport').disabled = false;
+
+  const s = data.summary;
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Matches</div><div class="kpi-val">${s.played}</div><div class="kpi-sub">${data.season}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Runs Scored</div><div class="kpi-val">${s.teamRunsFor}</div><div class="kpi-sub">RR ${s.teamRunRate} rpo</div></div>
+    <div class="kpi-card"><div class="kpi-label">Wickets Taken</div><div class="kpi-val">${s.teamWktsTaken}</div><div class="kpi-sub">Econ ${s.teamBowlEcon} rpo</div></div>
+    <div class="kpi-card"><div class="kpi-label">Highest Total</div><div class="kpi-val" style="font-size:16px; margin-top:4px;">${s.highestTeamLabel}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Players Used</div><div class="kpi-val">${data.players.length}</div><div class="kpi-sub">${data.team}</div></div>
+  `;
+
+  // Batting table
+  const batters = [...data.players].filter(p => p.batInn > 0).sort((a, b) => b.batRuns - a.batRuns || b.batAvg - a.batAvg);
+  document.getElementById('tblBatting').innerHTML = `
+    <thead><tr>
+      <th>Player</th><th>Mat</th><th>Inn</th><th>NO</th><th>Runs</th><th>HS</th><th>Avg</th><th>Balls</th><th>SR</th><th>4s</th><th>6s</th><th>25s</th><th>50s</th>
+    </tr></thead>
+    <tbody>
+      ${batters.map(p => `<tr>
+        <td class="player-name">${p.name}</td><td>${p.matchCount}</td><td>${p.batInn}</td><td>${p.batNO}</td>
+        <td class="num-strong">${p.batRuns}</td><td>${p.batHSDisplay}</td><td>${p.batAvgDisplay}</td>
+        <td>${p.batBalls}</td><td>${p.batSRDisplay}</td><td>${p.bat4s}</td><td>${p.bat6s}</td><td>${p.bat25s}</td><td>${p.bat50s}</td>
+      </tr>`).join('')}
+    </tbody>
+  `;
+
+  // Bowling table
+  const bowlers = [...data.players].filter(p => p.bowlBalls > 0 || p.bowlWkts > 0).sort((a, b) => b.bowlWkts - a.bowlWkts || (a.bowlEcon ?? 99) - (b.bowlEcon ?? 99));
+  document.getElementById('tblBowling').innerHTML = `
+    <thead><tr>
+      <th>Player</th><th>Mat</th><th>Overs</th><th>Mdn</th><th>Runs</th><th>Wkts</th><th>BBI</th><th>Avg</th><th>Econ</th><th>SR</th><th>Wd</th><th>NB</th>
+    </tr></thead>
+    <tbody>
+      ${bowlers.map(p => `<tr>
+        <td class="player-name">${p.name}</td><td>${p.matchCount}</td><td>${p.bowlOversDisplay}</td><td>${p.bowlMaidens}</td>
+        <td>${p.bowlRuns}</td><td class="num-strong">${p.bowlWkts}</td><td>${p.bestBowlDisplay}</td>
+        <td>${p.bowlAvgDisplay}</td><td>${p.bowlEconDisplay}</td><td>${p.bowlSRDisplay}</td><td>${p.bowlWides}</td><td>${p.bowlNB}</td>
+      </tr>`).join('')}
+    </tbody>
+  `;
+
+  // Fielding table
+  const fielders = [...data.players].filter(p => p.fieldTotal > 0).sort((a, b) => b.fieldTotal - a.fieldTotal || b.catches - a.catches);
+  document.getElementById('tblFielding').innerHTML = fielders.length > 0 ? `
+    <thead><tr><th>Player</th><th>Mat</th><th>Catches</th><th>Run Outs</th><th>Stumpings</th><th>Total</th></tr></thead>
+    <tbody>
+      ${fielders.map(p => `<tr>
+        <td class="player-name">${p.name}</td><td>${p.matchCount}</td><td>${p.catches}</td><td>${p.runOuts}</td><td>${p.stumpings}</td><td class="num-strong">${p.fieldTotal}</td>
+      </tr>`).join('')}
+    </tbody>
+  ` : '<tbody><tr><td style="text-align:center; color:#64748b; padding:16px;">No fielding dismissals recorded yet (paste PlayHQ Scorecards via Submit Data to populate catches, stumpings &amp; run outs).</td></tr></tbody>';
+
+  // Match-by-match table
+  document.getElementById('tblMatches').innerHTML = `
+    <thead><tr><th>Round</th><th>Date</th><th>Opponent</th><th>Our Score</th><th>Opponent Score</th><th>Result</th><th>Data</th></tr></thead>
+    <tbody>
+      ${data.matches.map(m => `<tr>
+        <td class="player-name">${m.round}</td><td>${m.date}</td><td style="text-align:left;">${m.opponent}</td>
+        <td>${m.ourScore}</td><td>${m.oppScore}</td><td style="text-align:left;">${m.result || '—'}</td>
+        <td><span class="badge ${m.source === 'CSV only' ? 'csv-only' : ''}">${m.source}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  `;
+
+  // Player cards
+  const byName = [...data.players].sort((a, b) => a.name.localeCompare(b.name));
+  document.getElementById('playerGrid').innerHTML = byName.map(p => `
+    <div class="player-card">
+      <h3>${p.name} <span style="font-size:11px; font-weight:500; color:#64748b;">(${p.matchCount} games)</span></h3>
+      ${p.batInn > 0 ? `<div class="p-stat-row"><strong>Batting:</strong> ${p.batRuns} runs (${p.batInn} inn, ${p.batNO} NO, HS ${p.batHSDisplay}, Avg ${p.batAvgDisplay}, SR ${p.batSRDisplay})</div>` : ''}
+      ${p.bowlBalls > 0 ? `<div class="p-stat-row"><strong>Bowling:</strong> ${p.bowlWkts}/${p.bowlRuns} (${p.bowlOversDisplay} ov, BBI ${p.bestBowlDisplay}, Econ ${p.bowlEconDisplay})</div>` : ''}
+      ${p.fieldTotal > 0 ? `<div class="p-stat-row"><strong>Fielding:</strong> ${p.catches} ct, ${p.runOuts} ro, ${p.stumpings} st</div>` : ''}
+      ${p.roundLog.length > 0 ? `<div class="p-rounds">${p.roundLog.join(' · ')}</div>` : ''}
+    </div>
+  `).join('');
+
+  // Coach's Report
+  const notes = loadCoachNotes();
+  const defaultTitle = `${data.team} — ${data.season} Season Coach's Report`;
+  const titleInput = document.getElementById('reportTitleInput');
+  const overviewInput = document.getElementById('coachOverview');
+  titleInput.value = notes.title || defaultTitle;
+  overviewInput.value = notes.overview || '';
+  document.getElementById('printTitle').textContent = titleInput.value;
+  document.getElementById('printSubtitle').textContent = `${data.team} · Season ${data.season} · ${s.played} Matches`;
+
+  const topBat = batters[0];
+  const bestHS = [...batters].sort((a, b) => b.batHS - a.batHS)[0];
+  const topBowl = bowlers[0];
+  const bestBBI = [...bowlers].sort((a, b) => b.bestBowlW - a.bestBowlW || a.bestBowlR - b.bestBowlR)[0];
+  const topField = fielders[0];
+
+  document.getElementById('highlightsBox').innerHTML = `
+    <div><strong>Leading Run-Scorer:</strong><br>${topBat ? `${topBat.name} — ${topBat.batRuns} runs (Avg ${topBat.batAvgDisplay})` : '—'}</div>
+    <div><strong>Highest Individual Score:</strong><br>${bestHS ? `${bestHS.name} — ${bestHS.batHSDisplay}` : '—'}</div>
+    <div><strong>Leading Wicket-Taker:</strong><br>${topBowl ? `${topBowl.name} — ${topBowl.bowlWkts} wkts (Econ ${topBowl.bowlEconDisplay})` : '—'}</div>
+    <div><strong>Best Bowling Figures:</strong><br>${bestBBI ? `${bestBBI.name} — ${bestBBI.bestBowlDisplay}` : '—'}</div>
+    <div><strong>Top Fielder:</strong><br>${topField ? `${topField.name} — ${topField.fieldTotal} (${topField.catches} ct, ${topField.runOuts} ro, ${topField.stumpings} st)` : '—'}</div>
+  `;
+
+  const pNotesEl = document.getElementById('playerNotesList');
+  pNotesEl.innerHTML = '';
+  const pNotesMap = notes.players || {};
+  byName.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'player-note-row';
+    const statBrief = [
+      p.batInn > 0 ? `${p.batRuns}r (HS ${p.batHSDisplay})` : null,
+      p.bowlBalls > 0 ? `${p.bowlWkts}/${p.bowlRuns} (${p.bowlOversDisplay}ov)` : null,
+      p.fieldTotal > 0 ? `${p.fieldTotal} field` : null
+    ].filter(Boolean).join(' · ');
+
+    const left = document.createElement('div');
+    left.innerHTML = `<div style="font-weight:700; font-size:12.5px;">${p.name}</div><div style="font-size:11px; color:#64748b;">${statBrief}</div>`;
+
+    const ta = document.createElement('textarea');
+    ta.placeholder = `Coach's note for ${p.name}...`;
+    ta.value = pNotesMap[p.name] || '';
+    ta.addEventListener('input', () => {
+      const cur = loadCoachNotes();
+      cur.players = cur.players || {};
+      cur.players[p.name] = ta.value;
+      saveCoachNotes(cur);
+    });
+
+    row.appendChild(left);
+    row.appendChild(ta);
+    pNotesEl.appendChild(row);
+  });
+
+  titleInput.oninput = () => {
+    const cur = loadCoachNotes();
+    cur.title = titleInput.value;
+    saveCoachNotes(cur);
+    document.getElementById('printTitle').textContent = titleInput.value;
+  };
+  overviewInput.oninput = () => {
+    const cur = loadCoachNotes();
+    cur.overview = overviewInput.value;
+    saveCoachNotes(cur);
+  };
+}
+
+function downloadCsv(filename, headers, rows) {
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function buildMarkdownReport() {
+  if (!aggData) return '';
+  const notes = loadCoachNotes();
+  const title = notes.title || `${aggData.team} — ${aggData.season} Season Coach's Report`;
+  const batters = [...aggData.players].filter(p => p.batInn > 0).sort((a, b) => b.batRuns - a.batRuns);
+  const bowlers = [...aggData.players].filter(p => p.bowlBalls > 0 || p.bowlWkts > 0).sort((a, b) => b.bowlWkts - a.bowlWkts);
+  const fielders = [...aggData.players].filter(p => p.fieldTotal > 0).sort((a, b) => b.fieldTotal - a.fieldTotal);
+
+  let md = `# ${title}\n\n`;
+  md += `**Season:** ${aggData.season} | **Matches:** ${aggData.summary.played} | **Runs Scored:** ${aggData.summary.teamRunsFor} (RR ${aggData.summary.teamRunRate}) | **Wickets Taken:** ${aggData.summary.teamWktsTaken} (Econ ${aggData.summary.teamBowlEcon})\n\n`;
+  if (notes.overview) {
+    md += `## Coach's Overview\n\n${notes.overview}\n\n`;
+  }
+  md += `## Match-by-Match Results\n\n| Round | Date | Opponent | Our Score | Opponent Score | Result |\n|---|---|---|---|---|---|\n`;
+  aggData.matches.forEach(m => {
+    md += `| ${m.round} | ${m.date} | ${m.opponent} | ${m.ourScore} | ${m.oppScore} | ${m.result || '—'} |\n`;
+  });
+  md += `\n## Batting Averages\n\n| Player | Mat | Inn | NO | Runs | HS | Avg | Balls | SR | 4s | 6s |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n`;
+  batters.forEach(p => {
+    md += `| ${p.name} | ${p.matchCount} | ${p.batInn} | ${p.batNO} | ${p.batRuns} | ${p.batHSDisplay} | ${p.batAvgDisplay} | ${p.batBalls} | ${p.batSRDisplay} | ${p.bat4s} | ${p.bat6s} |\n`;
+  });
+  md += `\n## Bowling Averages\n\n| Player | Mat | Overs | Mdn | Runs | Wkts | BBI | Avg | Econ | Wd | NB |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n`;
+  bowlers.forEach(p => {
+    md += `| ${p.name} | ${p.matchCount} | ${p.bowlOversDisplay} | ${p.bowlMaidens} | ${p.bowlRuns} | ${p.bowlWkts} | ${p.bestBowlDisplay} | ${p.bowlAvgDisplay} | ${p.bowlEconDisplay} | ${p.bowlWides} | ${p.bowlNB} |\n`;
+  });
+  if (fielders.length > 0) {
+    md += `\n## Fielding\n\n| Player | Catches | Run Outs | Stumpings | Total |\n|---|---:|---:|---:|---:|\n`;
+    fielders.forEach(p => {
+      md += `| ${p.name} | ${p.catches} | ${p.runOuts} | ${p.stumpings} | ${p.fieldTotal} |\n`;
+    });
+  }
+  const pNotes = notes.players || {};
+  const byName = [...aggData.players].sort((a, b) => a.name.localeCompare(b.name));
+  md += `\n## Player Summaries\n\n`;
+  byName.forEach(p => {
+    const bits = [];
+    if (p.batInn > 0) bits.push(`Batting: ${p.batRuns} runs (${p.batInn} inn, HS ${p.batHSDisplay}, Avg ${p.batAvgDisplay})`);
+    if (p.bowlBalls > 0) bits.push(`Bowling: ${p.bowlWkts}/${p.bowlRuns} (${p.bowlOversDisplay} ov, BBI ${p.bestBowlDisplay}, Econ ${p.bowlEconDisplay})`);
+    if (p.fieldTotal > 0) bits.push(`Fielding: ${p.catches} ct, ${p.runOuts} ro, ${p.stumpings} st`);
+    md += `- **${p.name}** (${p.matchCount} games) — ${bits.join('; ')}`;
+    if (pNotes[p.name]) md += `\n  - *Coach's note:* ${pNotes[p.name]}`;
+    md += `\n`;
+  });
+  return md;
+}
+
+async function loadSelectedTeamStats() {
+  const s = document.getElementById('selSeason').value;
+  const t = document.getElementById('selTeam').value;
+  currentSeason = s;
+  currentTeam = t;
+  if (!s || !t) {
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('contentArea').style.display = 'none';
+    document.getElementById('btnCopyAI').disabled = true;
+    document.getElementById('btnPrintReport').disabled = true;
+    return;
+  }
+
+  const entries = (indexData.games || []).filter(g => g.season === s && g.team === t);
+  const loaded = [];
+  for (const e of entries) {
+    try {
+      const resp = await fetch(e.path + '?t=' + Date.now());
+      if (resp.ok) loaded.push(await resp.json());
+    } catch (err) {
+      console.error('Failed to load', e.path, err);
+    }
+  }
+  const data = aggregateSeason(t, s, loaded);
+  renderAll(data);
+}
+
+async function init() {
+  try {
+    const resp = await fetch('data/index.json?t=' + Date.now());
+    indexData = await resp.json();
+  } catch (err) {
+    document.getElementById('emptyState').textContent = 'Could not load data/index.json. Open via localhost (npm start) or GitHub Pages.';
+    return;
+  }
+
+  const selS = document.getElementById('selSeason');
+  const selT = document.getElementById('selTeam');
+  const seasons = Array.from(new Set((indexData.games || []).map(g => g.season).filter(Boolean))).sort().reverse();
+  seasons.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    selS.appendChild(o);
+  });
+
+  selS.addEventListener('change', () => {
+    const s = selS.value;
+    selT.innerHTML = '<option value="">Select Team...</option>';
+    selT.disabled = !s;
+    if (s) {
+      const teams = Array.from(new Set((indexData.games || []).filter(g => g.season === s).map(g => g.team).filter(Boolean))).sort();
+      teams.forEach(t => {
+        const o = document.createElement('option');
+        o.value = t; o.textContent = t;
+        selT.appendChild(o);
+      });
+    }
+    loadSelectedTeamStats();
+  });
+
+  selT.addEventListener('change', loadSelectedTeamStats);
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  document.getElementById('btnPrintReport').addEventListener('click', () => window.print());
+
+  document.getElementById('btnCopyAI').addEventListener('click', async () => {
+    const md = buildMarkdownReport();
+    const prompt = `Using the cricket season statistics below, please write a warm, engaging Coach's Season Report suitable for players, parents, and the club yearbook (highlighting team progress, standout performances, and encouraging individual player shout-outs):\n\n${md}`;
+    try {
+      await navigator.clipboard.writeText(prompt);
+      showToast('Copied season stats & AI prompt to clipboard!');
+    } catch {
+      showToast('Could not access clipboard — use Download Markdown (.md) instead.');
+    }
+  });
+
+  document.getElementById('btnExportMarkdown').addEventListener('click', () => {
+    const md = buildMarkdownReport();
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `coaches-report-${currentSeason}-${currentTeam.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btnExportBatCsv').addEventListener('click', () => {
+    if (!aggData) return;
+    const rows = aggData.players.filter(p => p.batInn > 0).sort((a, b) => b.batRuns - a.batRuns)
+      .map(p => [p.name, p.matchCount, p.batInn, p.batNO, p.batRuns, p.batHSDisplay, p.batAvgDisplay, p.batBalls, p.batSRDisplay, p.bat4s, p.bat6s, p.bat25s, p.bat50s]);
+    downloadCsv(`batting-${currentSeason}-${currentTeam}.csv`, ['Player','Mat','Inn','NO','Runs','HS','Avg','Balls','SR','4s','6s','25s','50s'], rows);
+  });
+
+  document.getElementById('btnExportBowlCsv').addEventListener('click', () => {
+    if (!aggData) return;
+    const rows = aggData.players.filter(p => p.bowlBalls > 0 || p.bowlWkts > 0).sort((a, b) => b.bowlWkts - a.bowlWkts)
+      .map(p => [p.name, p.matchCount, p.bowlOversDisplay, p.bowlMaidens, p.bowlRuns, p.bowlWkts, p.bestBowlDisplay, p.bowlAvgDisplay, p.bowlEconDisplay, p.bowlSRDisplay, p.bowlWides, p.bowlNB]);
+    downloadCsv(`bowling-${currentSeason}-${currentTeam}.csv`, ['Player','Mat','Overs','Mdn','Runs','Wkts','BBI','Avg','Econ','SR','Wd','NB'], rows);
+  });
+
+  document.getElementById('btnExportFieldCsv').addEventListener('click', () => {
+    if (!aggData) return;
+    const rows = aggData.players.filter(p => p.fieldTotal > 0).sort((a, b) => b.fieldTotal - a.fieldTotal)
+      .map(p => [p.name, p.matchCount, p.catches, p.runOuts, p.stumpings, p.fieldTotal]);
+    downloadCsv(`fielding-${currentSeason}-${currentTeam}.csv`, ['Player','Mat','Catches','Run Outs','Stumpings','Total'], rows);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
