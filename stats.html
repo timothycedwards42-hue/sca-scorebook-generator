@@ -597,11 +597,14 @@ function parsePlayHQScorecard(text) {
 }
 
 function teamMatchScore(targetTeam, candidateName) {
+  const generic = new Set(['boys', 'girls', 'mixed', 'div', 'stage', 'shield', 'gee', 'team', 'club', 'cricket', 'u09', 'u10', 'u11', 'u12', 'u13', 'u14', 'u15', 'u16', 'u17', 'u18']);
   const words = String(targetTeam || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
   const low = String(candidateName || '').toLowerCase();
   if (!low || words.length === 0) return 0;
   let score = 0;
-  words.forEach(w => { if (low.includes(w)) score += 1; });
+  words.forEach(w => {
+    if (low.includes(w)) score += generic.has(w) ? 0.1 : 1;
+  });
   return score;
 }
 
@@ -615,6 +618,7 @@ function extractInningsStats(rawInn, parsedInn) {
     return {
       source: 'scorecard',
       team: sc.battingTeam || (rawInn.team || (parsedInn && parsedInn.team) || ''),
+      bowlingTeam: sc.bowlingTeam || (rawInn.against || (parsedInn && parsedInn.against) || ''),
       totalScore,
       totalWickets,
       totalOvers,
@@ -656,6 +660,7 @@ function extractInningsStats(rawInn, parsedInn) {
   return {
     source: 'csv',
     team: (rawInn && rawInn.team) || p.team || '',
+    bowlingTeam: (rawInn && rawInn.against) || p.against || '',
     totalScore: p.totalScore || 0,
     totalWickets: p.totalWickets || 0,
     totalOvers: p.totalOvers || 0,
@@ -712,21 +717,29 @@ function aggregateSeason(teamName, seasonName, loadedGames) {
 
     const inn1 = extractInningsStats(r1, p1);
     const inn2 = extractInningsStats(r2, p2);
+    const hasInnData = (inn) => inn && (inn.batters.length > 0 || inn.bowlers.length > 0 || inn.totalScore > 0);
 
-    const s1 = teamMatchScore(teamName, inn1.team);
-    const s2 = teamMatchScore(teamName, inn2.team);
+    const b1 = teamMatchScore(teamName, inn1.team);
+    const b2 = teamMatchScore(teamName, inn2.team);
+    const w1 = teamMatchScore(teamName, inn1.bowlingTeam);
+    const w2 = teamMatchScore(teamName, inn2.bowlingTeam);
+
+    const batFirstScore = b1 + w2;
+    const bowlFirstScore = b2 + w1;
 
     let ourBat = null, ourBowl = null;
-    if (s1 > s2) {
-      ourBat = inn1;
-      ourBowl = inn2.batters.length > 0 || inn2.bowlers.length > 0 ? inn2 : null;
-    } else if (s2 > s1) {
-      ourBat = inn2.batters.length > 0 || inn2.bowlers.length > 0 ? inn2 : null;
-      ourBowl = inn1;
+    if (batFirstScore > bowlFirstScore) {
+      ourBat = hasInnData(inn1) ? inn1 : null;
+      ourBowl = hasInnData(inn2) ? inn2 : null;
+    } else if (bowlFirstScore > batFirstScore) {
+      ourBat = hasInnData(inn2) ? inn2 : null;
+      ourBowl = hasInnData(inn1) ? inn1 : null;
+    } else if (g.opponent && teamMatchScore(g.opponent, inn1.team) > teamMatchScore(g.opponent, inn2.team)) {
+      ourBat = hasInnData(inn2) ? inn2 : null;
+      ourBowl = hasInnData(inn1) ? inn1 : null;
     } else {
-      // Fallback: if inn1 is clearly opponent (e.g. 1-innings washout where opponent batted)
-      ourBat = inn1;
-      ourBowl = inn2.batters.length > 0 || inn2.bowlers.length > 0 ? inn2 : null;
+      ourBat = hasInnData(inn1) ? inn1 : null;
+      ourBowl = hasInnData(inn2) ? inn2 : null;
     }
 
     const roundLbl = (g.match && g.match.round) ? `Rd ${g.match.round}` : `G${idx + 1}`;

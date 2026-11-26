@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T03:25:30.226Z",
+  "updatedAt": "2026-11-26T04:52:13.917Z",
   "games": [
     {
       "id": "2026-27/mosman-u10-boland/rd01-vs-sijcc-carey-u10-mixed-19-09-2026",
@@ -120,7 +120,7 @@
       "hasCsv": true,
       "hasScorecard": true,
       "hasBallByBall": true,
-      "savedAt": "2026-11-26T02:55:22.280Z"
+      "savedAt": "2026-11-26T04:52:13.810Z"
     },
     {
       "id": "2026-27/north-shore-u13-1/rd02-vs-northern-district-u13-1-11-10-2026",
