@@ -258,16 +258,51 @@
     font-size: 12.5px;
   }
   .player-note-row {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 10px;
-    align-items: start;
-    padding: 8px 0;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .player-note-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
     border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 5px;
+  }
+  .player-note-head .pname {
+    font-weight: 700;
+    font-size: 14px;
+    color: #0f172a;
+  }
+  .player-note-head .pmat {
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .player-note-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #334155;
+    line-height: 1.45;
+  }
+  .player-note-stats strong {
+    color: #0f172a;
+    display: inline-block;
+    min-width: 64px;
   }
   .player-note-row textarea {
-    min-height: 48px;
-    font-size: 12px;
+    min-height: 54px;
+    font-size: 12.5px;
+    background: #fff;
   }
   .toast {
     position: fixed;
@@ -1011,14 +1046,27 @@ function renderAll(data) {
   byName.forEach(p => {
     const row = document.createElement('div');
     row.className = 'player-note-row';
-    const statBrief = [
-      p.batInn > 0 ? `${p.batRuns}r (HS ${p.batHSDisplay})` : null,
-      p.bowlBalls > 0 ? `${p.bowlWkts}/${p.bowlRuns} (${p.bowlOversDisplay}ov)` : null,
-      p.fieldTotal > 0 ? `${p.fieldTotal} field` : null
-    ].filter(Boolean).join(' · ');
 
-    const left = document.createElement('div');
-    left.innerHTML = `<div style="font-weight:700; font-size:12.5px;">${p.name}</div><div style="font-size:11px; color:#64748b;">${statBrief}</div>`;
+    const batLine = p.batInn > 0
+      ? `${p.batRuns} runs · ${p.batInn} inn (${p.batNO} NO) · HS ${p.batHSDisplay} · Avg ${p.batAvgDisplay} · ${p.batBalls} balls (SR ${p.batSRDisplay}) · ${p.bat4s}×4s, ${p.bat6s}×6s${p.bat25s ? ` · ${p.bat25s}×25s` : ''}${p.bat50s ? ` · ${p.bat50s}×50s` : ''}`
+      : 'Did not bat';
+
+    const bowlLine = (p.bowlBalls > 0 || p.bowlWkts > 0)
+      ? `${p.bowlWkts} wkts / ${p.bowlRuns} runs · ${p.bowlOversDisplay} ov (${p.bowlMaidens} mdn) · Best ${p.bestBowlDisplay} · Avg ${p.bowlAvgDisplay} · Econ ${p.bowlEconDisplay} · SR ${p.bowlSRDisplay} · ${p.bowlWides} wd, ${p.bowlNB} nb`
+      : 'Did not bowl';
+
+    const fieldLine = `${p.catches} catches · ${p.runOuts} run outs · ${p.stumpings} stumpings (${p.fieldTotal} total)`;
+
+    const header = document.createElement('div');
+    header.className = 'player-note-head';
+    header.innerHTML = `<span class="pname">${p.name}</span><span class="pmat">${p.matchCount} match${p.matchCount === 1 ? '' : 'es'}</span>`;
+
+    const statsBox = document.createElement('div');
+    statsBox.className = 'player-note-stats';
+    statsBox.innerHTML =
+      `<div><strong>Batting:</strong> ${batLine}</div>` +
+      `<div><strong>Bowling:</strong> ${bowlLine}</div>` +
+      `<div><strong>Fielding:</strong> ${fieldLine}</div>`;
 
     const ta = document.createElement('textarea');
     ta.placeholder = `Coach's note for ${p.name}...`;
@@ -1030,7 +1078,8 @@ function renderAll(data) {
       saveCoachNotes(cur);
     });
 
-    row.appendChild(left);
+    row.appendChild(header);
+    row.appendChild(statsBox);
     row.appendChild(ta);
     pNotesEl.appendChild(row);
   });
@@ -1095,12 +1144,18 @@ function buildMarkdownReport() {
   const byName = [...aggData.players].sort((a, b) => a.name.localeCompare(b.name));
   md += `\n## Player Summaries\n\n`;
   byName.forEach(p => {
-    const bits = [];
-    if (p.batInn > 0) bits.push(`Batting: ${p.batRuns} runs (${p.batInn} inn, HS ${p.batHSDisplay}, Avg ${p.batAvgDisplay})`);
-    if (p.bowlBalls > 0) bits.push(`Bowling: ${p.bowlWkts}/${p.bowlRuns} (${p.bowlOversDisplay} ov, BBI ${p.bestBowlDisplay}, Econ ${p.bowlEconDisplay})`);
-    if (p.fieldTotal > 0) bits.push(`Fielding: ${p.catches} ct, ${p.runOuts} ro, ${p.stumpings} st`);
-    md += `- **${p.name}** (${p.matchCount} games) — ${bits.join('; ')}`;
-    if (pNotes[p.name]) md += `\n  - *Coach's note:* ${pNotes[p.name]}`;
+    const batLine = p.batInn > 0
+      ? `${p.batRuns} runs, ${p.batInn} inn (${p.batNO} NO), HS ${p.batHSDisplay}, Avg ${p.batAvgDisplay}, ${p.batBalls} balls (SR ${p.batSRDisplay}), ${p.bat4s}×4s, ${p.bat6s}×6s`
+      : 'Did not bat';
+    const bowlLine = (p.bowlBalls > 0 || p.bowlWkts > 0)
+      ? `${p.bowlWkts}/${p.bowlRuns}, ${p.bowlOversDisplay} ov (${p.bowlMaidens} mdn), Best ${p.bestBowlDisplay}, Avg ${p.bowlAvgDisplay}, Econ ${p.bowlEconDisplay}, SR ${p.bowlSRDisplay}, ${p.bowlWides} wd, ${p.bowlNB} nb`
+      : 'Did not bowl';
+    const fieldLine = `${p.catches} catches, ${p.runOuts} run outs, ${p.stumpings} stumpings (${p.fieldTotal} total)`;
+    md += `### ${p.name} (${p.matchCount} matches)\n`;
+    md += `- **Batting:** ${batLine}\n`;
+    md += `- **Bowling:** ${bowlLine}\n`;
+    md += `- **Fielding:** ${fieldLine}\n`;
+    if (pNotes[p.name]) md += `- **Coach's Note:** ${pNotes[p.name]}\n`;
     md += `\n`;
   });
   return md;
