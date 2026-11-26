@@ -1759,7 +1759,10 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granular
   const ev = rawEv.toLowerCase();
   const desc = (granularDesc || '').toLowerCase();
 
-  if (!ev.includes('no run')) {
+  const mDescRun = desc.match(/\bmade\s+(\d+)\s*runs?\b/);
+  if (mDescRun) {
+    batterRuns = parseInt(mDescRun[1], 10);
+  } else if (!ev.includes('no run')) {
     const mRun = ev.match(/(\d+)\s*runs?/);
     if (mRun) batterRuns = parseInt(mRun[1], 10);
   }
@@ -2067,6 +2070,9 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
       bwl.runs += d.wideRuns;
       ovObj.runsConceded += d.wideRuns;
       ovObj.tokens.push({ type: 'wide', wideRuns: d.wideRuns });
+      if (isStage1 || rule === 'max6') {
+        bat.balls += 1;
+      }
     } else if (d.nbRuns > 0) {
       sundries.noBalls.push(d.nbRuns);
       bwl.noBalls += d.nbRuns;
