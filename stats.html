@@ -666,15 +666,59 @@ function teamMatchScore(targetTeam, candidateName) {
   return score;
 }
 
+function countCsvDismissals(csvText, battersList) {
+  const counts = {};
+  let hasStage1Score = false;
+  const lookup = {};
+  (battersList || []).forEach(b => {
+    const parts = String(b.name || '').trim().split(/\s+/);
+    if (parts.length >= 2) {
+      lookup[`${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`] = b.name;
+    }
+  });
+  const resolve = (raw) => {
+    const t = cleanPlayerName(raw);
+    const parts = t.split(/\s+/);
+    if (parts.length >= 2) {
+      const k = `${parts[0][0].toLowerCase()}_${parts[parts.length - 1].toLowerCase()}`;
+      if (lookup[k]) return lookup[k];
+    }
+    return t;
+  };
+
+  const lines = String(csvText || '').split(/\r?\n/).slice(1);
+  lines.forEach(line => {
+    const m = line.match(/^[^,]+,([^,]*),(.+?)\s+to\s+(.+?)\s*:\s*(.+?)(?:,[^,]*)?$/i);
+    if (!m) return;
+    const score = m[1].trim();
+    const batter = m[3].trim();
+    const evRaw = m[4].replace(/^"|"$/g, '').trim();
+    const ev = evRaw.toLowerCase().replace(/\bnot\s+out\b/g, '');
+    if (ev.includes('dismissed') || /\bout\b/.test(ev)) {
+      if (/^0(--|\/)/.test(score)) hasStage1Score = true;
+      const mDis = evRaw.match(/^(.+?)\s+dismissed$/i);
+      const outName = resolve(mDis ? mDis[1].trim() : batter);
+      counts[outName] = (counts[outName] || 0) + 1;
+    }
+  });
+  return { counts, hasStage1Score };
+}
+
 function extractInningsStats(rawInn, parsedInn) {
   const hasSc = rawInn && (rawInn.scorecard || '').trim().length > 0;
   if (hasSc) {
     const sc = parsePlayHQScorecard(rawInn.scorecard);
+    const { counts: csvOuts, hasStage1Score } = countCsvDismissals(rawInn.csv || '', sc.batters);
+    const isStage1 = hasStage1Score || sc.batters.some(b => /retired/i.test(b.rawD || ''));
+    sc.batters.forEach(b => {
+      b.outs = isStage1 ? (csvOuts[b.name] || 0) : (b.isNotOut ? 0 : 1);
+    });
     const totalScore = sc.totalScore || (parsedInn ? parsedInn.totalScore : 0);
     const totalWickets = sc.totalWickets || (parsedInn ? parsedInn.totalWickets : 0);
     const totalOvers = sc.totalOvers || (parsedInn ? parsedInn.totalOvers : 0);
     return {
       source: 'scorecard',
+      isStage1,
       team: sc.battingTeam || (rawInn.team || (parsedInn && parsedInn.team) || ''),
       bowlingTeam: sc.bowlingTeam || (rawInn.against || (parsedInn && parsedInn.against) || ''),
       totalScore,
@@ -685,14 +729,19 @@ function extractInningsStats(rawInn, parsedInn) {
     };
   }
   const p = parsedInn || { batters: [], bowlers: [], totalScore: 0, totalWickets: 0, totalOvers: 0 };
+  const rawBatters = (p.batters || []).map(b => ({ name: cleanPlayerName(b.name) }));
+  const { counts: csvOuts, hasStage1Score } = countCsvDismissals(rawInn && rawInn.csv ? rawInn.csv : '', rawBatters);
+  const isStage1 = !!p.isStage1 || hasStage1Score;
   const batters = (p.batters || []).map(b => {
+    const name = cleanPlayerName(b.name);
     const ev = b.events || [];
     const fours = ev.filter(x => x === 4).length;
     const sixes = ev.filter(x => x === 6).length;
     const hLow = String(b.howOut || '').toLowerCase();
     const isNotOut = !!b.isDNB || hLow === '' || hLow.includes('not out') || hLow.includes('retired');
+    const outs = isStage1 ? (csvOuts[name] || 0) : (isNotOut ? 0 : 1);
     return {
-      name: cleanPlayerName(b.name),
+      name,
       runs: b.runs || 0,
       balls: b.balls || 0,
       fours,
@@ -700,6 +749,7 @@ function extractInningsStats(rawInn, parsedInn) {
       rawD: b.howOut || '',
       isDNB: !!b.isDNB,
       isNotOut,
+      outs,
       catcher: '',
       stumper: '',
       runOutFielders: []
@@ -717,6 +767,7 @@ function extractInningsStats(rawInn, parsedInn) {
   }));
   return {
     source: 'csv',
+    isStage1,
     team: (rawInn && rawInn.team) || p.team || '',
     bowlingTeam: (rawInn && rawInn.against) || p.against || '',
     totalScore: p.totalScore || 0,
@@ -738,6 +789,7 @@ function aggregateSeason(teamName, seasonName, loadedGames) {
         matches: new Set(),
         batInn: 0,
         batNO: 0,
+        batOuts: 0,
         batRuns: 0,
         batBalls: 0,
         bat4s: 0,
@@ -833,6 +885,7 @@ function aggregateSeason(teamName, seasonName, loadedGames) {
         if (!b.isDNB) {
           pl.batInn += 1;
           if (b.isNotOut) pl.batNO += 1;
+          pl.batOuts += (typeof b.outs === 'number' ? b.outs : (b.isNotOut ? 0 : 1));
           pl.batRuns += b.runs;
           pl.batBalls += b.balls;
           pl.bat4s += b.fours;
@@ -899,7 +952,7 @@ function aggregateSeason(teamName, seasonName, loadedGames) {
   });
 
   const playerList = Object.values(players).map(p => {
-    const dismissals = p.batInn - p.batNO;
+    const dismissals = p.batOuts;
     const batAvg = dismissals > 0 ? p.batRuns / dismissals : (p.batRuns > 0 ? p.batRuns : 0);
     const batSR = p.batBalls > 0 ? (p.batRuns / p.batBalls) * 100 : 0;
     const bowlAvg = p.bowlWkts > 0 ? p.bowlRuns / p.bowlWkts : null;
@@ -978,11 +1031,11 @@ function renderAll(data) {
   const batters = [...data.players].filter(p => p.batInn > 0).sort((a, b) => b.batRuns - a.batRuns || b.batAvg - a.batAvg);
   document.getElementById('tblBatting').innerHTML = `
     <thead><tr>
-      <th>Player</th><th>Mat</th><th>Inn</th><th>NO</th><th>Runs</th><th>HS</th><th>Avg</th><th>Balls</th><th>SR</th><th>4s</th><th>6s</th><th>25s</th><th>50s</th>
+      <th>Player</th><th>Mat</th><th>Inn</th><th>NO</th><th>Outs</th><th>Runs</th><th>HS</th><th>Avg</th><th>Balls</th><th>SR</th><th>4s</th><th>6s</th><th>25+</th><th>50s</th>
     </tr></thead>
     <tbody>
       ${batters.map(p => `<tr>
-        <td class="player-name">${p.name}</td><td>${p.matchCount}</td><td>${p.batInn}</td><td>${p.batNO}</td>
+        <td class="player-name">${p.name}</td><td>${p.matchCount}</td><td>${p.batInn}</td><td>${p.batNO}</td><td>${p.batOuts}</td>
         <td class="num-strong">${p.batRuns}</td><td>${p.batHSDisplay}</td><td>${p.batAvgDisplay}</td>
         <td>${p.batBalls}</td><td>${p.batSRDisplay}</td><td>${p.bat4s}</td><td>${p.bat6s}</td><td>${p.bat25s}</td><td>${p.bat50s}</td>
       </tr>`).join('')}
@@ -1071,7 +1124,7 @@ function renderAll(data) {
     row.className = 'player-note-row';
 
     const batLine = p.batInn > 0
-      ? `${p.batRuns} runs · ${p.batInn} inn (${p.batNO} NO) · HS ${p.batHSDisplay} · Avg ${p.batAvgDisplay} · ${p.batBalls} balls (SR ${p.batSRDisplay}) · ${p.bat4s}×4s, ${p.bat6s}×6s${p.bat25s ? ` · ${p.bat25s}×25s` : ''}${p.bat50s ? ` · ${p.bat50s}×50s` : ''}`
+      ? `${p.batRuns} runs · ${p.batInn} inn (${p.batOuts} outs, ${p.batNO} NO) · HS ${p.batHSDisplay} · Avg ${p.batAvgDisplay} · ${p.batBalls} balls (SR ${p.batSRDisplay}) · ${p.bat4s}×4s, ${p.bat6s}×6s${p.bat25s ? ` · ${p.bat25s}×25+` : ''}${p.bat50s ? ` · ${p.bat50s}×50s` : ''}`
       : 'Did not bat';
 
     const bowlLine = (p.bowlBalls > 0 || p.bowlWkts > 0)
@@ -1168,7 +1221,7 @@ function buildMarkdownReport() {
   md += `\n## Player Summaries\n\n`;
   byName.forEach(p => {
     const batLine = p.batInn > 0
-      ? `${p.batRuns} runs, ${p.batInn} inn (${p.batNO} NO), HS ${p.batHSDisplay}, Avg ${p.batAvgDisplay}, ${p.batBalls} balls (SR ${p.batSRDisplay}), ${p.bat4s}×4s, ${p.bat6s}×6s`
+      ? `${p.batRuns} runs, ${p.batInn} inn (${p.batOuts} outs, ${p.batNO} NO), HS ${p.batHSDisplay}, Avg ${p.batAvgDisplay}, ${p.batBalls} balls (SR ${p.batSRDisplay}), ${p.bat4s}×4s, ${p.bat6s}×6s`
       : 'Did not bat';
     const bowlLine = (p.bowlBalls > 0 || p.bowlWkts > 0)
       ? `${p.bowlWkts}/${p.bowlRuns}, ${p.bowlOversDisplay} ov (${p.bowlMaidens} mdn), Best ${p.bestBowlDisplay}, Avg ${p.bowlAvgDisplay}, Econ ${p.bowlEconDisplay}, SR ${p.bowlSRDisplay}, ${p.bowlWides} wd, ${p.bowlNB} nb`
@@ -1282,8 +1335,8 @@ async function init() {
   document.getElementById('btnExportBatCsv').addEventListener('click', () => {
     if (!aggData) return;
     const rows = aggData.players.filter(p => p.batInn > 0).sort((a, b) => b.batRuns - a.batRuns)
-      .map(p => [p.name, p.matchCount, p.batInn, p.batNO, p.batRuns, p.batHSDisplay, p.batAvgDisplay, p.batBalls, p.batSRDisplay, p.bat4s, p.bat6s, p.bat25s, p.bat50s]);
-    downloadCsv(`batting-${currentSeason}-${currentTeam}.csv`, ['Player','Mat','Inn','NO','Runs','HS','Avg','Balls','SR','4s','6s','25s','50s'], rows);
+      .map(p => [p.name, p.matchCount, p.batInn, p.batNO, p.batOuts, p.batRuns, p.batHSDisplay, p.batAvgDisplay, p.batBalls, p.batSRDisplay, p.bat4s, p.bat6s, p.bat25s, p.bat50s]);
+    downloadCsv(`batting-${currentSeason}-${currentTeam}.csv`, ['Player','Mat','Inn','NO','Outs','Runs','HS','Avg','Balls','SR','4s','6s','25+','50s'], rows);
   });
 
   document.getElementById('btnExportBowlCsv').addEventListener('click', () => {
