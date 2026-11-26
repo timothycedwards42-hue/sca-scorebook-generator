@@ -368,9 +368,29 @@ function main() {
     const b1 = sideBuckets.get(inn1Key) || { lines: [header], rows: [] };
     const b2 = sideBuckets.get(inn2Key) || { lines: [], rows: [] };
 
+    // Load optional auto-scraped PlayCricket match sidecar (.playhq.json) if present
+    let sidecar = null;
+    const sidecarPath = fullPath.replace(/\.csv$/i, '.playhq.json');
+    if (fs.existsSync(sidecarPath)) {
+      try {
+        sidecar = JSON.parse(fs.readFileSync(sidecarPath, 'utf8'));
+      } catch {}
+    }
+    const scInn1 = (sidecar && sidecar.innings && sidecar.innings[0]) || {};
+    const scInn2 = (sidecar && sidecar.innings && sidecar.innings[1]) || {};
+
+    // Replace generic "Innings 1 Batting" / "Opposition Bowling" headers with actual team names
+    const fixHeaders = (scText, batTeam, bowlTeam) => {
+      if (!scText) return '';
+      return scText
+        .replace(/^.*?\s+Batting$/m, `${batTeam} Batting`)
+        .replace(/^.*?\s+Bowling$/m, `${bowlTeam} Bowling`);
+    };
+
     const payload = {
       schemaVersion: 1,
       id,
+      matchId: (sidecar && sidecar.matchId) || '',
       title,
       season: args.season,
       team: args.team,
@@ -380,12 +400,12 @@ function main() {
         comp: args.comp || '',
         club: args.club || '',
         grade: args.grade || args.team,
-        venue: '',
+        venue: (sidecar && sidecar.venue) || '',
         toss: '',
         round,
         date,
-        result: '',
-        scorers: 'PlayCricket Ball-by-Ball CSV'
+        result: (sidecar && sidecar.result) || '',
+        scorers: sidecar ? 'PlayCricket Auto-Sync' : 'PlayCricket Ball-by-Ball CSV'
       },
       innings: [
         summarizeSideFromRows(1, team1, team2, b1.rows),
@@ -397,8 +417,8 @@ function main() {
           team: team1,
           against: team2,
           csv: b1.lines.join('\n'),
-          scorecard: '',
-          playhqText: '',
+          scorecard: fixHeaders(scInn1.scorecard || '', team1, team2),
+          playhqText: scInn1.playhqText || '',
           matchFormat: 'auto',
           overRule: 'auto',
           dotFormat: 'individual',
@@ -410,8 +430,8 @@ function main() {
           team: team2,
           against: team1,
           csv: b2.lines.length > 1 ? b2.lines.join('\n') : '',
-          scorecard: '',
-          playhqText: '',
+          scorecard: fixHeaders(scInn2.scorecard || '', team2, team1),
+          playhqText: scInn2.playhqText || '',
           matchFormat: 'auto',
           overRule: 'auto',
           dotFormat: 'individual',
@@ -423,6 +443,30 @@ function main() {
 
     const destPath = path.join(destDir, jsonFileName);
     if (!args.overwrite && fs.existsSync(destPath)) {
+      // If existing game has no scorecard yet and we now have a sidecar, enrich it without clobbering existing metadata!
+      if (sidecar && (scInn1.scorecard || scInn2.scorecard)) {
+        try {
+          const existing = JSON.parse(fs.readFileSync(destPath, 'utf8'));
+          const alreadyEnriched = Boolean((existing.raw?.innings1?.scorecard || '').trim() || (existing.raw?.innings2?.scorecard || '').trim());
+          if (!alreadyEnriched) {
+            existing.matchId = sidecar.matchId || existing.matchId || '';
+            if (sidecar.result && existing.match && !existing.match.result) existing.match.result = sidecar.result;
+            if (existing.raw?.innings1) {
+              existing.raw.innings1.scorecard = payload.raw.innings1.scorecard;
+              if (!existing.raw.innings1.playhqText) existing.raw.innings1.playhqText = payload.raw.innings1.playhqText;
+            }
+            if (existing.raw?.innings2) {
+              existing.raw.innings2.scorecard = payload.raw.innings2.scorecard;
+              if (!existing.raw.innings2.playhqText) existing.raw.innings2.playhqText = payload.raw.innings2.playhqText;
+            }
+            existing.savedAt = new Date().toISOString();
+            fs.writeFileSync(destPath, JSON.stringify(existing, null, 2) + '\n', 'utf8');
+            console.log(`Enriched existing game with Scorecard & Ball-by-Ball: ${path.relative(repoRoot, destPath)}`);
+            imported++;
+            continue;
+          }
+        } catch {}
+      }
       console.log(`[NOTICE] Already in Match Library — ignored: ${path.relative(repoRoot, destPath)}`);
       skippedExisting++;
       continue;

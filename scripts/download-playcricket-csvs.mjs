@@ -36,6 +36,7 @@ function parseArgs(argv) {
     headed: false,
     listOnly: false,
     overwrite: false,
+    csvOnly: false,
     help: false
   };
   for (let i = 0; i < argv.length; i++) {
@@ -44,6 +45,7 @@ function parseArgs(argv) {
     else if (a === '--headed') args.headed = true;
     else if (a === '--list-only') args.listOnly = true;
     else if (a === '--overwrite') args.overwrite = true;
+    else if (a === '--csv-only') args.csvOnly = true;
     else if (a === '--org' && argv[i + 1]) args.org = argv[++i];
     else if (a === '--season' && argv[i + 1]) args.season = argv[++i];
     else if (a === '--grade' && argv[i + 1]) args.grade = argv[++i];
@@ -235,6 +237,176 @@ async function downloadSingleMatch(page, matchName, outFile) {
   ]);
 
   await download.saveAs(outFile);
+  let matchId = '';
+  try {
+    matchId = new URL(page.url()).searchParams.get('matchId') || '';
+  } catch {}
+  return matchId;
+}
+
+async function scrapeMatchPage(matchPage, matchId) {
+  const baseUrl = `https://play.cricket.com.au/match/${matchId}`;
+  await matchPage.goto(`${baseUrl}?tab=scorecard`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await matchPage.locator('table[aria-label="Batting players"]').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+  await matchPage.waitForTimeout(800);
+
+  // Extract match summary info (result / venue) from page header text
+  const headerInfo = await matchPage.evaluate(() => {
+    const bodyText = document.body ? document.body.innerText : '';
+    const lines = bodyText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    let result = '';
+    for (const l of lines.slice(0, 35)) {
+      if (/\b(won by|tied|draw|abandoned|no result|washout)\b/i.test(l) && l.length < 120) {
+        result = l;
+        break;
+      }
+    }
+    return { result };
+  });
+
+  const extractCurrentScorecard = async () => {
+    return await matchPage.evaluate(() => {
+      const readTableRows = (ariaLabel) => {
+        const tbl = document.querySelector(`table[aria-label="${ariaLabel}"]`);
+        if (!tbl) return [];
+        const rows = [];
+        tbl.querySelectorAll('tbody tr').forEach(tr => {
+          const cells = Array.from(tr.querySelectorAll('th, td')).map(td => (td.innerText || '').trim());
+          if (cells.length > 0 && cells.some(Boolean)) rows.push(cells);
+        });
+        return rows;
+      };
+
+      const batRows = readTableRows('Batting players');
+      const bowlRows = readTableRows('Bowling players');
+      const fieldRows = readTableRows('Fielding players');
+
+      // Try to read team heading and total/extras text from the scorecard panel
+      const panelText = (document.querySelector('main')?.innerText || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      let totalLine = '';
+      let oversLine = '';
+      let extrasLine = '';
+      for (let i = 0; i < panelText.length; i++) {
+        if (/^extras$/i.test(panelText[i]) && panelText[i + 1]) {
+          extrasLine = panelText[i + 1];
+        }
+        if (/^total$/i.test(panelText[i]) && panelText[i + 1]) {
+          totalLine = panelText[i + 1];
+          if (panelText[i + 2] && /overs?/i.test(panelText[i + 2])) oversLine = panelText[i + 2];
+        }
+      }
+
+      // Active radio label
+      const checkedRadio = document.querySelector('[role="radiogroup"] [role="radio"][aria-checked="true"]');
+      const radioLabel = checkedRadio ? (checkedRadio.innerText || '').trim() : '';
+
+      return { batRows, bowlRows, fieldRows, extrasLine, totalLine, oversLine, radioLabel };
+    });
+  };
+
+  const formatScorecardText = (raw, batTeamName, bowlTeamName) => {
+    const out = [];
+    if (raw.batRows.length > 0) {
+      out.push(`${batTeamName || 'Innings'} Batting`, 'Batters', 'R', 'B', '4S', '6s', 'SR');
+      raw.batRows.forEach(cells => {
+        // Cell 0 usually has "Player Name\ndismissal text"
+        const firstLines = String(cells[0] || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        const name = firstLines[0] || '';
+        const dismissal = firstLines.slice(1).join(' ') || 'not out';
+        if (!name || /^(extras|total)$/i.test(name)) return;
+        out.push(name, dismissal);
+        const r = cells[1] ?? '-';
+        const b = cells[2] ?? '-';
+        const f4 = cells[3] ?? '0';
+        const s6 = cells[4] ?? '0';
+        const sr = cells[5] ?? '0.00';
+        out.push(r, b, f4, s6, sr);
+      });
+      if (raw.extrasLine) out.push('Extras', raw.extrasLine);
+      if (raw.totalLine) {
+        out.push('Total', raw.totalLine);
+        if (raw.oversLine) out.push(raw.oversLine);
+      }
+    }
+    if (raw.bowlRows.length > 0) {
+      out.push(`${bowlTeamName || 'Opposition'} Bowling`, 'Bowlers', 'O', 'M', 'R', 'W', 'HT', 'E', 'WD', 'NB');
+      raw.bowlRows.forEach(cells => {
+        const name = String(cells[0] || '').split(/\r?\n/)[0].trim();
+        if (!name) return;
+        const o = cells[1] ?? '0';
+        const m = cells[2] ?? '0';
+        const r = cells[3] ?? '0';
+        const w = cells[4] ?? '0';
+        const econ = cells[5] ?? '0.00';
+        const wd = cells[6] ?? '0';
+        const nb = cells[7] ?? '0';
+        out.push(name, o, m, r, w, '0', econ, wd, nb);
+      });
+    }
+    if (raw.fieldRows.length > 0) {
+      out.push('Fielders', 'CF', 'CWK', 'ROU', 'ROA', 'S');
+      raw.fieldRows.forEach(cells => {
+        const name = String(cells[0] || '').split(/\r?\n/)[0].trim();
+        if (!name) return;
+        const c = cells[1] ?? '0';
+        const ro = cells[2] ?? '0';
+        const st = cells[3] ?? '0';
+        out.push(name, c, '0', ro, '0', st);
+      });
+    }
+    return out.join('\n');
+  };
+
+  const radios = matchPage.locator('[role="radiogroup"] [role="radio"]');
+  const radioCount = Math.max(1, await radios.count().catch(() => 1));
+  const rawScorecards = [];
+
+  for (let idx = 0; idx < Math.min(radioCount, 2); idx++) {
+    if (radioCount > 1) {
+      await radios.nth(idx).click({ force: true, timeout: 8000 }).catch(() => {});
+      await matchPage.waitForTimeout(700);
+    }
+    rawScorecards.push(await extractCurrentScorecard());
+  }
+
+  // Switch to Ball-by-Ball tab
+  const bbbTexts = [];
+  const bbbTab = matchPage.getByRole('tab', { name: /ball by ball/i });
+  if (await bbbTab.isVisible().catch(() => false)) {
+    await bbbTab.click({ force: true, timeout: 8000 }).catch(() => {});
+    await matchPage.waitForTimeout(900);
+
+    const bbbRadios = matchPage.locator('[role="radiogroup"] [role="radio"]');
+    const bbbRadioCount = Math.max(1, await bbbRadios.count().catch(() => 1));
+    for (let idx = 0; idx < Math.min(bbbRadioCount, 2); idx++) {
+      if (bbbRadioCount > 1) {
+        await bbbRadios.nth(idx).click({ force: true, timeout: 8000 }).catch(() => {});
+        await matchPage.waitForTimeout(700);
+      }
+      const bbbText = await matchPage.evaluate(() => {
+        const articles = Array.from(document.querySelectorAll('article'));
+        if (articles.length > 0) {
+          return articles.map(a => (a.innerText || '').trim()).filter(Boolean).join('\n');
+        }
+        return '';
+      });
+      bbbTexts.push(bbbText);
+    }
+  }
+
+  const innings = rawScorecards.map((raw, idx) => ({
+    index: idx + 1,
+    radioLabel: raw.radioLabel,
+    scorecard: formatScorecardText(raw, raw.radioLabel || `Innings ${idx + 1}`, ''),
+    playhqText: bbbTexts[idx] || ''
+  }));
+
+  return {
+    matchId,
+    url: `${baseUrl}?tab=scorecard`,
+    result: headerInfo.result || '',
+    innings
+  };
 }
 
 async function saveErrorScreenshot(page, label) {
@@ -271,8 +443,9 @@ async function main() {
   }
 
   const browser = await playwright.chromium.launch({ headless: !args.headed });
-  const context = await browser.newContext({ acceptDownloads: true });
+  const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 1000 } });
   const page = await context.newPage();
+  const matchPage = await context.newPage();
 
   try {
     console.log(`Opening ${STATS_URL} ...`);
@@ -341,8 +514,12 @@ async function main() {
       const matchName = matches[i];
       const fileName = `${String(i + 1).padStart(2, '0')}-${slugify(matchName, 'match')}.csv`;
       const outFile = path.join(outDir, fileName);
+      const sidecarFile = outFile.replace(/\.csv$/i, '.playhq.json');
 
-      if (!args.overwrite && fs.existsSync(outFile)) {
+      const csvExists = fs.existsSync(outFile);
+      const sidecarExists = fs.existsSync(sidecarFile);
+
+      if (!args.overwrite && csvExists && (args.csvOnly || sidecarExists)) {
         console.log(`[${i + 1}/${matches.length}] [NOTICE] Already downloaded — ignored: ${fileName}`);
         skipped++;
         continue;
@@ -350,16 +527,27 @@ async function main() {
 
       let ok = false;
       let lastErr = null;
+      let matchId = '';
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
           console.log(`[${i + 1}/${matches.length}] Downloading${attempt > 1 ? ' (retry)' : ''}: ${matchName}`);
-          await downloadSingleMatch(page, matchName, outFile);
+          matchId = await downloadSingleMatch(page, matchName, outFile);
           downloaded++;
           ok = true;
           break;
         } catch (err) {
           lastErr = err;
           if (attempt < 2) await page.waitForTimeout(1500);
+        }
+      }
+
+      if (ok && !args.csvOnly && matchId && (args.overwrite || !sidecarExists)) {
+        try {
+          console.log(`  Fetching Scorecard & Ball-by-Ball (matchId: ${matchId})...`);
+          const scraped = await scrapeMatchPage(matchPage, matchId);
+          fs.writeFileSync(sidecarFile, JSON.stringify(scraped, null, 2) + '\n', 'utf8');
+        } catch (err) {
+          console.warn(`  [WARN] Could not scrape match page for ${matchId}: ${err.message}`);
         }
       }
 

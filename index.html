@@ -536,6 +536,9 @@
           <label style="display:flex; align-items:center; gap:4px; margin:0; cursor:pointer;">
             <input type="checkbox" id="syncAutoImport" checked style="width:auto;"> Import to Library
           </label>
+          <label style="display:flex; align-items:center; gap:4px; margin:0; cursor:pointer;" title="Also open each match page on play.cricket.com.au to scrape full Scorecard &amp; Detailed Ball-by-Ball">
+            <input type="checkbox" id="syncWithMatchData" checked style="width:auto;"> Auto-fetch Scorecard &amp; BBB
+          </label>
           <label style="display:flex; align-items:center; gap:4px; margin:0; cursor:pointer;">
             <input type="checkbox" id="syncListOnly" style="width:auto;"> Dry run (list only)
           </label>
@@ -3945,6 +3948,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const librarySeason = document.getElementById('syncSeasonFolder').value.trim();
       const libraryTeam = document.getElementById('syncTeamFolder').value.trim();
       const importToLibrary = document.getElementById('syncAutoImport').checked;
+      const withMatchData = document.getElementById('syncWithMatchData')?.checked !== false;
       const listOnly = document.getElementById('syncListOnly').checked;
       if (!org || !season || (checkedGrades.length === 0 && !grade && !team)) {
         setStatus('Enter Association/Club, Season, and select or type at least one Grade/Team.', true);
@@ -3972,6 +3976,7 @@ window.addEventListener('DOMContentLoaded', () => {
             librarySeason,
             libraryTeam,
             importToLibrary,
+            withMatchData,
             listOnly,
             overwrite: false
           })

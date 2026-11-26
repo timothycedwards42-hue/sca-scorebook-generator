@@ -982,7 +982,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const { org, season, grade, grades, team, gradeOrTeam, comp, librarySeason, libraryTeam, importToLibrary, listOnly, overwrite } = body;
+    const { org, season, grade, grades, team, gradeOrTeam, comp, librarySeason, libraryTeam, importToLibrary, withMatchData, listOnly, overwrite } = body;
     const effTeam = (team || '').trim();
     const gradeList = Array.isArray(grades) && grades.length > 0
       ? grades.map(g => String(g || '').trim()).filter(Boolean)
@@ -1059,6 +1059,7 @@ const server = http.createServer(async (req, res) => {
       if (!curGrade && !effTeam) dlArgs.push('--team', curTargetLabel);
       if (listOnly) dlArgs.push('--list-only');
       if (overwrite) dlArgs.push('--overwrite');
+      if (withMatchData === false) dlArgs.push('--csv-only');
 
       res.write(`=== Step 1: Downloading Ball-by-Ball CSVs ===\n`);
       const dlCode = await runStep(process.execPath, dlArgs, res);
