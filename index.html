@@ -519,6 +519,7 @@
       <div style="display:flex; gap:6px; flex-wrap:wrap;">
         <button id="btnLoadTeamToSeason" class="btn-secondary" type="button" style="flex:1; font-size:11px; padding:5px 8px;">Load Filtered Games to Season Book</button>
         <a id="btnOpenLocalSync" href="/sync" target="_blank" class="btn-mini" style="display:none; padding:5px 8px; text-decoration:none; background:#dbeafe; color:#1d4ed8; border-color:#93c5fd;">Sync PlayCricket</a>
+        <a id="btnOpenLocalEnrich" href="/enrich" target="_blank" class="btn-mini" style="display:none; padding:5px 8px; text-decoration:none; background:#dcfce7; color:#166534; border-color:#86efac;">Submit Data</a>
         <button id="btnRefreshRepoIndex" class="btn-mini" type="button" style="padding:5px 8px;">Refresh</button>
       </div>
     </div>
@@ -2995,6 +2996,7 @@ function printScorebook(overrideScope) {
 /* ==================== REPO MATCH LIBRARY (data/seasons/) ==================== */
 let repoIndex = { schemaVersion: 1, updatedAt: '', games: [] };
 let repoDirHandle = null;
+let localServerAvailable = false;
 
 function slugifySegment(str, fallback) {
   const s = String(str || '')
@@ -3178,6 +3180,24 @@ function downloadCurrentGameJson() {
 }
 
 async function saveCurrentGameToRepoFolder() {
+  if (localServerAvailable) {
+    try {
+      const { payload, relPath } = buildGameArchivePayload();
+      const resp = await fetch('/api/save-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: relPath, payload })
+      });
+      const out = await resp.json();
+      if (!resp.ok || !out.ok) throw new Error(out.error || 'Server save failed');
+      await refreshRepoIndex();
+      setStatus(`Saved ${relPath} and updated data/index.json via local server.`, false);
+      return;
+    } catch (err) {
+      setStatus(`Could not save via local server: ${err.message}`, true);
+      return;
+    }
+  }
   if (typeof window.showDirectoryPicker !== 'function') {
     setStatus('Folder picker requires Chrome/Edge. Downloading game JSON instead...', false);
     downloadCurrentGameJson();
@@ -3586,10 +3606,21 @@ window.addEventListener('DOMContentLoaded', () => {
   refreshRepoIndex();
   fetch('/api/health').then(r => {
     if (r.ok) {
+      localServerAvailable = true;
       const btn = document.getElementById('btnOpenLocalSync');
       if (btn) btn.style.display = 'inline-block';
+      const btnEnrich = document.getElementById('btnOpenLocalEnrich');
+      if (btnEnrich) btnEnrich.style.display = 'inline-block';
     }
   }).catch(() => {});
+
+  const urlGameParam = new URLSearchParams(window.location.search).get('game');
+  if (urlGameParam && urlGameParam.startsWith('data/seasons/')) {
+    fetch(urlGameParam + '?t=' + Date.now())
+      .then(r => r.ok ? r.json() : null)
+      .then(obj => { if (obj) loadGameArchiveObject(obj); })
+      .catch(() => {});
+  }
   if (document.getElementById('libSeason') && !document.getElementById('libSeason').value) {
     document.getElementById('libSeason').value = guessSeasonString('');
   }

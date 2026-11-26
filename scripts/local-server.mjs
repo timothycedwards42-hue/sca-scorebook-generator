@@ -10,7 +10,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -200,7 +200,10 @@ const SYNC_PAGE_HTML = `<!DOCTYPE html>
 <body>
 <header>
   <h1>PlayCricket Ball-by-Ball Sync</h1>
-  <a href="/">← Back to Scorebook</a>
+  <div style="display:flex; gap:8px;">
+    <a href="/enrich">Submit / Enrich Data</a>
+    <a href="/">← Back to Scorebook</a>
+  </div>
 </header>
 <main>
   <form id="syncForm" class="card">
@@ -314,6 +317,402 @@ const SYNC_PAGE_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+const ENRICH_PAGE_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit &amp; Enrich Match Data — SCA Scorebook</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  header {
+    background: #1e293b;
+    color: #fff;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+  header a {
+    color: #e2e8f0;
+    text-decoration: none;
+    background: #334155;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  header a:hover { background: #475569; }
+  .layout {
+    max-width: 1240px;
+    margin: 20px auto;
+    padding: 0 16px 40px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card h2 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #334155;
+  }
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  select, input[type="text"], textarea {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-family: inherit;
+  }
+  textarea {
+    min-height: 120px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px;
+    resize: vertical;
+  }
+  label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 4px;
+  }
+  .game-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .game-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    background: #f8fafc;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .game-item:hover { border-color: #93c5fd; background: #eff6ff; }
+  .game-item.active { border-color: #2563eb; background: #dbeafe; }
+  .game-title { font-size: 12px; font-weight: 600; color: #0f172a; margin-bottom: 5px; }
+  .badges { display: flex; gap: 5px; flex-wrap: wrap; }
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 999px;
+  }
+  .badge.ok { background: #dcfce7; color: #166534; }
+  .badge.miss { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .innings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .innings-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .innings-box h3 {
+    margin: 0;
+    font-size: 13px;
+    color: #1e293b;
+  }
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  button, .btn-link {
+    border: none;
+    border-radius: 6px;
+    padding: 9px 15px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+  .btn-secondary { background: #e2e8f0; color: #1e293b; }
+  .btn-secondary:hover { background: #cbd5e1; }
+  .status {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #047857;
+  }
+  .status.err { color: #b91c1c; }
+  .empty-state {
+    color: #64748b;
+    font-size: 13px;
+    padding: 24px 0;
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .innings-grid, .meta-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Submit &amp; Enrich Match Data</h1>
+  <div style="display:flex; gap:8px;">
+    <a href="/sync">PlayCricket Sync</a>
+    <a href="/">← Back to Scorebook</a>
+  </div>
+</header>
+<div class="layout">
+  <div class="card">
+    <h2>Saved Games (data/seasons/)</h2>
+    <div class="filters">
+      <select id="filterSeason"><option value="">All Seasons</option></select>
+      <select id="filterTeam"><option value="">All Teams</option></select>
+    </div>
+    <div id="gameList" class="game-list"></div>
+  </div>
+
+  <div class="card">
+    <div id="noSelection" class="empty-state">
+      Select a game on the left to paste its PlayHQ Scorecard View and Detailed Ball-by-Ball text.
+    </div>
+    <form id="enrichForm" style="display:none;">
+      <h2 id="selectedHeader">Selected Game</h2>
+      <div class="meta-grid">
+        <div><label for="mRound">Round</label><input type="text" id="mRound"></div>
+        <div><label for="mDate">Date</label><input type="text" id="mDate" placeholder="DD/MM/YYYY"></div>
+        <div><label for="mVenue">Venue / Ground</label><input type="text" id="mVenue"></div>
+        <div><label for="mToss">Toss Won By</label><input type="text" id="mToss"></div>
+        <div><label for="mResult">Result</label><input type="text" id="mResult"></div>
+        <div><label for="mScorers">Scorers</label><input type="text" id="mScorers"></div>
+      </div>
+
+      <div class="innings-grid">
+        <div class="innings-box">
+          <h3 id="inn1Title">Innings 1</h3>
+          <div>
+            <label for="inn1Scorecard">PlayHQ Scorecard View (1st or combined)</label>
+            <textarea id="inn1Scorecard" placeholder="Paste PlayHQ Scorecard View for Innings 1 (or both innings)..."></textarea>
+          </div>
+          <div>
+            <label for="inn1BallByBall">Detailed PlayHQ Ball-by-Ball Text</label>
+            <textarea id="inn1BallByBall" placeholder="Paste PlayHQ Ball-by-Ball commentary for Innings 1..."></textarea>
+          </div>
+        </div>
+
+        <div class="innings-box">
+          <h3 id="inn2Title">Innings 2</h3>
+          <div>
+            <label for="inn2Scorecard">PlayHQ Scorecard View (2nd innings)</label>
+            <textarea id="inn2Scorecard" placeholder="Paste PlayHQ Scorecard View for Innings 2..."></textarea>
+          </div>
+          <div>
+            <label for="inn2BallByBall">Detailed PlayHQ Ball-by-Ball Text</label>
+            <textarea id="inn2BallByBall" placeholder="Paste PlayHQ Ball-by-Ball commentary for Innings 2..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" id="btnSave" class="btn-primary">Save to Match Library</button>
+        <a id="btnOpenScorebook" class="btn-link btn-secondary" href="/" target="_blank">Open in Scorebook →</a>
+        <span id="saveStatus" class="status"></span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let indexData = { games: [] };
+  let selectedEntry = null;
+  let selectedGameObj = null;
+
+  const filterSeason = document.getElementById('filterSeason');
+  const filterTeam = document.getElementById('filterTeam');
+  const gameListEl = document.getElementById('gameList');
+  const noSelectionEl = document.getElementById('noSelection');
+  const formEl = document.getElementById('enrichForm');
+  const statusEl = document.getElementById('saveStatus');
+
+  function setStatus(msg, isErr) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status' + (isErr ? ' err' : '');
+  }
+
+  async function loadIndex() {
+    const resp = await fetch('/data/index.json?t=' + Date.now());
+    indexData = await resp.json();
+    populateFilters();
+    renderGameList();
+  }
+
+  function populateFilters() {
+    const games = indexData.games || [];
+    const prevS = filterSeason.value;
+    const prevT = filterTeam.value;
+    const seasons = Array.from(new Set(games.map(g => g.season).filter(Boolean))).sort().reverse();
+    filterSeason.innerHTML = '<option value="">All Seasons</option>';
+    seasons.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s; o.textContent = s;
+      filterSeason.appendChild(o);
+    });
+    if (seasons.includes(prevS)) filterSeason.value = prevS;
+
+    const curS = filterSeason.value;
+    const teams = Array.from(new Set(games.filter(g => !curS || g.season === curS).map(g => g.team).filter(Boolean))).sort();
+    filterTeam.innerHTML = '<option value="">All Teams</option>';
+    teams.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      filterTeam.appendChild(o);
+    });
+    if (teams.includes(prevT)) filterTeam.value = prevT;
+  }
+
+  function renderGameList() {
+    const s = filterSeason.value;
+    const t = filterTeam.value;
+    const filtered = (indexData.games || []).filter(g => (!s || g.season === s) && (!t || g.team === t));
+    gameListEl.innerHTML = '';
+    if (filtered.length === 0) {
+      gameListEl.innerHTML = '<div class="empty-state">No games found.</div>';
+      return;
+    }
+    filtered.forEach(g => {
+      const div = document.createElement('div');
+      div.className = 'game-item' + (selectedEntry && selectedEntry.path === g.path ? ' active' : '');
+      div.innerHTML =
+        '<div class="game-title"></div>' +
+        '<div class="badges">' +
+          '<span class="badge ' + (g.hasCsv ? 'ok' : 'miss') + '">CSV ' + (g.hasCsv ? '✓' : '–') + '</span>' +
+          '<span class="badge ' + (g.hasScorecard ? 'ok' : 'miss') + '">Scorecard ' + (g.hasScorecard ? '✓' : '–') + '</span>' +
+          '<span class="badge ' + (g.hasBallByBall ? 'ok' : 'miss') + '">Ball-by-Ball ' + (g.hasBallByBall ? '✓' : '–') + '</span>' +
+        '</div>';
+      div.querySelector('.game-title').textContent = g.title;
+      div.addEventListener('click', () => selectGame(g));
+      gameListEl.appendChild(div);
+    });
+  }
+
+  async function selectGame(entry) {
+    selectedEntry = entry;
+    renderGameList();
+    setStatus('Loading...', false);
+    const resp = await fetch('/' + entry.path + '?t=' + Date.now());
+    selectedGameObj = await resp.json();
+
+    noSelectionEl.style.display = 'none';
+    formEl.style.display = 'block';
+    document.getElementById('selectedHeader').textContent = selectedGameObj.title || entry.title;
+    document.getElementById('btnOpenScorebook').href = '/?game=' + encodeURIComponent(entry.path);
+
+    const m = selectedGameObj.match || {};
+    document.getElementById('mRound').value = m.round || '';
+    document.getElementById('mDate').value = m.date || '';
+    document.getElementById('mVenue').value = m.venue || '';
+    document.getElementById('mToss').value = m.toss || '';
+    document.getElementById('mResult').value = m.result || '';
+    document.getElementById('mScorers').value = m.scorers || '';
+
+    const r1 = (selectedGameObj.raw && selectedGameObj.raw.innings1) || {};
+    const r2 = (selectedGameObj.raw && selectedGameObj.raw.innings2) || {};
+    document.getElementById('inn1Title').textContent = 'Innings 1 — ' + (r1.team || 'Side 1');
+    document.getElementById('inn2Title').textContent = 'Innings 2 — ' + (r2.team || 'Side 2');
+    document.getElementById('inn1Scorecard').value = r1.scorecard || '';
+    document.getElementById('inn1BallByBall').value = r1.playhqText || '';
+    document.getElementById('inn2Scorecard').value = r2.scorecard || '';
+    document.getElementById('inn2BallByBall').value = r2.playhqText || '';
+    setStatus('', false);
+  }
+
+  formEl.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!selectedEntry || !selectedGameObj) return;
+    const btn = document.getElementById('btnSave');
+    btn.disabled = true;
+    setStatus('Saving...', false);
+
+    selectedGameObj.match = Object.assign({}, selectedGameObj.match || {}, {
+      round: document.getElementById('mRound').value.trim(),
+      date: document.getElementById('mDate').value.trim(),
+      venue: document.getElementById('mVenue').value.trim(),
+      toss: document.getElementById('mToss').value.trim(),
+      result: document.getElementById('mResult').value.trim(),
+      scorers: document.getElementById('mScorers').value.trim()
+    });
+    selectedGameObj.raw = selectedGameObj.raw || { innings1: {}, innings2: {} };
+    selectedGameObj.raw.innings1 = selectedGameObj.raw.innings1 || {};
+    selectedGameObj.raw.innings2 = selectedGameObj.raw.innings2 || {};
+    selectedGameObj.raw.innings1.scorecard = document.getElementById('inn1Scorecard').value;
+    selectedGameObj.raw.innings1.playhqText = document.getElementById('inn1BallByBall').value;
+    selectedGameObj.raw.innings2.scorecard = document.getElementById('inn2Scorecard').value;
+    selectedGameObj.raw.innings2.playhqText = document.getElementById('inn2BallByBall').value;
+    selectedGameObj.savedAt = new Date().toISOString();
+
+    try {
+      const resp = await fetch('/api/save-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: selectedEntry.path, payload: selectedGameObj })
+      });
+      const out = await resp.json();
+      if (!resp.ok || !out.ok) throw new Error(out.error || 'Save failed');
+      await loadIndex();
+      setStatus('Saved to ' + selectedEntry.path + '!', false);
+    } catch (err) {
+      setStatus('Error: ' + err.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  filterSeason.addEventListener('change', () => { populateFilters(); renderGameList(); });
+  filterTeam.addEventListener('change', renderGameList);
+  loadIndex();
+</script>
+</body>
+</html>`;
+
 function runStep(cmd, args, res) {
   return new Promise((resolve) => {
     const child = spawn(cmd, args, { cwd: repoRoot });
@@ -337,7 +736,7 @@ function readJsonBody(req) {
     let body = '';
     req.on('data', chunk => {
       body += chunk;
-      if (body.length > 1024 * 1024) reject(new Error('Body too large'));
+      if (body.length > 20 * 1024 * 1024) reject(new Error('Body too large'));
     });
     req.on('end', () => {
       try { resolve(JSON.parse(body || '{}')); }
@@ -439,9 +838,43 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/save-game' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const relPath = String(body.path || '').replace(/^\/+/, '');
+      if (!relPath.startsWith('data/seasons/') || !relPath.endsWith('.json') || relPath.includes('..')) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid target path. Must be under data/seasons/*.json' }));
+        return;
+      }
+      const fullTarget = path.resolve(repoRoot, relPath);
+      const seasonsRoot = path.resolve(repoRoot, 'data', 'seasons');
+      if (!fullTarget.startsWith(seasonsRoot + path.sep)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Path escapes data/seasons/' }));
+        return;
+      }
+      fs.mkdirSync(path.dirname(fullTarget), { recursive: true });
+      fs.writeFileSync(fullTarget, JSON.stringify(body.payload, null, 2) + '\n', 'utf8');
+      execFileSync(process.execPath, [path.join(__dirname, 'rebuild-index.mjs')], { stdio: 'ignore' });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, path: relPath }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: err.message }));
+    }
+    return;
+  }
+
   if (pathname === '/sync') {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(SYNC_PAGE_HTML);
+    return;
+  }
+
+  if (pathname === '/enrich') {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(ENRICH_PAGE_HTML);
     return;
   }
 

@@ -42,6 +42,12 @@ for (const file of files) {
     const dtSuffix = date ? ` (${date})` : '';
     const title = g.title || `${rdPrefix}${team}${opponent ? ' vs ' + opponent : ''}${dtSuffix}`;
 
+    const r1 = (g.raw && g.raw.innings1) || {};
+    const r2 = (g.raw && g.raw.innings2) || {};
+    const hasCsv = Boolean((r1.csv || '').trim() || (r2.csv || '').trim());
+    const hasScorecard = Boolean((r1.scorecard || '').trim() || (r2.scorecard || '').trim());
+    const hasBallByBall = Boolean((r1.playhqText || '').trim() || (r2.playhqText || '').trim());
+
     games.push({
       id: g.id || relPath.replace(/^data\/seasons\//, '').replace(/\.json$/, ''),
       path: relPath,
@@ -52,6 +58,9 @@ for (const file of files) {
       date,
       result,
       title,
+      hasCsv,
+      hasScorecard,
+      hasBallByBall,
       savedAt: g.savedAt || fs.statSync(file).mtime.toISOString()
     });
   } catch (err) {
