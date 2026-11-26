@@ -1,14 +1,113 @@
 [
   {
-    "label": "North Shore U13/1 — Summer 2026/27",
+    "label": "North Shore 15s — Summer 2026/27",
     "org": "North Shore Junior Cricket Association - Rep Teams",
     "season": "Summer 2026/27",
-    "grade": "North Shore U13/1",
+    "grade": "North Shore 15s",
     "team": "",
-    "comp": "NSJCA Rep Teams",
-    "librarySeason": "2026-27",
-    "libraryTeam": "North Shore U13/1",
-    "lastUsed": "2026-11-26T02:34:00.000Z"
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:34:51.666Z"
+  },
+  {
+    "label": "North Shore 14s — Summer 2026/27",
+    "org": "North Shore Junior Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "North Shore 14s",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:33:52.964Z"
+  },
+  {
+    "label": "Fairfield-Liverpool U13 DIV 1 — Summer 2026/27",
+    "org": "Fairfield-Liverpool Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "Fairfield-Liverpool U13 DIV 1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:30:45.305Z"
+  },
+  {
+    "label": "Hornsby Ku-ring-gai & Hills District U13/1 — Summer 2026/27",
+    "org": "Hornsby Ku-ring-gai & Hills District Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "Hornsby Ku-ring-gai & Hills District U13/1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:27:42.591Z"
+  },
+  {
+    "label": "Parramatta U13 - 1 Gee Shield — Summer 2026/27",
+    "org": "Parramatta District Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Parramatta U13 - 1 Gee Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:22:54.341Z"
+  },
+  {
+    "label": "Manly Warringah U13/1 — Summer 2026/27",
+    "org": "Manly Warringah Junior Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Manly Warringah U13/1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:21:41.076Z"
+  },
+  {
+    "label": "ND U13 Div 1 — Summer 2026/27",
+    "org": "Northern District Junior Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "ND U13 Div 1",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:18:36.621Z"
+  },
+  {
+    "label": "CDCA U13-1 Gee Shield — Summer 2026/27",
+    "org": "Camden District Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "CDCA U13-1 Gee Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:15:35.414Z"
+  },
+  {
+    "label": "Bankstown U13s — Summer 2026/27",
+    "org": "Bankstown District Cricket Association - Representative Teams",
+    "season": "Summer 2026/27",
+    "grade": "Bankstown U13s",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T08:12:32.103Z"
+  },
+  {
+    "label": "Gee Shield — Summer 2026/27",
+    "org": "South Eastern Junior Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "Gee Shield",
+    "team": "",
+    "comp": "",
+    "librarySeason": "",
+    "libraryTeam": "",
+    "lastUsed": "2026-11-26T07:54:19.177Z"
   },
   {
     "label": "Mosman U10 Boland — Summer 2026/27",
@@ -20,5 +119,16 @@
     "librarySeason": "2026-27",
     "libraryTeam": "Mosman U10 Boland",
     "lastUsed": "2026-11-26T03:20:00.000Z"
+  },
+  {
+    "label": "North Shore U13/1 — Summer 2026/27",
+    "org": "North Shore Junior Cricket Association - Rep Teams",
+    "season": "Summer 2026/27",
+    "grade": "North Shore U13/1",
+    "team": "",
+    "comp": "NSJCA Rep Teams",
+    "librarySeason": "2026-27",
+    "libraryTeam": "North Shore U13/1",
+    "lastUsed": "2026-11-26T02:34:00.000Z"
   }
 ]

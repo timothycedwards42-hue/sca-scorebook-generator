@@ -7585,7 +7585,7 @@
       "playhqText": "",
       "matchFormat": "auto",
       "overRule": "auto",
-      "dotFormat": "grouped",
+      "dotFormat": "individual",
       "preSplit": true,
       "dismissalCount": 0
     },
@@ -7598,7 +7598,7 @@
       "playhqText": "",
       "matchFormat": "auto",
       "overRule": "auto",
-      "dotFormat": "grouped",
+      "dotFormat": "individual",
       "preSplit": true,
       "dismissalCount": 0
     }

@@ -399,7 +399,7 @@ function main() {
           playhqText: '',
           matchFormat: 'auto',
           overRule: 'auto',
-          dotFormat: 'grouped',
+          dotFormat: 'individual',
           preSplit: true,
           dismissalCount: 0
         },
@@ -412,7 +412,7 @@ function main() {
           playhqText: '',
           matchFormat: 'auto',
           overRule: 'auto',
-          dotFormat: 'grouped',
+          dotFormat: 'individual',
           preSplit: true,
           dismissalCount: 0
         }

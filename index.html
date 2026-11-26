@@ -563,8 +563,8 @@
       <div class="field-group">
         <label for="dotFormat">Dot Ball Format</label>
         <select id="dotFormat">
-          <option value="grouped" selected>Grouped (10d 1 6d)</option>
-          <option value="individual">Individual (. . . 1)</option>
+          <option value="individual" selected>Individual (. . . 1)</option>
+          <option value="grouped">Grouped (10d 1 6d)</option>
           <option value="scoring_only">Scoring Shots Only (1 4 2)</option>
         </select>
       </div>
@@ -1040,7 +1040,7 @@ const inningsStore = {
     playhqText: '',
     matchFormat: 'auto',
     overRule: 'auto',
-    dotFormat: 'grouped',
+    dotFormat: 'individual',
     preSplit: false,
     dismissalCount: 0,
     parsed: null
@@ -1054,7 +1054,7 @@ const inningsStore = {
     playhqText: '',
     matchFormat: 'auto',
     overRule: 'auto',
-    dotFormat: 'grouped',
+    dotFormat: 'individual',
     preSplit: false,
     dismissalCount: 0,
     parsed: null
@@ -1318,7 +1318,7 @@ function syncUIFromStore(num) {
   if (phqEl) phqEl.value = st.playhqText || '';
   document.getElementById('matchFormat').value = st.matchFormat || 'auto';
   document.getElementById('overRule').value = st.overRule || 'auto';
-  document.getElementById('dotFormat').value = st.dotFormat || 'grouped';
+  document.getElementById('dotFormat').value = st.dotFormat || 'individual';
   document.getElementById('metaInnings').value = isUnnamed ? '' : (st.label || sideName);
   document.getElementById('metaTeam').value = isUnnamed ? '' : sideName;
   document.getElementById('metaAgainst').value = st.against || '';
@@ -2435,7 +2435,7 @@ function renderScorebookTo(svg, st, meta) {
   const ink = '#1b2a4a';
   const sans = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
   const serif = 'Georgia, "Times New Roman", serif';
-  const dotMode = (st && st.dotFormat) || 'grouped';
+  const dotMode = (st && st.dotFormat) || 'individual';
 
   const addText = (x, y, txt, opts) => {
     const o = opts || {};
