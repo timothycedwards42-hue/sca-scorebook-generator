@@ -74,119 +74,47 @@ function buildCoverHtml({ team, season, club, grade, games, accent, showGuides }
 <head>
 <meta charset="UTF-8">
 <style>
-  /* A4 Landscape (297x210mm) + 3.2mm bleed on all 4 sides = 303.4mm x 216.4mm */
-  @page { size: 303.4mm 216.4mm; margin: 0; }
+  /* Lulu A4 Landscape Coil-Bound 1-page full wrap cover: exact 23.63in x 8.52in (600.2mm x 216.41mm) */
+  @page { size: 23.63in 8.52in; margin: 0; }
   * { box-sizing: border-box; }
   html, body {
     margin: 0;
     padding: 0;
+    width: 23.63in;
+    height: 8.52in;
+    overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: ${accent};
   }
-  .cover-page {
-    position: relative;
-    width: 303.4mm;
-    height: 216.4mm;
+  .cover-spread {
+    display: flex;
+    flex-direction: row;
+    width: 23.63in;
+    height: 8.52in;
     overflow: hidden;
-    page-break-after: always;
-    break-after: page;
   }
-  .cover-page:last-child { page-break-after: auto; break-after: auto; }
+  .cover-half {
+    position: relative;
+    width: 11.815in;
+    height: 8.52in;
+    overflow: hidden;
+  }
 
-  /* FRONT COVER (coil on LEFT edge: 3.2mm bleed + 14mm coil margin = 17.2mm) */
-  .front {
-    background: linear-gradient(135deg, ${accent} 0%, #0f172a 100%);
-    color: #fff;
-    padding: 18mm 18mm 18mm 26mm;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .accent-bar {
-    position: absolute;
-    left: 17.2mm;
-    top: 0;
-    bottom: 0;
-    width: 3mm;
-    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-  }
-  .front-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 0.4mm solid rgba(255,255,255,0.22);
-    padding-bottom: 5mm;
-  }
-  .badge {
-    font-size: 9.5pt;
-    font-weight: 700;
-    letter-spacing: 2.2px;
-    text-transform: uppercase;
-    color: #fbbf24;
-  }
-  .season-pill {
-    font-size: 11pt;
-    font-weight: 700;
-    padding: 2mm 5mm;
-    border: 0.4mm solid rgba(251,191,36,0.7);
-    border-radius: 2mm;
-    color: #fef3c7;
-  }
-  .front-center {
-    margin: auto 0;
-    padding: 8mm 0;
-  }
-  .kicker {
-    font-size: 11pt;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: #cbd5e1;
-    margin-bottom: 4mm;
-  }
-  .team-title {
-    font-size: 38pt;
-    font-weight: 800;
-    line-height: 1.08;
-    margin: 0 0 5mm 0;
-    color: #ffffff;
-  }
-  .grade-sub {
-    font-size: 16pt;
-    font-weight: 500;
-    color: #fbbf24;
-    margin: 0 0 3mm 0;
-  }
-  .club-sub {
-    font-size: 11.5pt;
-    color: #cbd5e1;
-    margin: 0;
-  }
-  .front-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    border-top: 0.4mm solid rgba(255,255,255,0.22);
-    padding-top: 5mm;
-    font-size: 9.5pt;
-    color: #94a3b8;
-  }
-  .front-bottom strong { color: #f8fafc; }
-
-  /* BACK COVER (coil on RIGHT edge when flipped: 3.2mm bleed + 14mm coil margin = 17.2mm right) */
+  /* BACK COVER (left half of spread; coil is along center/RIGHT edge -> 22mm right safe padding) */
   .back {
     background: #f8fafc;
     color: #0f172a;
-    padding: 16mm 26mm 16mm 18mm;
+    padding: 15mm 22mm 15mm 16mm;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
   }
   .back-accent {
     position: absolute;
-    right: 17.2mm;
+    right: 14mm;
     top: 0;
     bottom: 0;
-    width: 3mm;
+    width: 2.5mm;
     background: ${accent};
   }
   .back h2 {
@@ -207,8 +135,9 @@ function buildCoverHtml({ team, season, club, grade, games, accent, showGuides }
   }
   table.summary th {
     text-align: left;
-    background: ${accent};
-    color: #fff;
+    background: #e2e8f0;
+    color: ${accent};
+    border-bottom: 0.5mm solid ${accent};
     padding: 2.2mm 3mm;
     font-size: 8pt;
     text-transform: uppercase;
@@ -221,8 +150,8 @@ function buildCoverHtml({ team, season, club, grade, games, accent, showGuides }
   }
   table.summary tr:nth-child(even) td { background: #f1f5f9; }
   .c-rd { width: 12%; font-weight: 700; color: ${accent}; white-space: nowrap; }
-  .c-dt { width: 14%; white-space: nowrap; color: #475569; }
-  .c-opp { width: 38%; font-weight: 600; }
+  .c-dt { width: 15%; white-space: nowrap; color: #475569; }
+  .c-opp { width: 37%; font-weight: 600; }
   .c-res { width: 36%; color: #334155; }
   .back-footer {
     font-size: 8pt;
@@ -233,76 +162,125 @@ function buildCoverHtml({ team, season, club, grade, games, accent, showGuides }
     padding-top: 3mm;
   }
 
-  /* PROOF GUIDES */
-  .guide-bleed {
-    position: absolute;
-    inset: 3.2mm;
-    border: 0.35mm dashed #ef4444;
-    pointer-events: none;
-  }
-  .guide-coil-left, .guide-coil-right {
-    position: absolute;
-    top: 3.2mm;
-    bottom: 3.2mm;
-    width: 12.7mm;
-    background: rgba(239, 68, 68, 0.14);
-    border: 0.35mm dashed #dc2626;
+  /* FRONT COVER (right half of spread; coil is along center/LEFT edge -> 22mm left safe padding) */
+  .front {
+    background: linear-gradient(135deg, ${accent} 0%, #0f172a 100%);
+    color: #fff;
+    padding: 16mm 16mm 16mm 22mm;
     display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .accent-bar {
+    position: absolute;
+    left: 14mm;
+    top: 0;
+    bottom: 0;
+    width: 2.5mm;
+    background: #d97706;
+  }
+  .front-top {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    pointer-events: none;
+    border-bottom: 0.4mm solid #3b4f73;
+    padding-bottom: 5mm;
   }
-  .guide-coil-left { left: 3.2mm; }
-  .guide-coil-right { right: 3.2mm; }
-  .guide-coil-left span, .guide-coil-right span {
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    font-size: 7pt;
+  .badge {
+    font-size: 9.5pt;
     font-weight: 700;
-    color: #dc2626;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fbbf24;
   }
+  .season-pill {
+    font-size: 11pt;
+    font-weight: 700;
+    padding: 2mm 5mm;
+    border: 0.4mm solid #d97706;
+    border-radius: 2mm;
+    color: #fef3c7;
+  }
+  .front-center {
+    margin: auto 0;
+    padding: 8mm 0;
+  }
+  .kicker {
+    font-size: 11pt;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #cbd5e1;
+    margin-bottom: 4mm;
+  }
+  .team-title {
+    font-size: 36pt;
+    font-weight: 800;
+    line-height: 1.08;
+    margin: 0 0 5mm 0;
+    color: #ffffff;
+  }
+  .grade-sub {
+    font-size: 16pt;
+    font-weight: 500;
+    color: #fbbf24;
+    margin: 0 0 3mm 0;
+  }
+  .club-sub {
+    font-size: 11.5pt;
+    color: #cbd5e1;
+    margin: 0;
+  }
+  .front-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 0.4mm solid #3b4f73;
+    padding-top: 5mm;
+    font-size: 9.5pt;
+    color: #94a3b8;
+  }
+  .front-bottom strong { color: #f8fafc; }
 </style>
 </head>
 <body>
-  <div class="cover-page front">
-    <div class="accent-bar"></div>
-    <div class="front-top">
-      <div class="badge">Sydney Cricket Association · Official Scorebook</div>
-      <div class="season-pill">Season ${escHtml(seasonLabel)}</div>
+  <div class="cover-spread">
+    <div class="cover-half back">
+      <div class="back-accent"></div>
+      <div>
+        <h2>${escHtml(team)} — ${escHtml(seasonLabel)} Season Schedule</h2>
+        <p class="sub">${escHtml(club || grade || 'Season Match Summary')}</p>
+        <table class="summary">
+          <thead>
+            <tr><th>Round</th><th>Date</th><th>Opponent</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+      <div class="back-footer">
+        <span>Generated by SCA Digital Scorebook</span>
+        <span>${escHtml(team)} · Season ${escHtml(seasonLabel)}</span>
+      </div>
     </div>
-    <div class="front-center">
-      <div class="kicker">Season Match Record</div>
-      <h1 class="team-title">${escHtml(team)}</h1>
-      ${grade ? `<p class="grade-sub">${escHtml(grade)}</p>` : ''}
-      ${club ? `<p class="club-sub">${escHtml(club)}</p>` : ''}
-    </div>
-    <div class="front-bottom">
-      <div><strong>${completedCount} Match${completedCount === 1 ? '' : 'es'}</strong> · Complete Ball-by-Ball &amp; Traditional Scorebook</div>
-      <div>A4 Landscape · Coil Bound</div>
-    </div>
-    ${guideOverlayFront}
-  </div>
 
-  <div class="cover-page back">
-    <div class="back-accent"></div>
-    <div>
-      <h2>${escHtml(team)} — ${escHtml(seasonLabel)} Season Schedule</h2>
-      <p class="sub">${escHtml(club || grade || 'Season Match Summary')}</p>
-      <table class="summary">
-        <thead>
-          <tr><th>Round</th><th>Date</th><th>Opponent</th><th>Result</th></tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-        </tbody>
-      </table>
+    <div class="cover-half front">
+      <div class="accent-bar"></div>
+      <div class="front-top">
+        <div class="badge">Sydney Cricket Association · Official Scorebook</div>
+        <div class="season-pill">Season ${escHtml(seasonLabel)}</div>
+      </div>
+      <div class="front-center">
+        <div class="kicker">Season Match Record</div>
+        <h1 class="team-title">${escHtml(team)}</h1>
+        ${grade ? `<p class="grade-sub">${escHtml(grade)}</p>` : ''}
+        ${club ? `<p class="club-sub">${escHtml(club)}</p>` : ''}
+      </div>
+      <div class="front-bottom">
+        <div><strong>${completedCount} Match${completedCount === 1 ? '' : 'es'}</strong> · Complete Ball-by-Ball &amp; Traditional Scorebook</div>
+        <div>A4 Landscape · Coil Bound</div>
+      </div>
     </div>
-    <div class="back-footer">
-      <span>Generated by SCA Digital Scorebook</span>
-      <span>${escHtml(team)} · Season ${escHtml(seasonLabel)}</span>
-    </div>
-    ${guideOverlayBack}
   </div>
 </body>
 </html>`;
@@ -483,8 +461,9 @@ function buildInteriorHtml({ team, season, club, grade, games, renderedPages, ac
   }
   table.idx-table th {
     text-align: left;
-    background: ${accent};
-    color: #fff;
+    background: #e2e8f0;
+    color: ${accent};
+    border-bottom: 0.5mm solid ${accent};
     padding: 2.3mm 3mm;
     font-size: 8pt;
     text-transform: uppercase;
@@ -605,6 +584,54 @@ async function main() {
           svg.style.height = '750px';
           host.appendChild(svg);
           renderScorebookTo(svg, st, sharedMeta);
+          // Lulu print preflight hardening:
+          // 1. Flatten all opacity / stroke-opacity / fill-opacity into solid white-blended colors (zero transparency)
+          const blendWhite = (hex, alpha) => {
+            const m = String(hex || '').trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+            if (!m) return '#8c95a6';
+            let h = m[1];
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            const r = Math.round(parseInt(h.slice(0, 2), 16) * alpha + 255 * (1 - alpha));
+            const g = Math.round(parseInt(h.slice(2, 4), 16) * alpha + 255 * (1 - alpha));
+            const b = Math.round(parseInt(h.slice(4, 6), 16) * alpha + 255 * (1 - alpha));
+            return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+          };
+          svg.querySelectorAll('*').forEach(el => {
+            const so = parseFloat(el.getAttribute('stroke-opacity'));
+            if (!isNaN(so) && so < 1) {
+              el.setAttribute('stroke', blendWhite(el.getAttribute('stroke') || '#1a2b4c', so));
+              el.removeAttribute('stroke-opacity');
+            }
+            const fo = parseFloat(el.getAttribute('fill-opacity'));
+            if (!isNaN(fo) && fo < 1) {
+              el.setAttribute('fill', blendWhite(el.getAttribute('fill') || '#1a2b4c', fo));
+              el.removeAttribute('fill-opacity');
+            }
+            const op = parseFloat(el.getAttribute('opacity'));
+            if (!isNaN(op) && op < 1) {
+              if (el.getAttribute('stroke') && el.getAttribute('stroke') !== 'none') {
+                el.setAttribute('stroke', blendWhite(el.getAttribute('stroke'), op));
+              }
+              if (el.getAttribute('fill') && el.getAttribute('fill') !== 'none') {
+                el.setAttribute('fill', blendWhite(el.getAttribute('fill'), op));
+              }
+              el.removeAttribute('opacity');
+            }
+            // 2. Reduce solid black ink density on large filled spine bars for Standard Color paper
+            if (el.tagName.toLowerCase() === 'rect') {
+              const fill = (el.getAttribute('fill') || '').toLowerCase();
+              if (fill === '#000' || fill === '#000000' || fill === 'black') {
+                el.setAttribute('fill', '#334155');
+              }
+            }
+            // 3. Ensure all text is >= 6.0 SVG units (~5.1pt in A4 PDF) to avoid Lulu <5pt warning
+            if (el.tagName.toLowerCase() === 'text') {
+              const fsVal = parseFloat(el.getAttribute('font-size'));
+              if (!isNaN(fsVal) && fsVal < 6.0) {
+                el.setAttribute('font-size', '6.0');
+              }
+            }
+          });
           svg.removeAttribute('style');
           out.push({ sideNum, team: st.team, against: st.against, svg: svg.outerHTML });
           svg.remove();
@@ -630,7 +657,7 @@ async function main() {
     await pdfPage.setContent(buildCoverHtml({
       team: args.team, season: args.season, club, grade, games, accent: args.accent, showGuides: false
     }), { waitUntil: 'load' });
-    await pdfPage.pdf({ path: coverPath, preferCSSPageSize: true, printBackground: true });
+    await pdfPage.pdf({ path: coverPath, width: '23.63in', height: '8.52in', printBackground: true });
 
     const interiorPath = path.join(outDir, 'Interior.pdf');
     await pdfPage.setContent(buildInteriorHtml({
