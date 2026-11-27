@@ -3322,7 +3322,36 @@ function printScorebook(overrideScope) {
     renderScorebookTo(svg, p.st, p.meta);
   });
 
+  const sanitizePdfName = (s) => String(s || '')
+    .replace(/[\/\\:*?"<>|]+/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const repoTeamVal = (document.getElementById('repoTeamSelect')?.value || '').trim();
+  const activeTeamName = repoTeamVal
+    || (inningsStore[activeInnings]?.team || '').trim()
+    || (inningsStore[1]?.team || '').trim()
+    || (sharedMeta.grade || '').trim();
+  const rdRaw = String(sharedMeta.round || '').trim();
+  const rdPart = rdRaw ? (/^r(d|ound)\b/i.test(rdRaw) ? rdRaw : `Rd ${rdRaw}`) : '';
+
+  let pdfTitle = 'Scorebook';
+  if (scope === 'season') {
+    const seasonTeam = repoTeamVal || (seasonBook[0]?.innings1?.team || '').trim() || activeTeamName;
+    pdfTitle = seasonTeam ? `${sanitizePdfName(seasonTeam)} - Season Scorebook` : 'Season Scorebook';
+  } else if (activeTeamName && rdPart) {
+    pdfTitle = `${sanitizePdfName(activeTeamName)} - ${sanitizePdfName(rdPart)}`;
+  } else if (activeTeamName) {
+    pdfTitle = `${sanitizePdfName(activeTeamName)} - Scorebook`;
+  } else if (rdPart) {
+    pdfTitle = `Scorebook - ${sanitizePdfName(rdPart)}`;
+  }
+
+  const origTitle = document.title;
+  document.title = pdfTitle;
+  const restoreTitle = () => { document.title = origTitle; };
+  window.addEventListener('afterprint', restoreTitle, { once: true });
   window.print();
+  setTimeout(restoreTitle, 1000);
 }
 
 /* ==================== REPO MATCH LIBRARY (data/seasons/) ==================== */
