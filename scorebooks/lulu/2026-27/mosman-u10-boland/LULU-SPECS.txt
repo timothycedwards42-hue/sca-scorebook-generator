@@ -1,0 +1,15 @@
+Lulu Print-Ready Scorebook — Mosman U10 Boland (2026/27)
+================================================================
+
+Files generated:
+  1. Cover.pdf             — Front & Back Cover (303.4mm x 216.4mm incl. 3.2mm bleed)
+  2. Interior.pdf          — 15 pages (A4 Landscape 297mm x 210mm, 14mm alternating left/right coil gutter)
+  3. Proof-With-Guides.pdf — Visual proof with red dashed 12.7mm coil punch zone overlay
+
+Recommended Lulu.com settings:
+  - Book Size:     A4 Landscape (297 x 210 mm / 11.69 x 8.27 in)
+  - Binding Type:  Coil Bound (Left Edge)
+  - Interior:      Standard Color or Premium Color, 80# White Uncoated
+  - Cover Finish:  Matte or Glossy
+
+Review Proof-With-Guides.pdf in macOS Preview first to confirm no text/borders enter the red coil punch zone.

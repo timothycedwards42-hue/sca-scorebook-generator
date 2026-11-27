@@ -494,9 +494,9 @@
       </div>
       <div id="libGameList" class="season-list"></div>
       <button id="btnLoadTeamToSeason" class="lib-action-btn" type="button" style="width:100%; background:#f1f5f9;" disabled title="Add all games for the selected Season and Team into the Season Scorebook Builder below">Add All Team Games to Season Book</button>
+      <button id="btnBuildLuluBook" class="lib-action-btn" type="button" style="display:none; width:100%; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;" title="Generate Lulu-ready A4 Landscape Left-Coil Cover.pdf, Interior.pdf, and Proof-With-Guides.pdf for the selected Season &amp; Team">Build Lulu Coil-Bound Book (PDF)</button>
       <div class="lib-btn-grid">
         <a id="btnOpenLocalEnrich" href="/enrich" target="_blank" class="lib-action-btn lib-action-btn-green" style="display:none;" title="Open the Submit &amp; Enrich page to paste PlayHQ Scorecard and Detailed Ball-by-Ball text into saved games">Add Scorecard / BBB</a>
-        <button id="btnBuildLuluBook" class="lib-action-btn lib-action-btn-blue" type="button" style="display:none;" title="Generate Lulu-ready A4 Landscape Left-Coil Cover.pdf, Interior.pdf, and Proof-With-Guides.pdf for the selected Season &amp; Team">Build Lulu Book</button>
         <button id="btnLoadGameJson" class="lib-action-btn" type="button" title="Open a single saved game .json file from your computer">Open .json File</button>
         <button id="btnRefreshRepoIndex" class="lib-action-btn" type="button" title="Reload the list of saved games from data/index.json">Refresh List</button>
         <input type="file" id="gameJsonImportFile" accept=".json,application/json" style="display:none;">
@@ -3337,8 +3337,8 @@ function buildPrintPayload(overrideScope) {
     .replace(/[\/\\:*?"<>|]+/g, '-')
     .replace(/\s+/g, ' ')
     .trim();
-  const repoSeasonVal = (document.getElementById('repoSeasonSelect')?.value || '').trim();
-  const repoTeamVal = (document.getElementById('repoTeamSelect')?.value || '').trim();
+  const repoSeasonVal = (document.getElementById('libFilterSeason')?.value || '').trim();
+  const repoTeamVal = (document.getElementById('libFilterTeam')?.value || '').trim();
   const activeTeamName = repoTeamVal
     || (inningsStore[activeInnings]?.team || '').trim()
     || (inningsStore[1]?.team || '').trim()
@@ -3944,8 +3944,8 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnPrint').addEventListener('click', () => printScorebook());
   document.getElementById('btnSavePdfLocal')?.addEventListener('click', () => savePdfToLocalFolder());
   document.getElementById('btnBuildLuluBook')?.addEventListener('click', async () => {
-    const season = (document.getElementById('repoSeasonSelect')?.value || '').trim();
-    const team = (document.getElementById('repoTeamSelect')?.value || '').trim();
+    const season = (document.getElementById('libFilterSeason')?.value || '').trim();
+    const team = (document.getElementById('libFilterTeam')?.value || '').trim();
     if (!season || !team) {
       setStatus('Select a Season and a Team in the Match Library first, then click Build Lulu Book.', true);
       return;
