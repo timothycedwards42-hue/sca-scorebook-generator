@@ -387,17 +387,38 @@
   .lib-action-btn-green:hover { background: #d1fae5; }
 
   @media print {
-    body { background: white; }
+    html, body {
+      display: block !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      width: 100% !important;
+      min-height: 0 !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
     header, .sidebar, .workspace { display: none !important; }
     #printContainer {
-      position: static;
-      left: auto;
-      width: 100%;
-      visibility: visible;
+      position: static !important;
+      left: auto !important;
+      top: auto !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      visibility: visible !important;
       display: block !important;
     }
     .print-page {
       width: 100%;
+      height: var(--print-svg-h, 182mm);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      page-break-inside: avoid;
+      break-inside: avoid;
       page-break-after: always;
       break-after: page;
     }
@@ -406,8 +427,10 @@
       break-after: auto;
     }
     .print-page svg {
-      width: 100%;
-      height: auto;
+      width: var(--print-svg-w, 242mm);
+      height: var(--print-svg-h, 182mm);
+      max-width: 100%;
+      max-height: 100%;
       display: block;
     }
   }
@@ -415,7 +438,11 @@
 <style id="printPageStyle">
   @page {
     size: A4 landscape;
-    margin: 4mm;
+    margin: 5mm;
+  }
+  :root {
+    --print-svg-w: 242mm;
+    --print-svg-h: 182mm;
   }
 </style>
 </head>
@@ -3247,9 +3274,12 @@ function importSeasonJSON(file) {
 
 function updatePrintPageSize() {
   const size = document.getElementById('pdfPaperSize')?.value || 'A4';
+  const dims = size === 'A3'
+    ? { w: '357mm', h: '268mm' }
+    : { w: '242mm', h: '182mm' };
   const styleEl = document.getElementById('printPageStyle');
   if (styleEl) {
-    styleEl.textContent = `@page { size: ${size} landscape; margin: 4mm; }`;
+    styleEl.textContent = `@page { size: ${size} landscape; margin: 5mm; }\n:root { --print-svg-w: ${dims.w}; --print-svg-h: ${dims.h}; }`;
   }
 }
 
@@ -3282,7 +3312,11 @@ function printScorebook(overrideScope) {
   pages.forEach(p => {
     const pageDiv = document.createElement('div');
     pageDiv.className = 'print-page';
-    const svg = svgEl('svg', { viewBox: '0 0 1000 750', xmlns: 'http://www.w3.org/2000/svg' });
+    const svg = svgEl('svg', {
+      viewBox: '0 0 1000 750',
+      preserveAspectRatio: 'xMidYMid meet',
+      xmlns: 'http://www.w3.org/2000/svg'
+    });
     pageDiv.appendChild(svg);
     container.appendChild(pageDiv);
     renderScorebookTo(svg, p.st, p.meta);
