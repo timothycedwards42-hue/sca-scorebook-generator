@@ -466,6 +466,7 @@
       <option value="match" selected>Both Innings (2 pgs)</option>
       <option value="season">Full Season Book</option>
     </select>
+    <button id="btnSavePdfLocal" class="btn-secondary" type="button" style="display:none;" title="Generate and save PDF directly into the local scorebooks/ folder">Save PDF</button>
     <button id="btnPrint" class="btn-primary" type="button">Print / Save PDF</button>
   </div>
 </header>
@@ -3283,7 +3284,7 @@ function updatePrintPageSize() {
   }
 }
 
-function printScorebook(overrideScope) {
+function buildPrintPayload(overrideScope) {
   saveCurrentInputs();
   saveSharedMeta();
   updatePrintPageSize();
@@ -3301,7 +3302,7 @@ function printScorebook(overrideScope) {
   } else if (scope === 'season') {
     if (seasonBook.length === 0) {
       setStatus('Season Book is empty — add matches first or choose "Both Innings" / "Current Side".', true);
-      return;
+      return null;
     }
     seasonBook.forEach(m => {
       pages.push({ st: m.innings1, meta: m.sharedMeta });
@@ -3309,6 +3310,7 @@ function printScorebook(overrideScope) {
     });
   }
 
+  const svgStrings = [];
   pages.forEach(p => {
     const pageDiv = document.createElement('div');
     pageDiv.className = 'print-page';
@@ -3320,12 +3322,14 @@ function printScorebook(overrideScope) {
     pageDiv.appendChild(svg);
     container.appendChild(pageDiv);
     renderScorebookTo(svg, p.st, p.meta);
+    svgStrings.push(svg.outerHTML);
   });
 
   const sanitizePdfName = (s) => String(s || '')
     .replace(/[\/\\:*?"<>|]+/g, '-')
     .replace(/\s+/g, ' ')
     .trim();
+  const repoSeasonVal = (document.getElementById('repoSeasonSelect')?.value || '').trim();
   const repoTeamVal = (document.getElementById('repoTeamSelect')?.value || '').trim();
   const activeTeamName = repoTeamVal
     || (inningsStore[activeInnings]?.team || '').trim()
@@ -3346,8 +3350,78 @@ function printScorebook(overrideScope) {
     pdfTitle = `Scorebook - ${sanitizePdfName(rdPart)}`;
   }
 
+  const paperSize = document.getElementById('pdfPaperSize')?.value || 'A4';
+  const seasonFolder = repoSeasonVal || guessSeasonString(sharedMeta.date);
+  return {
+    scope,
+    pdfTitle,
+    svgStrings,
+    paperSize,
+    seasonFolder,
+    teamFolder: sanitizePdfName(activeTeamName)
+  };
+}
+
+async function savePdfToLocalFolder(overrideScope, silent = false, overwrite = false) {
+  const payload = buildPrintPayload(overrideScope);
+  if (!payload) return;
+  const btn = document.getElementById('btnSavePdfLocal');
+  if (btn && !silent) {
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+  }
+  try {
+    const resp = await fetch('/api/save-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pages: payload.svgStrings,
+        fileName: `${payload.pdfTitle}.pdf`,
+        season: payload.seasonFolder,
+        team: payload.teamFolder,
+        paperSize: payload.paperSize,
+        overwrite
+      })
+    });
+    const data = await resp.json();
+    if (resp.status === 409 && data.exists) {
+      if (silent) {
+        setStatus(`PDF already exists (kept): ${data.path}`, false);
+        return;
+      }
+      const shouldOverwrite = window.confirm(
+        `A PDF already exists at:\n${data.path}\n\nClick OK to overwrite it, or Cancel to keep the existing file.`
+      );
+      if (shouldOverwrite) {
+        await savePdfToLocalFolder(overrideScope, false, true);
+      } else {
+        setStatus(`Cancelled — kept existing PDF: ${data.path}`, false);
+      }
+      return;
+    }
+    if (!resp.ok || !data.ok) throw new Error(data.error || 'PDF save failed');
+    setStatus(`${overwrite ? 'Overwrote' : 'Saved'} PDF to ${data.path} (${data.pages} pg${data.pages === 1 ? '' : 's'}).`, false);
+  } catch (err) {
+    if (!silent) setStatus(`Could not save PDF: ${err.message}`, true);
+  } finally {
+    if (btn && !silent) {
+      btn.disabled = false;
+      btn.textContent = 'Save PDF';
+    }
+  }
+}
+
+function printScorebook(overrideScope) {
+  const payload = buildPrintPayload(overrideScope);
+  if (!payload) return;
+
+  if (localServerAvailable) {
+    // Also auto-save a copy directly into scorebooks/ when running locally
+    savePdfToLocalFolder(overrideScope, true);
+  }
+
   const origTitle = document.title;
-  document.title = pdfTitle;
+  document.title = payload.pdfTitle;
   const restoreTitle = () => { document.title = origTitle; };
   window.addEventListener('afterprint', restoreTitle, { once: true });
   window.print();
@@ -3860,6 +3934,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnExportPNG').addEventListener('click', exportPNG);
   document.getElementById('pdfPaperSize').addEventListener('change', updatePrintPageSize);
   document.getElementById('btnPrint').addEventListener('click', () => printScorebook());
+  document.getElementById('btnSavePdfLocal')?.addEventListener('click', () => savePdfToLocalFolder());
   document.getElementById('btnSaveToRepoFolder').addEventListener('click', saveCurrentGameToRepoFolder);
   document.getElementById('btnDownloadGameJson').addEventListener('click', downloadCurrentGameJson);
   document.getElementById('btnLoadGameJson').addEventListener('click', () => {
@@ -4217,6 +4292,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (syncSec) syncSec.style.display = 'block';
       const btnEnrich = document.getElementById('btnOpenLocalEnrich');
       if (btnEnrich) btnEnrich.style.display = 'inline-flex';
+      const btnSavePdf = document.getElementById('btnSavePdfLocal');
+      if (btnSavePdf) btnSavePdf.style.display = 'inline-flex';
       loadSyncPresets();
     }
   }).catch(() => {});

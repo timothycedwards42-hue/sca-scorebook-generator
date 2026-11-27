@@ -1104,6 +1104,111 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/save-pdf' && req.method === 'POST') {
+    let browser;
+    try {
+      const body = await readJsonBody(req);
+      const svgPages = Array.isArray(body.pages) ? body.pages.filter(Boolean) : [];
+      if (svgPages.length === 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'No scorebook pages provided.' }));
+        return;
+      }
+      const paperSize = body.paperSize === 'A3' ? 'A3' : 'A4';
+      const dims = paperSize === 'A3'
+        ? { w: '404mm', h: '282mm' }
+        : { w: '282mm', h: '196mm' };
+
+      const cleanSeg = (s) => String(s || '')
+        .replace(/[\/\\:*?"<>|]+/g, '-')
+        .replace(/\.\.+/g, '.')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const rawName = cleanSeg(body.fileName || 'Scorebook');
+      const fileName = /\.pdf$/i.test(rawName) ? rawName : `${rawName}.pdf`;
+      const seasonDir = cleanSeg(body.season || '');
+      const teamDir = cleanSeg(body.team || '');
+
+      const scorebooksRoot = path.resolve(repoRoot, 'scorebooks');
+      const targetParts = [scorebooksRoot];
+      if (seasonDir) targetParts.push(seasonDir);
+      if (teamDir) targetParts.push(teamDir);
+      targetParts.push(fileName);
+
+      const fullTarget = path.resolve(...targetParts);
+      if (!fullTarget.startsWith(scorebooksRoot + path.sep)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid target path outside scorebooks/' }));
+        return;
+      }
+
+      const relOut = path.relative(repoRoot, fullTarget);
+      if (fs.existsSync(fullTarget) && !body.overwrite) {
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, exists: true, path: relOut }));
+        return;
+      }
+
+      const htmlDoc = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: ${paperSize} landscape; margin: 5mm; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  .print-page {
+    width: 100%;
+    height: ${dims.h};
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: always;
+    break-after: page;
+  }
+  .print-page:last-child { page-break-after: auto; break-after: auto; }
+  .print-page svg {
+    width: ${dims.w};
+    height: ${dims.h};
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+  }
+</style>
+</head>
+<body>
+${svgPages.map(svg => `<div class="print-page">${svg}</div>`).join('\n')}
+</body>
+</html>`;
+
+      const playwright = await import('playwright');
+      browser = await playwright.chromium.launch({ headless: true });
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.setContent(htmlDoc, { waitUntil: 'load' });
+      fs.mkdirSync(path.dirname(fullTarget), { recursive: true });
+      await page.pdf({
+        path: fullTarget,
+        preferCSSPageSize: true,
+        printBackground: true
+      });
+      await browser.close();
+      browser = null;
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, path: relOut, pages: svgPages.length }));
+    } catch (err) {
+      if (browser) await browser.close().catch(() => {});
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: err.message }));
+    }
+    return;
+  }
+
   if (pathname === '/api/save-game' && req.method === 'POST') {
     try {
       const body = await readJsonBody(req);
