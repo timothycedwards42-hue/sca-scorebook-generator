@@ -14,7 +14,7 @@
     "toss": "",
     "round": "6",
     "date": "08/11/2026",
-    "result": "",
+    "result": "Manly Warringah U13/1 won by 55 runs (Custom Target Score)",
     "scorers": "PlayCricket Ball-by-Ball CSV"
   },
   "innings": [
@@ -6433,5 +6433,6 @@
       "preSplit": true,
       "dismissalCount": 0
     }
-  }
+  },
+  "matchId": "35952f45-bda8-4f28-922d-b009b7f23b80"
 }

@@ -14,7 +14,7 @@
     "toss": "",
     "round": "2",
     "date": "11/10/2026",
-    "result": "",
+    "result": "North Shore U13 Gee won by 4 wickets",
     "scorers": "PlayCricket Ball-by-Ball CSV"
   },
   "innings": [
@@ -6621,5 +6621,6 @@
       "preSplit": true,
       "dismissalCount": 0
     }
-  }
+  },
+  "matchId": "90055320-ab3c-4a17-a413-dac07b57a51c"
 }

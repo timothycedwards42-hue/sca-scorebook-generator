@@ -1104,6 +1104,33 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/build-lulu' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const season = String(body.season || '').trim();
+      const team = String(body.team || '').trim();
+      if (!season || !team) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Select both a Season and a Team first.' }));
+        return;
+      }
+      const scriptPath = path.join(__dirname, 'build-lulu-book.mjs');
+      const output = execFileSync(process.execPath, [scriptPath, '--season', season, '--team', team], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+        timeout: 180000
+      });
+      const slug = s => String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown';
+      const relDir = path.join('scorebooks', 'lulu', slug(season), slug(team));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, dir: relDir, log: output.trim() }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: err.stderr || err.message }));
+    }
+    return;
+  }
+
   if (pathname === '/api/save-pdf' && req.method === 'POST') {
     let browser;
     try {

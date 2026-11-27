@@ -496,6 +496,7 @@
       <button id="btnLoadTeamToSeason" class="lib-action-btn" type="button" style="width:100%; background:#f1f5f9;" disabled title="Add all games for the selected Season and Team into the Season Scorebook Builder below">Add All Team Games to Season Book</button>
       <div class="lib-btn-grid">
         <a id="btnOpenLocalEnrich" href="/enrich" target="_blank" class="lib-action-btn lib-action-btn-green" style="display:none;" title="Open the Submit &amp; Enrich page to paste PlayHQ Scorecard and Detailed Ball-by-Ball text into saved games">Add Scorecard / BBB</a>
+        <button id="btnBuildLuluBook" class="lib-action-btn lib-action-btn-blue" type="button" style="display:none;" title="Generate Lulu-ready A4 Landscape Left-Coil Cover.pdf, Interior.pdf, and Proof-With-Guides.pdf for the selected Season &amp; Team">Build Lulu Book</button>
         <button id="btnLoadGameJson" class="lib-action-btn" type="button" title="Open a single saved game .json file from your computer">Open .json File</button>
         <button id="btnRefreshRepoIndex" class="lib-action-btn" type="button" title="Reload the list of saved games from data/index.json">Refresh List</button>
         <input type="file" id="gameJsonImportFile" accept=".json,application/json" style="display:none;">
@@ -1507,7 +1508,8 @@ function parseScorecardView(text) {
     totalOvers: 0,
     totalScore: 0,
     totalWickets: 0,
-    hasStage1Markers: false
+    hasStage1Markers: false,
+    retiredCount: 0
   };
   if (lines.length === 0) return result;
 
@@ -1652,10 +1654,13 @@ function parseScorecardView(text) {
         isDNB = true;
       } else if (dLow.includes('retired not out')) {
         howOut = 'retired not out';
-        result.hasStage1Markers = true;
+        result.retiredCount += 1;
+      } else if (dLow.includes('retired out')) {
+        howOut = 'retired out';
+        result.retiredCount += 1;
       } else if (dLow.includes('retired')) {
         howOut = 'retired';
-        result.hasStage1Markers = true;
+        result.retiredCount += 1;
       } else if (dLow.includes('not out')) {
         howOut = 'Not out';
       } else if (dLow.startsWith('c&b:')) {
@@ -1813,12 +1818,15 @@ function detectStage1(formatSetting, csvRows, scData) {
   if (formatSetting === 'stage1') return true;
   if (formatSetting === 'standard') return false;
   if (scData && scData.hasStage1Markers) return true;
+  let hasTeamWicket = false;
   for (const r of csvRows) {
     const ev = r.event.toLowerCase();
-    if ((ev.includes('dismissed') || ev.includes('out')) && /^0(--|\/)/.test(r.score)) {
+    if (/^[1-9]\d*(--|\/)/.test(r.score)) hasTeamWicket = true;
+    if ((ev.includes('dismissed') || ev.includes('out')) && !ev.includes('not out') && /^0(--|\/)/.test(r.score)) {
       return true;
     }
   }
+  if (scData && scData.retiredCount >= 4 && !hasTeamWicket) return true;
   return false;
 }
 
@@ -3935,6 +3943,33 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('pdfPaperSize').addEventListener('change', updatePrintPageSize);
   document.getElementById('btnPrint').addEventListener('click', () => printScorebook());
   document.getElementById('btnSavePdfLocal')?.addEventListener('click', () => savePdfToLocalFolder());
+  document.getElementById('btnBuildLuluBook')?.addEventListener('click', async () => {
+    const season = (document.getElementById('repoSeasonSelect')?.value || '').trim();
+    const team = (document.getElementById('repoTeamSelect')?.value || '').trim();
+    if (!season || !team) {
+      setStatus('Select a Season and a Team in the Match Library first, then click Build Lulu Book.', true);
+      return;
+    }
+    const btn = document.getElementById('btnBuildLuluBook');
+    btn.disabled = true;
+    btn.textContent = 'Building...';
+    setStatus(`Building Lulu Coil-Bound PDFs for ${team} (${season})...`, false);
+    try {
+      const resp = await fetch('/api/build-lulu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ season, team })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'Lulu build failed');
+      setStatus(`Lulu Book ready in ${data.dir}/ (Cover.pdf, Interior.pdf, Proof-With-Guides.pdf).`, false);
+    } catch (err) {
+      setStatus(`Lulu build error: ${err.message}`, true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Build Lulu Book';
+    }
+  });
   document.getElementById('btnSaveToRepoFolder').addEventListener('click', saveCurrentGameToRepoFolder);
   document.getElementById('btnDownloadGameJson').addEventListener('click', downloadCurrentGameJson);
   document.getElementById('btnLoadGameJson').addEventListener('click', () => {
@@ -4294,6 +4329,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (btnEnrich) btnEnrich.style.display = 'inline-flex';
       const btnSavePdf = document.getElementById('btnSavePdfLocal');
       if (btnSavePdf) btnSavePdf.style.display = 'inline-flex';
+      const btnLulu = document.getElementById('btnBuildLuluBook');
+      if (btnLulu) btnLulu.style.display = 'inline-flex';
       loadSyncPresets();
     }
   }).catch(() => {});

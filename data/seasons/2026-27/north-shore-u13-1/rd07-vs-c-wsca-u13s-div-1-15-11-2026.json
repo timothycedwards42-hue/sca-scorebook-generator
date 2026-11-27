@@ -14,7 +14,7 @@
     "toss": "",
     "round": "7",
     "date": "15/11/2026",
-    "result": "",
+    "result": "C&WSCA U13s Div 1 won by 12 runs",
     "scorers": "PlayCricket Ball-by-Ball CSV"
   },
   "innings": [
@@ -7351,5 +7351,6 @@
       "preSplit": true,
       "dismissalCount": 0
     }
-  }
+  },
+  "matchId": "5bee9108-b5a2-4f04-82da-7ddc9fcfc5cf"
 }

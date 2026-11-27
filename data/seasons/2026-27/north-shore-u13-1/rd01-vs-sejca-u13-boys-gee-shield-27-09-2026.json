@@ -14,7 +14,7 @@
     "toss": "",
     "round": "1",
     "date": "27/09/2026",
-    "result": "",
+    "result": "ABANDONED",
     "scorers": "PlayCricket Ball-by-Ball CSV"
   },
   "innings": [
@@ -1339,5 +1339,6 @@
       "preSplit": true,
       "dismissalCount": 0
     }
-  }
+  },
+  "matchId": "aa1fb407-060e-40e2-ae67-62ab19e26e41"
 }
