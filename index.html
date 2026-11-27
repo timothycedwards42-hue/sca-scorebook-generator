@@ -1873,7 +1873,7 @@ function normalizeDelivery(ballStr, scoreStr, bowler, batter, csvEvent, granular
     byeRuns = m ? parseInt(m[1], 10) : 1;
   }
 
-  const mDis = rawEv.match(/^(.+?)\s+dismissed$/i);
+  const mDis = rawEv.match(/(?:^|,\s*)([^,]+?)\s+dismissed$/i);
   if (mDis && resolveNameFn) {
     dismissedBatter = resolveNameFn(mDis[1].trim());
   }
@@ -2178,6 +2178,7 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
 
     runsOffBatAndExtras += d.batterRuns + d.extras;
 
+    let deliveryRecorded = false;
     if (d.wideRuns > 0) {
       sundries.wides.push(d.wideRuns);
       bwl.wides += d.wideRuns;
@@ -2187,6 +2188,7 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
       if (isStage1 || rule === 'max6') {
         bat.balls += 1;
       }
+      deliveryRecorded = true;
     } else if (d.nbRuns > 0) {
       sundries.noBalls.push(d.nbRuns);
       bwl.noBalls += d.nbRuns;
@@ -2204,6 +2206,7 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
         sundries.legByes.push(d.lbRuns);
       }
       ovObj.tokens.push({ type: 'noball', batterRuns: d.batterRuns, byeRuns: d.byeRuns, lbRuns: d.lbRuns });
+      deliveryRecorded = true;
     } else {
       bat.balls += 1;
       bwl.legalBalls += 1;
@@ -2212,81 +2215,98 @@ function buildScorebookModel(deliveries, scData, isStage1, overRule, oppDismissa
         sundries.byes.push(d.byeRuns);
         bat.events.push(0);
         ovObj.tokens.push('.');
+        deliveryRecorded = true;
       } else if (d.lbRuns > 0) {
         sundries.legByes.push(d.lbRuns);
         bat.events.push(0);
         ovObj.tokens.push('.');
-      } else if (d.isWicket) {
-        const outPlayerName = d.dismissedBatter || d.batter;
-        ensureBatter(outPlayerName, false);
-        const outBat = batters[outPlayerName];
-        outBat.isDNB = false;
-
-        const scBwl = scData && scData.bowlerStats ? scData.bowlerStats[d.bowler] : null;
-        const scBatter = scData && scData.batterDetails ? scData.batterDetails[outPlayerName] : null;
-        const isRunOut = (outPlayerName !== d.batter) ||
-          (d.wicketKind === 'run out') ||
-          (scBatter && scBatter.howOut && scBatter.howOut.toLowerCase().includes('run out')) ||
-          (scBwl && scBwl.wickets === 0) ||
-          (scBwl && bwl.wickets >= scBwl.wickets);
-
-        if (isStage1) {
-          bat.events.push('W');
-          outBat.howOut = (scBatter && scBatter.howOut) ? scBatter.howOut : 'Not out';
-          outBat.bowlerOut = '';
-          if (!isRunOut) {
-            bwl.wickets += 1;
-            ovObj.wicketsTaken += 1;
-            ovObj.tokens.push('W');
-          } else {
-            ovObj.tokens.push('.');
-          }
+        deliveryRecorded = true;
+      } else if (!d.isWicket) {
+        if (d.batterRuns > 0) {
+          bat.runs += d.batterRuns;
+          bat.events.push(d.batterRuns);
+          bwl.runs += d.batterRuns;
+          ovObj.runsConceded += d.batterRuns;
+          ovObj.tokens.push(String(d.batterRuns));
         } else {
-          totalWickets += 1;
           bat.events.push(0);
-
-          if (scBatter && scBatter.howOut && scBatter.howOut !== 'Not out') {
-            outBat.howOut = scBatter.howOut;
-            outBat.bowlerOut = scBatter.bowlerOut;
-          } else {
-            outBat.howOut = isRunOut ? 'run out' : 'out';
-            outBat.bowlerOut = isRunOut ? '' : d.bowler;
-          }
-
-          if (!isRunOut) {
-            bwl.wickets += 1;
-            ovObj.wicketsTaken += 1;
-            ovObj.tokens.push('W');
-          } else {
-            ovObj.tokens.push('.');
-          }
-
-          let notOutName = '';
-          if (outPlayerName !== d.batter) {
-            notOutName = d.batter;
-          } else {
-            const activeBatters = batterOrder.filter(n => !batters[n].isDNB && n !== outPlayerName && batters[n].balls > 0 && !fowList.some(f => f.batterOut === n));
-            notOutName = activeBatters.length > 0 ? activeBatters[activeBatters.length - 1] : '';
-          }
-          const notOutScore = notOutName && batters[notOutName] ? batters[notOutName].runs : 0;
-          const shortPartner = notOutName ? `${notOutName.split(' ')[0][0]} ${notOutName.split(' ').slice(1).join(' ')} (${notOutScore})` : '';
-
-          fowList.push({
-            wicketNum: totalWickets,
-            score: runsOffBatAndExtras,
-            batterOut: outPlayerName,
-            partnerText: shortPartner
-          });
+          ovObj.tokens.push('.');
         }
-      } else if (d.batterRuns > 0) {
+        deliveryRecorded = true;
+      }
+    }
+
+    if (d.isWicket) {
+      const outPlayerName = d.dismissedBatter || d.batter;
+      ensureBatter(outPlayerName, false);
+      const outBat = batters[outPlayerName];
+      outBat.isDNB = false;
+
+      if (!deliveryRecorded && d.batterRuns > 0) {
         bat.runs += d.batterRuns;
-        bat.events.push(d.batterRuns);
         bwl.runs += d.batterRuns;
         ovObj.runsConceded += d.batterRuns;
-        ovObj.tokens.push(String(d.batterRuns));
+      }
+
+      const scBwl = scData && scData.bowlerStats ? scData.bowlerStats[d.bowler] : null;
+      const scBatter = scData && scData.batterDetails ? scData.batterDetails[outPlayerName] : null;
+      const isRunOut = (d.nbRuns > 0) ||
+        (d.byeRuns > 0) ||
+        (d.lbRuns > 0) ||
+        (outPlayerName !== d.batter) ||
+        (d.wicketKind === 'run out') ||
+        (scBatter && scBatter.howOut && scBatter.howOut.toLowerCase().includes('run out')) ||
+        (scBwl && scBwl.wickets === 0) ||
+        (scBwl && bwl.wickets >= scBwl.wickets);
+
+      if (isStage1) {
+        if (!deliveryRecorded && d.batterRuns > 0) bat.events.push(d.batterRuns);
+        bat.events.push('W');
+        outBat.howOut = (scBatter && scBatter.howOut) ? scBatter.howOut : 'Not out';
+        outBat.bowlerOut = '';
+        if (!isRunOut) {
+          bwl.wickets += 1;
+          ovObj.wicketsTaken += 1;
+          if (!deliveryRecorded) ovObj.tokens.push('W');
+        } else if (!deliveryRecorded) {
+          ovObj.tokens.push(d.batterRuns > 0 ? String(d.batterRuns) : '.');
+        }
       } else {
-        bat.events.push(0);
-        ovObj.tokens.push('.');
+        totalWickets += 1;
+        if (!deliveryRecorded) bat.events.push(d.batterRuns > 0 ? d.batterRuns : 0);
+
+        if (scBatter && scBatter.howOut && scBatter.howOut !== 'Not out') {
+          outBat.howOut = scBatter.howOut;
+          outBat.bowlerOut = scBatter.bowlerOut;
+        } else {
+          outBat.howOut = isRunOut ? 'run out' : 'out';
+          outBat.bowlerOut = isRunOut ? '' : d.bowler;
+        }
+
+        if (!isRunOut) {
+          bwl.wickets += 1;
+          ovObj.wicketsTaken += 1;
+          if (!deliveryRecorded) ovObj.tokens.push('W');
+        } else if (!deliveryRecorded) {
+          ovObj.tokens.push(d.batterRuns > 0 ? String(d.batterRuns) : '.');
+        }
+
+        let notOutName = '';
+        if (outPlayerName !== d.batter) {
+          notOutName = d.batter;
+        } else {
+          const activeBatters = batterOrder.filter(n => !batters[n].isDNB && n !== outPlayerName && batters[n].balls > 0 && !fowList.some(f => f.batterOut === n));
+          notOutName = activeBatters.length > 0 ? activeBatters[activeBatters.length - 1] : '';
+        }
+        const notOutScore = notOutName && batters[notOutName] ? batters[notOutName].runs : 0;
+        const shortPartner = notOutName ? `${notOutName.split(' ')[0][0]} ${notOutName.split(' ').slice(1).join(' ')} (${notOutScore})` : '';
+
+        fowList.push({
+          wicketNum: totalWickets,
+          score: runsOffBatAndExtras,
+          batterOut: outPlayerName,
+          partnerText: shortPartner
+        });
       }
     }
   });
