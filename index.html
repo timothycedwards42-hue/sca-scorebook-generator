@@ -410,7 +410,7 @@
     }
     .print-page {
       width: 100%;
-      height: var(--print-svg-h, 182mm);
+      height: var(--print-svg-h, 196mm);
       margin: 0;
       padding: 0;
       display: flex;
@@ -427,8 +427,8 @@
       break-after: auto;
     }
     .print-page svg {
-      width: var(--print-svg-w, 242mm);
-      height: var(--print-svg-h, 182mm);
+      width: var(--print-svg-w, 282mm);
+      height: var(--print-svg-h, 196mm);
       max-width: 100%;
       max-height: 100%;
       display: block;
@@ -441,8 +441,8 @@
     margin: 5mm;
   }
   :root {
-    --print-svg-w: 242mm;
-    --print-svg-h: 182mm;
+    --print-svg-w: 282mm;
+    --print-svg-h: 196mm;
   }
 </style>
 </head>
@@ -3275,8 +3275,8 @@ function importSeasonJSON(file) {
 function updatePrintPageSize() {
   const size = document.getElementById('pdfPaperSize')?.value || 'A4';
   const dims = size === 'A3'
-    ? { w: '357mm', h: '268mm' }
-    : { w: '242mm', h: '182mm' };
+    ? { w: '404mm', h: '282mm' }
+    : { w: '282mm', h: '196mm' };
   const styleEl = document.getElementById('printPageStyle');
   if (styleEl) {
     styleEl.textContent = `@page { size: ${size} landscape; margin: 5mm; }\n:root { --print-svg-w: ${dims.w}; --print-svg-h: ${dims.h}; }`;
@@ -3313,8 +3313,8 @@ function printScorebook(overrideScope) {
     const pageDiv = document.createElement('div');
     pageDiv.className = 'print-page';
     const svg = svgEl('svg', {
-      viewBox: '0 0 1000 750',
-      preserveAspectRatio: 'xMidYMid meet',
+      viewBox: '16 16 968 718',
+      preserveAspectRatio: 'none',
       xmlns: 'http://www.w3.org/2000/svg'
     });
     pageDiv.appendChild(svg);
