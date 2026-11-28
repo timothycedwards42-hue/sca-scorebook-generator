@@ -1,0 +1,65 @@
+name: Request a Team / Season Sync
+description: Request a PlayCricket team or grade to be added or updated in the SCA Digital Scorebook library.
+title: "[Team Sync] "
+labels: ["team-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill in the PlayCricket details below (exactly as shown on **play.cricket.com.au/stats**).
+        Once a maintainer adds the **`approved`** label, GitHub Actions will automatically fetch the games, enrich them with Scorecards & Ball-by-Ball data, and publish them to the live scorebook (~2–3 minutes).
+
+  - type: input
+    id: org
+    attributes:
+      label: Organisation (Association or Club)
+      description: Exact Association or Club name on play.cricket.com.au/stats
+      placeholder: e.g. North Shore Junior Cricket Association - Rep Teams
+    validations:
+      required: true
+
+  - type: input
+    id: season
+    attributes:
+      label: Season
+      description: PlayCricket Season label
+      placeholder: e.g. Summer 2026/27
+      value: Summer 2026/27
+    validations:
+      required: true
+
+  - type: input
+    id: grade
+    attributes:
+      label: Grade or Club Team
+      description: The Grade (for Associations) or Team (for Clubs/Rep Associations)
+      placeholder: e.g. Saturday U10 North Stage 1  or  North Shore U13/1
+    validations:
+      required: true
+
+  - type: input
+    id: team
+    attributes:
+      label: Team Filter (optional)
+      description: Only needed when selecting a whole Grade and you want to filter matches for one specific team
+      placeholder: e.g. Mosman U10 Boland
+    validations:
+      required: false
+
+  - type: input
+    id: library_season
+    attributes:
+      label: Library Season Folder (optional)
+      description: Leave blank to auto-derive (e.g. "Summer 2026/27" -> "2026-27")
+      placeholder: e.g. 2026-27
+    validations:
+      required: false
+
+  - type: input
+    id: library_team
+    attributes:
+      label: Library Team Name Override (optional)
+      description: Leave blank to auto-detect the team name from the match CSVs
+      placeholder: e.g. Mosman U10 Boland
+    validations:
+      required: false

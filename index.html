@@ -497,6 +497,7 @@
       <button id="btnBuildLuluBook" class="lib-action-btn" type="button" style="display:none; width:100%; background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;" title="Generate Lulu-ready A4 Landscape Left-Coil Cover.pdf, Interior.pdf, and Proof-With-Guides.pdf for the selected Season &amp; Team">Build Lulu Coil-Bound Book (PDF)</button>
       <div class="lib-btn-grid">
         <a id="btnOpenLocalEnrich" href="/enrich" target="_blank" class="lib-action-btn lib-action-btn-green" style="display:none;" title="Open the Submit &amp; Enrich page to paste PlayHQ Scorecard and Detailed Ball-by-Ball text into saved games">Add Scorecard / BBB</a>
+        <a id="btnRequestTeamGitHub" href="https://github.com/timothycedwards42-hue/sca-scorebook-generator/issues/new?template=request-team.yml" target="_blank" rel="noopener" class="lib-action-btn lib-action-btn-green" title="Request a new PlayCricket team or season to be added to the online Match Library">Request a Team</a>
         <button id="btnLoadGameJson" class="lib-action-btn" type="button" title="Open a single saved game .json file from your computer">Open .json File</button>
         <button id="btnRefreshRepoIndex" class="lib-action-btn" type="button" title="Reload the list of saved games from data/index.json">Refresh List</button>
         <input type="file" id="gameJsonImportFile" accept=".json,application/json" style="display:none;">
@@ -4347,6 +4348,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (syncSec) syncSec.style.display = 'block';
       const btnEnrich = document.getElementById('btnOpenLocalEnrich');
       if (btnEnrich) btnEnrich.style.display = 'inline-flex';
+      const btnReqTeam = document.getElementById('btnRequestTeamGitHub');
+      if (btnReqTeam) btnReqTeam.style.display = 'none';
       const btnSavePdf = document.getElementById('btnSavePdfLocal');
       if (btnSavePdf) btnSavePdf.style.display = 'inline-flex';
       const btnLulu = document.getElementById('btnBuildLuluBook');

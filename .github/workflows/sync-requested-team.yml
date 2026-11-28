@@ -1,0 +1,126 @@
+name: Sync Requested PlayCricket Team
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      org:
+        description: 'Organisation (Association or Club)'
+        required: true
+        type: string
+      season:
+        description: 'PlayCricket Season (e.g. Summer 2026/27)'
+        required: true
+        default: 'Summer 2026/27'
+        type: string
+      grade:
+        description: 'Grade or Club Team'
+        required: true
+        type: string
+      team:
+        description: 'Optional Team Filter (when selecting a whole Grade)'
+        required: false
+        type: string
+      library_season:
+        description: 'Optional Library Season Folder (e.g. 2026-27)'
+        required: false
+        type: string
+      library_team:
+        description: 'Optional Library Team Name Override'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: playcricket-team-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'approved'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies and Playwright Chromium
+        run: |
+          npm ci || npm install
+          npx playwright install chromium --with-deps
+
+      - name: Download and import PlayCricket games
+        id: run_sync
+        continue-on-error: true
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          SYNC_ORG: ${{ inputs.org }}
+          SYNC_SEASON: ${{ inputs.season }}
+          SYNC_GRADE: ${{ inputs.grade }}
+          SYNC_TEAM: ${{ inputs.team }}
+          SYNC_LIBRARY_SEASON: ${{ inputs.library_season }}
+          SYNC_LIBRARY_TEAM: ${{ inputs.library_team }}
+          SUMMARY_OUT: /tmp/sync-summary.md
+        run: node scripts/sync-from-issue.mjs
+
+      - name: Commit and push new games to main
+        if: steps.run_sync.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No new games to commit."
+          else
+            git commit -m "Sync PlayCricket games via GitHub Actions"
+            git pull --rebase origin main
+            git push origin main
+          fi
+
+      - name: Comment on Issue with result
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        env:
+          SYNC_OUTCOME: ${{ steps.run_sync.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.existsSync('/tmp/sync-summary.md')
+              ? fs.readFileSync('/tmp/sync-summary.md', 'utf8')
+              : 'Sync finished (no summary generated).';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            });
+            if (process.env.SYNC_OUTCOME === 'success') {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['synced']
+              }).catch(() => {});
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                state: 'closed'
+              });
+            }
+
+      - name: Fail job if sync failed
+        if: steps.run_sync.outcome != 'success'
+        run: exit 1
