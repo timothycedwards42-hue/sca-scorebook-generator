@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T02:19:46.323Z",
+  "updatedAt": "2026-11-28T01:46:08.896Z",
   "games": [
     {
       "id": "2026-27/bankstown-u13s/rd01-vs-fairfield-liverpool-u13-div-1-27-09-2026",
@@ -4591,6 +4591,21 @@
       "hasScorecard": true,
       "hasBallByBall": true,
       "savedAt": "2026-11-26T06:16:23.829Z"
+    },
+    {
+      "id": "2026-27/mosman-u10-boland/rd08-vs-ldcc-u10-boland-28-11-2026",
+      "path": "data/seasons/2026-27/mosman-u10-boland/rd08-vs-ldcc-u10-boland-28-11-2026.json",
+      "season": "2026-27",
+      "team": "Mosman U10 Boland",
+      "opponent": "LDCC U10 Boland",
+      "round": "8",
+      "date": "28/11/2026",
+      "result": "Mosman U10 Boland won by 10 wickets",
+      "title": "Rd 8: Mosman U10 Boland vs LDCC U10 Boland (28/11/2026)",
+      "hasCsv": true,
+      "hasScorecard": true,
+      "hasBallByBall": true,
+      "savedAt": "2026-11-28T01:46:07.196Z"
     },
     {
       "id": "2026-27/north-shore-14s/rd01-vs-opponent-27-09-2026",
