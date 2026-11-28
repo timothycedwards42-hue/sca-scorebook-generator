@@ -7,7 +7,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,16 +44,30 @@ function deriveSeasonFolder(seasonStr) {
 }
 
 function runNode(scriptRel, args) {
-  const res = spawnSync(process.execPath, [path.join(repoRoot, scriptRel), ...args], {
-    cwd: repoRoot,
-    encoding: 'utf8',
-    maxBuffer: 20 * 1024 * 1024
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [path.join(repoRoot, scriptRel), ...args], {
+      cwd: repoRoot,
+      env: process.env
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => {
+      const s = chunk.toString('utf8');
+      stdout += s;
+      process.stdout.write(s);
+    });
+    child.stderr.on('data', (chunk) => {
+      const s = chunk.toString('utf8');
+      stderr += s;
+      process.stderr.write(s);
+    });
+    child.on('close', (code) => {
+      resolve({ status: code ?? 1, stdout, stderr });
+    });
+    child.on('error', (err) => {
+      resolve({ status: 1, stdout, stderr: stderr + '\n' + err.message });
+    });
   });
-  return {
-    status: res.status ?? 1,
-    stdout: res.stdout || '',
-    stderr: res.stderr || ''
-  };
 }
 
 function writeSummary(md) {
@@ -62,7 +76,7 @@ function writeSummary(md) {
   console.log(md);
 }
 
-function main() {
+async function main() {
   const issueBody = process.env.ISSUE_BODY || '';
   const parsed = issueBody ? parseIssueForm(issueBody) : {};
 
@@ -102,7 +116,7 @@ function main() {
   console.log(url
     ? `Downloading from URL: "${url}" team="${team}"`
     : `Downloading: org="${org}" season="${season}" grade="${grade}" team="${team}"`);
-  const dl = runNode('scripts/download-playcricket-csvs.mjs', dlArgs);
+  const dl = await runNode('scripts/download-playcricket-csvs.mjs', dlArgs);
   if (dl.status !== 0) {
     const errText = (dl.stderr || dl.stdout || 'Unknown error').trim().slice(-2000);
     writeSummary([
@@ -135,7 +149,7 @@ function main() {
   if (process.env.SYNC_LIBRARY_TEAM || parsed.libraryTeam) impArgs.push('--force-team');
 
   console.log(`Importing from ${outDir} -> ${librarySeason} / ${libraryTeam}`);
-  const imp = runNode('scripts/import-csvs-to-library.mjs', impArgs);
+  const imp = await runNode('scripts/import-csvs-to-library.mjs', impArgs);
   try { fs.rmSync(outDir, { recursive: true, force: true }); } catch {}
 
   if (imp.status !== 0) {
