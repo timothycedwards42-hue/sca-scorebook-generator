@@ -22,7 +22,8 @@ function parseIssueForm(body) {
     const heading = (lines[0] || '').trim().toLowerCase();
     const val = lines.slice(1).join('\n').trim();
     const clean = /^_no response_$/i.test(val) ? '' : val;
-    if (heading.startsWith('organisation')) fields.org = clean;
+    if (heading.startsWith('playcricket stats url') || heading.startsWith('playcricket url')) fields.url = clean;
+    else if (heading.startsWith('organisation')) fields.org = clean;
     else if (heading === 'season') fields.season = clean;
     else if (heading.startsWith('grade')) fields.grade = clean;
     else if (heading.startsWith('team filter')) fields.team = clean;
@@ -65,47 +66,61 @@ function main() {
   const issueBody = process.env.ISSUE_BODY || '';
   const parsed = issueBody ? parseIssueForm(issueBody) : {};
 
+  const url = (process.env.SYNC_URL || parsed.url || '').trim();
   const org = (process.env.SYNC_ORG || parsed.org || '').trim();
   const season = (process.env.SYNC_SEASON || parsed.season || '').trim();
   const grade = (process.env.SYNC_GRADE || parsed.grade || '').trim();
   const team = (process.env.SYNC_TEAM || parsed.team || '').trim();
   const librarySeason = (process.env.SYNC_LIBRARY_SEASON || parsed.librarySeason || deriveSeasonFolder(season)).trim();
-  const libraryTeam = (process.env.SYNC_LIBRARY_TEAM || parsed.libraryTeam || team || grade).trim();
+  const libraryTeam = (process.env.SYNC_LIBRARY_TEAM || parsed.libraryTeam || team || grade || 'requested-team').trim();
 
-  if (!org || !season || (!grade && !team)) {
+  if (!url && (!org || !season || (!grade && !team))) {
     writeSummary([
       '❌ **Sync could not run — missing required fields.**',
       '',
+      'Provide either a **PlayCricket Stats URL** OR **Organisation + Season + Grade/Team**:',
+      `- PlayCricket Stats URL: \`${url || '(none)'}\``,
       `- Organisation: \`${org || '(missing)'}\``,
       `- Season: \`${season || '(missing)'}\``,
       `- Grade / Club Team: \`${grade || '(missing)'}\``,
       '',
-      'Please edit the issue body with the required fields and re-apply the `approved` label.'
+      'Please edit the issue body and re-apply the `approved` label.'
     ].join('\n'));
     process.exit(1);
   }
 
   const outDir = path.join(repoRoot, 'downloads', slugify(librarySeason), slugify(libraryTeam));
-  const dlArgs = ['--org', org, '--season', season, '--out', outDir, '--delay', '800'];
-  if (grade) dlArgs.push('--grade', grade);
+  const dlArgs = ['--out', outDir, '--delay', '800'];
+  if (url) {
+    dlArgs.push('--url', url);
+  } else {
+    dlArgs.push('--org', org, '--season', season);
+    if (grade) dlArgs.push('--grade', grade);
+  }
   if (team) dlArgs.push('--team', team);
 
-  console.log(`Downloading: org="${org}" season="${season}" grade="${grade}" team="${team}"`);
+  console.log(url
+    ? `Downloading from URL: "${url}" team="${team}"`
+    : `Downloading: org="${org}" season="${season}" grade="${grade}" team="${team}"`);
   const dl = runNode('scripts/download-playcricket-csvs.mjs', dlArgs);
   if (dl.status !== 0) {
     const errText = (dl.stderr || dl.stdout || 'Unknown error').trim().slice(-2000);
     writeSummary([
       '❌ **PlayCricket download failed**',
       '',
-      `- **Organisation:** ${org}`,
-      `- **Season:** ${season}`,
-      `- **Grade / Team:** ${grade}${team ? ` (filter: ${team})` : ''}`,
+      ...(url
+        ? [`- **URL:** ${url}`]
+        : [
+            `- **Organisation:** ${org}`,
+            `- **Season:** ${season}`,
+            `- **Grade / Team:** ${grade}${team ? ` (filter: ${team})` : ''}`
+          ]),
       '',
       '```',
       errText,
       '```',
       '',
-      'Check the spelling against `play.cricket.com.au/stats`, update the issue, and re-apply the `approved` label to retry.'
+      'The `approved` label has been removed automatically. Update the issue and click **`approved`** once to retry.'
     ].join('\n'));
     process.exit(1);
   }
@@ -113,10 +128,10 @@ function main() {
   const impArgs = [
     '--dir', outDir,
     '--season', librarySeason,
-    '--team', libraryTeam,
-    '--club', org,
-    '--grade', grade || libraryTeam
+    '--team', libraryTeam
   ];
+  if (org) impArgs.push('--club', org);
+  if (grade) impArgs.push('--grade', grade);
   if (process.env.SYNC_LIBRARY_TEAM || parsed.libraryTeam) impArgs.push('--force-team');
 
   console.log(`Importing from ${outDir} -> ${librarySeason} / ${libraryTeam}`);

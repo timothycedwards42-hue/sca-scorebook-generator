@@ -6,25 +6,42 @@ body:
   - type: markdown
     attributes:
       value: |
-        Fill in the PlayCricket details below (exactly as shown on **play.cricket.com.au/stats**).
-        Once a maintainer adds the **`approved`** label, GitHub Actions will automatically fetch the games, enrich them with Scorecards & Ball-by-Ball data, and publish them to the live scorebook (~2–3 minutes).
+        **Easiest way:** Open **play.cricket.com.au/stats**, pick your Organisation, Season, and Grade/Team, then paste the page URL below (no exact typing needed!).
+        **Or** leave the URL blank and fill in Organisation, Season, and Grade/Team (minor wording/order differences are matched automatically).
+
+        Once a maintainer adds the **`approved`** label, GitHub Actions will fetch the games, enrich them with Scorecards & Ball-by-Ball data, and publish them to the live scorebook (~2–3 minutes).
+
+  - type: input
+    id: url
+    attributes:
+      label: PlayCricket Stats URL (easiest — optional)
+      description: Paste the URL from play.cricket.com.au/stats after selecting your Org, Season, and Grade/Team. If provided, Organisation and Grade below can be left blank.
+      placeholder: https://play.cricket.com.au/stats?cat=ballByBall&...
+    validations:
+      required: false
 
   - type: input
     id: org
     attributes:
       label: Organisation (Association or Club)
-      description: Exact Association or Club name on play.cricket.com.au/stats
-      placeholder: e.g. North Shore Junior Cricket Association - Rep Teams
+      description: Association or Club name on play.cricket.com.au/stats (skip if you pasted a URL above)
+      placeholder: e.g. North Shore Junior Cricket Association
     validations:
-      required: true
+      required: false
 
-  - type: input
+  - type: dropdown
     id: season
     attributes:
       label: Season
-      description: PlayCricket Season label
-      placeholder: e.g. Summer 2026/27
-      value: Summer 2026/27
+      description: PlayCricket Season (also used to name the library season folder)
+      options:
+        - Summer 2026/27
+        - Summer 2025/26
+        - Summer 2024/25
+        - Summer 2023/24
+        - Winter 2026
+        - Winter 2025
+      default: 0
     validations:
       required: true
 
@@ -32,10 +49,10 @@ body:
     id: grade
     attributes:
       label: Grade or Club Team
-      description: The Grade (for Associations) or Team (for Clubs/Rep Associations)
-      placeholder: e.g. Saturday U10 North Stage 1  or  North Shore U13/1
+      description: The Grade (for Associations) or Team (for Clubs/Rep Associations) — word-order & abbreviation tolerant (skip if you pasted a URL above)
+      placeholder: e.g. Saturday U15 S3 20 Over  or  North Shore U13/1
     validations:
-      required: true
+      required: false
 
   - type: input
     id: team
@@ -50,7 +67,7 @@ body:
     id: library_season
     attributes:
       label: Library Season Folder (optional)
-      description: Leave blank to auto-derive (e.g. "Summer 2026/27" -> "2026-27")
+      description: Leave blank to auto-derive from Season (e.g. "Summer 2026/27" -> "2026-27")
       placeholder: e.g. 2026-27
     validations:
       required: false

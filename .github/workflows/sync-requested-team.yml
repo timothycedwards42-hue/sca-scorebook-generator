@@ -5,9 +5,13 @@ on:
     types: [labeled]
   workflow_dispatch:
     inputs:
+      url:
+        description: 'Optional PlayCricket Stats URL (skips Org/Season/Grade dropdowns)'
+        required: false
+        type: string
       org:
         description: 'Organisation (Association or Club)'
-        required: true
+        required: false
         type: string
       season:
         description: 'PlayCricket Season (e.g. Summer 2026/27)'
@@ -16,7 +20,7 @@ on:
         type: string
       grade:
         description: 'Grade or Club Team'
-        required: true
+        required: false
         type: string
       team:
         description: 'Optional Team Filter (when selecting a whole Grade)'
@@ -66,6 +70,7 @@ jobs:
         continue-on-error: true
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
+          SYNC_URL: ${{ inputs.url }}
           SYNC_ORG: ${{ inputs.org }}
           SYNC_SEASON: ${{ inputs.season }}
           SYNC_GRADE: ${{ inputs.grade }}
@@ -119,6 +124,13 @@ jobs:
                 issue_number: context.issue.number,
                 state: 'closed'
               });
+            } else {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'approved'
+              }).catch(() => {});
             }
 
       - name: Fail job if sync failed

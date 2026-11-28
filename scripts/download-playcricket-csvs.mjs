@@ -27,6 +27,7 @@ const STATS_URL = 'https://play.cricket.com.au/stats?cat=ballByBall';
 
 function parseArgs(argv) {
   const args = {
+    url: '',
     org: '',
     season: '',
     grade: '',
@@ -48,6 +49,7 @@ function parseArgs(argv) {
     else if (a === '--list-only') args.listOnly = true;
     else if (a === '--overwrite') args.overwrite = true;
     else if (a === '--csv-only') args.csvOnly = true;
+    else if (a === '--url' && argv[i + 1]) args.url = argv[++i];
     else if (a === '--scrape-match' && argv[i + 1]) args.scrapeMatch = argv[++i];
     else if (a === '--org' && argv[i + 1]) args.org = argv[++i];
     else if (a === '--season' && argv[i + 1]) args.season = argv[++i];
@@ -94,14 +96,49 @@ function normalizeMatchText(s) {
   return String(s || '').toLowerCase().replace(/[\/\-–—]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function canonicalizeTokens(s) {
+  const cleaned = String(s || '')
+    .toLowerCase()
+    .replace(/\b(\d{1,2})[:.](\d{2})\s*(am|pm)\b/g, '$1$2$3')
+    .replace(/\b(\d{1,2})\s*(am|pm)\b/g, '$1$2')
+    .replace(/\bu\s+(\d+)\b/g, 'u$1')
+    .replace(/\bstage\s*(\d+)\b/g, 's$1')
+    .replace(/\bdiv(?:ision)?\s*(\d+)\b/g, 'd$1')
+    .replace(/\bovers\b/g, 'over')
+    .replace(/\bsat\b/g, 'saturday')
+    .replace(/\bsun\b/g, 'sunday')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+  return cleaned ? cleaned.split(/\s+/) : [];
+}
+
+function tokensMatchAll(candidateStr, queryStr) {
+  const qTokens = canonicalizeTokens(queryStr);
+  if (qTokens.length === 0) return false;
+  const cSet = new Set(canonicalizeTokens(candidateStr));
+  return qTokens.every(t => cSet.has(t));
+}
+
 function findMatchingOption(options, query) {
   const q = normalizeMatchText(query);
   if (!q) return null;
+  // 1. Exact normalized match
   const exact = options.find(o => normalizeMatchText(o) === q);
   if (exact) return exact;
+  // 2. Substring match
   const partial = options.filter(o => normalizeMatchText(o).includes(q));
   if (partial.length === 1) return partial[0];
   if (partial.length > 1) return partial[0];
+  // 3. Word-order-insensitive canonical token match (e.g. "S3 U15" or "U15 20 Overs" -> "Saturday 3.30pm U15 S3 20 Over")
+  const tokenMatches = options.filter(o => tokensMatchAll(o, query));
+  if (tokenMatches.length === 1) return tokenMatches[0];
+  if (tokenMatches.length > 1) {
+    // Prefer a unique option with the fewest extra tokens
+    const scored = tokenMatches
+      .map(o => ({ opt: o, len: canonicalizeTokens(o).length }))
+      .sort((a, b) => a.len - b.len);
+    if (scored[0].len < scored[1].len) return scored[0].opt;
+  }
   return null;
 }
 
@@ -462,10 +499,10 @@ async function main() {
     process.exit(0);
   }
 
-  if (!args.scrapeMatch) {
+  if (!args.scrapeMatch && !args.url) {
     args = await promptMissingArgs(args);
     if (!args.org || !args.season || (!args.grade && !args.team)) {
-      console.error('Error: --org, --season, and --grade (or --team) are required. Run with --help for usage.');
+      console.error('Error: --org, --season, and --grade (or --team) are required (or pass --url). Run with --help for usage.');
       process.exit(1);
     }
   }
@@ -500,41 +537,57 @@ async function main() {
   }
 
   try {
-    console.log(`Opening ${STATS_URL} ...`);
-    await page.goto(STATS_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    let chosenSeason = args.season || 'season';
+    let chosenThird = args.grade || args.team || 'team';
+    let thirdLabel = 'Grade';
 
-    // Confirm Ball by Ball is active; select it if needed
-    const orgInput = page.locator('#stats-org-search');
-    const orgReady = await orgInput.waitFor({ state: 'visible', timeout: 12000 }).then(() => true).catch(() => false);
-    if (!orgReady) {
-      await selectCustomDropdown(page, 'Category', 'Ball by Ball');
+    if (args.url) {
+      let targetUrl = args.url.trim();
+      try {
+        const u = new URL(targetUrl);
+        if (!u.searchParams.get('cat')) u.searchParams.set('cat', 'ballByBall');
+        targetUrl = u.toString();
+      } catch {}
+      console.log(`Opening direct stats URL: ${targetUrl} ...`);
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await waitForEnabled(page.getByRole('button', { name: 'Match', exact: true }), 20000);
+      await page.waitForTimeout(1000);
+    } else {
+      console.log(`Opening ${STATS_URL} ...`);
+      await page.goto(STATS_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+      // Confirm Ball by Ball is active; select it if needed
+      const orgInput = page.locator('#stats-org-search');
+      const orgReady = await orgInput.waitFor({ state: 'visible', timeout: 12000 }).then(() => true).catch(() => false);
+      if (!orgReady) {
+        await selectCustomDropdown(page, 'Category', 'Ball by Ball');
+      }
+
+      const chosenOrg = await selectOrganisation(page, args.org);
+      console.log(`Organisation: ${chosenOrg}`);
+      await page.waitForTimeout(800);
+
+      chosenSeason = await selectCustomDropdown(page, 'Season', args.season);
+      console.log(`Season:       ${chosenSeason}`);
+      await page.waitForTimeout(1400);
+
+      // Associations expose a "Grade" dropdown; Clubs expose a "Team" dropdown
+      const gradeBtn = page.getByRole('button', { name: 'Grade', exact: true });
+      const teamBtn = page.getByRole('button', { name: 'Team', exact: true });
+      const hasTeamBtn = await teamBtn.isVisible().catch(() => false);
+      const hasGradeBtn = await gradeBtn.isVisible().catch(() => false);
+      if (hasTeamBtn && !hasGradeBtn) thirdLabel = 'Team';
+
+      const thirdQuery = thirdLabel === 'Team' ? (args.team || args.grade) : (args.grade || args.team);
+      chosenThird = await selectCustomDropdown(page, thirdLabel, thirdQuery, args.gradeIndex);
+      console.log(`${(thirdLabel + ':').padEnd(14)}${chosenThird}`);
+      await page.waitForTimeout(1000);
     }
 
-    const chosenOrg = await selectOrganisation(page, args.org);
-    console.log(`Organisation: ${chosenOrg}`);
-    await page.waitForTimeout(800);
-
-    const chosenSeason = await selectCustomDropdown(page, 'Season', args.season);
-    console.log(`Season:       ${chosenSeason}`);
-    await page.waitForTimeout(1400);
-
-    // Associations expose a "Grade" dropdown; Clubs expose a "Team" dropdown
-    const gradeBtn = page.getByRole('button', { name: 'Grade', exact: true });
-    const teamBtn = page.getByRole('button', { name: 'Team', exact: true });
-    let thirdLabel = 'Grade';
-    const hasTeamBtn = await teamBtn.isVisible().catch(() => false);
-    const hasGradeBtn = await gradeBtn.isVisible().catch(() => false);
-    if (hasTeamBtn && !hasGradeBtn) thirdLabel = 'Team';
-
-    const thirdQuery = thirdLabel === 'Team' ? (args.team || args.grade) : (args.grade || args.team);
-    const chosenThird = await selectCustomDropdown(page, thirdLabel, thirdQuery, args.gradeIndex);
-    console.log(`${(thirdLabel + ':').padEnd(14)}${chosenThird}`);
-    await page.waitForTimeout(1000);
-
     const allMatches = await listMatchesInDropdown(page);
-    const matchFilter = (thirdLabel === 'Grade' && args.team) ? args.team : '';
+    const matchFilter = ((args.url || thirdLabel === 'Grade') && args.team) ? args.team : '';
     const matches = matchFilter
-      ? allMatches.filter(m => normalizeMatchText(m).includes(normalizeMatchText(matchFilter)))
+      ? allMatches.filter(m => normalizeMatchText(m).includes(normalizeMatchText(matchFilter)) || tokensMatchAll(m, matchFilter))
       : allMatches;
 
     console.log(`Found ${matches.length} matching game(s)${matchFilter ? ` for "${matchFilter}"` : ''} (out of ${allMatches.length} available).`);
