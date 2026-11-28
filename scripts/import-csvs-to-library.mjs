@@ -394,9 +394,10 @@ function main() {
         return set;
       };
       const overlap = (surnames, text) => {
-        const low = String(text || '').toLowerCase();
+        // Match only against the Batting section (before Bowling/Fielders) so Stage 1 all-rounders don't tie!
+        const batOnly = String(text || '').split(/\r?\n[^\r\n]+\bBowling\b/i)[0].toLowerCase();
         let hits = 0;
-        for (const s of surnames) if (low.includes(s)) hits++;
+        for (const s of surnames) if (batOnly.includes(s)) hits++;
         return hits;
       };
       const b1S = csvSurnames(b1.rows);
