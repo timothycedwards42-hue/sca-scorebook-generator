@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "id": "2026-27/saturday-3-30pm-u15-s3-20-over/rd03-vs-u14-15-mixed-clubs-26-09-2026",
+  "id": "2026-27/ldcc-u14-15-inglis/rd02-vs-u14-15-mixed-clubs-26-09-2026",
   "matchId": "2b01d8ff-b0d0-4184-b38a-9ce9bed1d463",
-  "title": "Rd 3: LDCC U14/15 Inglis vs U14/15 MIXED CLUBS (26/09/2026)",
+  "title": "Rd 2: LDCC U14/15 Inglis vs U14/15 MIXED CLUBS (26/09/2026)",
   "season": "2026-27",
-  "team": "Saturday 3.30pm U15 S3 20 Over",
+  "team": "LDCC U14/15 Inglis",
   "opponent": "U14/15 MIXED CLUBS",
   "savedAt": "2026-11-28T09:54:12.079Z",
   "match": {
@@ -13,7 +13,7 @@
     "grade": "Saturday 3.30pm U15 S3 20 Over",
     "venue": "",
     "toss": "",
-    "round": "3",
+    "round": "2",
     "date": "26/09/2026",
     "result": "LDCC U14/15 Inglis won by 5 wickets",
     "scorers": "PlayCricket Auto-Sync"

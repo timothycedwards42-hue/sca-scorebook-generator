@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "2026-27/saturday-3-30pm-u15-s3-20-over/rd11-vs-ldcc-u14-15-inglis-07-11-2026",
+  "id": "2026-27/ldcc-u14-15-inglis/rd05-vs-ns-u15-mixed-thomas-07-11-2026",
   "matchId": "895d390b-f4e4-42f6-98e3-98d0d7c448e3",
-  "title": "Rd 11: NS U15 Mixed Thomas vs LDCC U14/15 Inglis (07/11/2026)",
+  "title": "Rd 5: NS U15 Mixed Thomas vs LDCC U14/15 Inglis (07/11/2026)",
   "season": "2026-27",
-  "team": "Saturday 3.30pm U15 S3 20 Over",
-  "opponent": "LDCC U14/15 Inglis",
+  "team": "LDCC U14/15 Inglis",
+  "opponent": "NS U15 Mixed Thomas",
   "savedAt": "2026-11-28T09:54:12.091Z",
   "match": {
     "comp": "",
@@ -13,7 +13,7 @@
     "grade": "Saturday 3.30pm U15 S3 20 Over",
     "venue": "",
     "toss": "",
-    "round": "11",
+    "round": "5",
     "date": "07/11/2026",
     "result": "LDCC U14/15 Inglis won by 37 runs",
     "scorers": "PlayCricket Auto-Sync"

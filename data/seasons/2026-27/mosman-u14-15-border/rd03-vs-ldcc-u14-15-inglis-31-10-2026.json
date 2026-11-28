@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "id": "2026-27/saturday-3-30pm-u15-s3-20-over/rd10-vs-ldcc-u14-15-inglis-31-10-2026",
+  "id": "2026-27/mosman-u14-15-border/rd03-vs-ldcc-u14-15-inglis-31-10-2026",
   "matchId": "330b0790-c1b1-4ab4-9407-2ae9e162fc8d",
-  "title": "Rd 10: Mosman U14/15 Border vs LDCC U14/15 Inglis (31/10/2026)",
+  "title": "Rd 3: Mosman U14/15 Border vs LDCC U14/15 Inglis (31/10/2026)",
   "season": "2026-27",
-  "team": "Saturday 3.30pm U15 S3 20 Over",
+  "team": "Mosman U14/15 Border",
   "opponent": "LDCC U14/15 Inglis",
   "savedAt": "2026-11-28T09:54:12.089Z",
   "match": {
@@ -13,7 +13,7 @@
     "grade": "Saturday 3.30pm U15 S3 20 Over",
     "venue": "",
     "toss": "",
-    "round": "10",
+    "round": "3",
     "date": "31/10/2026",
     "result": "LDCC U14/15 Inglis won by 36 runs",
     "scorers": "PlayCricket Auto-Sync"

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "id": "2026-27/saturday-3-30pm-u15-s3-20-over/rd18-vs-mosman-u14-15-border-28-11-2026",
+  "id": "2026-27/u14-15-mixed-clubs/rd07-vs-mosman-u14-15-border-28-11-2026",
   "matchId": "7f8fa550-e92b-4727-a146-a6fff2eeab80",
-  "title": "Rd 18: U14/15 MIXED CLUBS vs Mosman U14/15 Border (28/11/2026)",
+  "title": "Rd 7: U14/15 MIXED CLUBS vs Mosman U14/15 Border (28/11/2026)",
   "season": "2026-27",
-  "team": "Saturday 3.30pm U15 S3 20 Over",
+  "team": "U14/15 MIXED CLUBS",
   "opponent": "Mosman U14/15 Border",
   "savedAt": "2026-11-28T09:54:12.102Z",
   "match": {
@@ -13,7 +13,7 @@
     "grade": "Saturday 3.30pm U15 S3 20 Over",
     "venue": "",
     "toss": "",
-    "round": "18",
+    "round": "7",
     "date": "28/11/2026",
     "result": "U14/15 MIXED CLUBS won by 7 wickets",
     "scorers": "PlayCricket Auto-Sync"

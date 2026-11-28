@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "2026-27/saturday-3-30pm-u15-s3-20-over/rd15-vs-u14-15-mixed-clubs-21-11-2026",
+  "id": "2026-27/u14-15-mixed-clubs/rd06-vs-ns-u15-mixed-avendano-21-11-2026",
   "matchId": "ae38e52f-71ab-4925-9101-c53e4bbaa953",
-  "title": "Rd 15: U14/15 MIXED CLUBS vs NS U15 Mixed Avendano (21/11/2026)",
+  "title": "Rd 6: U14/15 MIXED CLUBS vs NS U15 Mixed Avendano (21/11/2026)",
   "season": "2026-27",
-  "team": "Saturday 3.30pm U15 S3 20 Over",
-  "opponent": "U14/15 MIXED CLUBS",
+  "team": "U14/15 MIXED CLUBS",
+  "opponent": "NS U15 Mixed Avendano",
   "savedAt": "2026-11-28T09:54:12.098Z",
   "match": {
     "comp": "",
@@ -13,7 +13,7 @@
     "grade": "Saturday 3.30pm U15 S3 20 Over",
     "venue": "",
     "toss": "",
-    "round": "15",
+    "round": "6",
     "date": "21/11/2026",
     "result": "NS U15 Mixed Avendano won by 49 runs",
     "scorers": "PlayCricket Auto-Sync"

@@ -21,10 +21,11 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
 
 function parseArgs(argv) {
-  const args = { dir: '', season: '', team: '', comp: '', club: '', grade: '', forceTeam: false, overwrite: false };
+  const args = { dir: '', season: '', team: '', comp: '', club: '', grade: '', forceTeam: false, splitByTeam: false, overwrite: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--force-team') args.forceTeam = true;
+    else if (a === '--split-by-team') args.splitByTeam = true;
     else if (a === '--overwrite') args.overwrite = true;
     else if (a === '--dir' && argv[i + 1]) args.dir = argv[++i];
     else if (a === '--season' && argv[i + 1]) args.season = argv[++i];
@@ -36,8 +37,7 @@ function parseArgs(argv) {
   return args;
 }
 
-function inferCommonTeamFromCsvs(srcDir, csvFiles, fallbackTeam) {
-  if (csvFiles.length < 2) return fallbackTeam;
+function getTeamCountsFromCsvs(srcDir, csvFiles) {
   const counts = {};
   for (const fileName of csvFiles) {
     const raw = fs.readFileSync(path.join(srcDir, fileName), 'utf8').replace(/^\uFEFF/, '');
@@ -53,6 +53,26 @@ function inferCommonTeamFromCsvs(srcDir, csvFiles, fallbackTeam) {
       counts[team] = (counts[team] || 0) + 1;
     }
   }
+  return counts;
+}
+
+function detectWholeGradeSplit(srcDir, csvFiles) {
+  if (csvFiles.length < 2) return false;
+  const counts = getTeamCountsFromCsvs(srcDir, csvFiles);
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (entries.length < 3) return false;
+  // If no single team appears in at least 75% of the CSVs, this is a whole-grade download
+  return entries[0][1] / csvFiles.length < 0.75;
+}
+
+function parseDateMs(d) {
+  const m = String(d || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? new Date(`${m[3]}-${m[2]}-${m[1]}T00:00:00Z`).getTime() : 0;
+}
+
+function inferCommonTeamFromCsvs(srcDir, csvFiles, fallbackTeam) {
+  if (csvFiles.length < 2) return fallbackTeam;
+  const counts = getTeamCountsFromCsvs(srcDir, csvFiles);
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   if (sorted.length > 0 && sorted[0][1] >= 2 && (sorted.length === 1 || sorted[0][1] > sorted[1][1])) {
     const inferred = sorted[0][0];
@@ -296,17 +316,60 @@ function main() {
     process.exit(1);
   }
 
-  if (!args.forceTeam) {
+  const shouldSplitByTeam = !args.forceTeam && (args.splitByTeam || detectWholeGradeSplit(srcDir, csvFiles));
+  if (!args.forceTeam && !shouldSplitByTeam) {
     args.team = inferCommonTeamFromCsvs(srcDir, csvFiles, args.team);
+  }
+  if (shouldSplitByTeam) {
+    console.log(`Detected whole-grade download (${csvFiles.length} games across multiple teams) — splitting into individual team folders.`);
   }
 
   const seasonSlug = slugify(args.season, 'season');
   const teamSlug = slugify(args.team, 'team');
   const destDir = path.join(repoRoot, 'data', 'seasons', seasonSlug, teamSlug);
-  fs.mkdirSync(destDir, { recursive: true });
+  if (!shouldSplitByTeam) fs.mkdirSync(destDir, { recursive: true });
 
   let imported = 0;
   let skippedExisting = 0;
+  const splitBuckets = new Map();
+
+  const writeOrEnrichGame = (targetDir, targetFileName, payloadObj, sidecarObj, hasSc) => {
+    fs.mkdirSync(targetDir, { recursive: true });
+    const destPath = path.join(targetDir, targetFileName);
+    if (!args.overwrite && fs.existsSync(destPath)) {
+      if (sidecarObj && hasSc) {
+        try {
+          const existing = JSON.parse(fs.readFileSync(destPath, 'utf8'));
+          const needsInn2 = Boolean((existing.raw?.innings2?.csv || '').trim());
+          const alreadyEnriched = Boolean((existing.raw?.innings1?.scorecard || '').trim())
+            && (!needsInn2 || Boolean((existing.raw?.innings2?.scorecard || '').trim()));
+          if (!alreadyEnriched) {
+            existing.matchId = sidecarObj.matchId || existing.matchId || '';
+            if (sidecarObj.result && existing.match && !existing.match.result) existing.match.result = sidecarObj.result;
+            if (existing.raw?.innings1) {
+              existing.raw.innings1.scorecard = payloadObj.raw.innings1.scorecard;
+              if (!existing.raw.innings1.playhqText) existing.raw.innings1.playhqText = payloadObj.raw.innings1.playhqText;
+            }
+            if (existing.raw?.innings2) {
+              existing.raw.innings2.scorecard = payloadObj.raw.innings2.scorecard;
+              if (!existing.raw.innings2.playhqText) existing.raw.innings2.playhqText = payloadObj.raw.innings2.playhqText;
+            }
+            existing.savedAt = new Date().toISOString();
+            fs.writeFileSync(destPath, JSON.stringify(existing, null, 2) + '\n', 'utf8');
+            console.log(`Enriched existing game with Scorecard & Ball-by-Ball: ${path.relative(repoRoot, destPath)}`);
+            imported++;
+            return;
+          }
+        } catch {}
+      }
+      console.log(`[NOTICE] Already in Match Library — ignored: ${path.relative(repoRoot, destPath)}`);
+      skippedExisting++;
+      return;
+    }
+    fs.writeFileSync(destPath, JSON.stringify(payloadObj, null, 2) + '\n', 'utf8');
+    console.log(`Imported: ${path.relative(repoRoot, destPath)} (${payloadObj.title})`);
+    imported++;
+  };
 
   for (const fileName of csvFiles) {
     const fullPath = path.join(srcDir, fileName);
@@ -471,45 +534,56 @@ function main() {
       }
     };
 
-    const destPath = path.join(destDir, jsonFileName);
-    if (!args.overwrite && fs.existsSync(destPath)) {
-      // If existing game has no scorecard yet and we now have a sidecar, enrich it without clobbering existing metadata!
-      if (sidecar && (scInn1.scorecard || scInn2.scorecard)) {
-        try {
-          const existing = JSON.parse(fs.readFileSync(destPath, 'utf8'));
-          const needsInn2 = Boolean((existing.raw?.innings2?.csv || '').trim());
-          const alreadyEnriched = Boolean((existing.raw?.innings1?.scorecard || '').trim())
-            && (!needsInn2 || Boolean((existing.raw?.innings2?.scorecard || '').trim()));
-          if (!alreadyEnriched) {
-            existing.matchId = sidecar.matchId || existing.matchId || '';
-            if (sidecar.result && existing.match && !existing.match.result) existing.match.result = sidecar.result;
-            if (existing.raw?.innings1) {
-              existing.raw.innings1.scorecard = payload.raw.innings1.scorecard;
-              if (!existing.raw.innings1.playhqText) existing.raw.innings1.playhqText = payload.raw.innings1.playhqText;
-            }
-            if (existing.raw?.innings2) {
-              existing.raw.innings2.scorecard = payload.raw.innings2.scorecard;
-              if (!existing.raw.innings2.playhqText) existing.raw.innings2.playhqText = payload.raw.innings2.playhqText;
-            }
-            existing.savedAt = new Date().toISOString();
-            fs.writeFileSync(destPath, JSON.stringify(existing, null, 2) + '\n', 'utf8');
-            console.log(`Enriched existing game with Scorecard & Ball-by-Ball: ${path.relative(repoRoot, destPath)}`);
-            imported++;
-            continue;
-          }
-        } catch {}
+    if (shouldSplitByTeam) {
+      for (const [myTeam, oppTeam] of [[team1, team2], [team2, team1]]) {
+        if (!myTeam || /^opponent$/i.test(myTeam)) continue;
+        if (!splitBuckets.has(myTeam)) splitBuckets.set(myTeam, []);
+        splitBuckets.get(myTeam).push({
+          payload,
+          sidecar,
+          hasSc: Boolean(scInn1.scorecard || scInn2.scorecard),
+          team1,
+          team2,
+          myTeam,
+          oppTeam: oppTeam || 'Opponent',
+          date,
+          fileName
+        });
       }
-      console.log(`[NOTICE] Already in Match Library — ignored: ${path.relative(repoRoot, destPath)}`);
-      skippedExisting++;
       continue;
     }
-    fs.writeFileSync(destPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
-    console.log(`Imported: ${path.relative(repoRoot, destPath)} (${title})`);
-    imported++;
+
+    writeOrEnrichGame(destDir, jsonFileName, payload, sidecar, Boolean(scInn1.scorecard || scInn2.scorecard));
+  }
+
+  if (shouldSplitByTeam) {
+    for (const [teamName, entries] of splitBuckets.entries()) {
+      entries.sort((a, b) => parseDateMs(a.date) - parseDateMs(b.date) || a.fileName.localeCompare(b.fileName));
+      const tSlug = slugify(teamName, 'team');
+      const tDir = path.join(repoRoot, 'data', 'seasons', seasonSlug, tSlug);
+      entries.forEach((entry, idx) => {
+        const rd = String(idx + 1);
+        const rdTag = `rd${rd.padStart(2, '0')}`;
+        const oppS = slugify(entry.oppTeam, 'opponent');
+        const dtS = entry.date ? `-${slugify(entry.date, '')}` : '';
+        const fn = `${rdTag}-vs-${oppS}${dtS}.json`;
+        const copy = JSON.parse(JSON.stringify(entry.payload));
+        copy.id = `${seasonSlug}/${tSlug}/${fn.replace(/\.json$/, '')}`;
+        copy.team = teamName;
+        copy.opponent = entry.oppTeam;
+        copy.title = `Rd ${rd}: ${entry.team1} vs ${entry.team2}${entry.date ? ` (${entry.date})` : ''}`;
+        copy.match.round = rd;
+        writeOrEnrichGame(tDir, fn, copy, entry.sidecar, entry.hasSc);
+      });
+    }
   }
 
   execFileSync(process.execPath, [path.join(__dirname, 'rebuild-index.mjs')], { stdio: 'inherit' });
-  console.log(`\nDone! Imported: ${imported}, Ignored (already in library): ${skippedExisting} in data/seasons/${seasonSlug}/${teamSlug}/`);
+  if (shouldSplitByTeam) {
+    console.log(`\nDone! Imported: ${imported}, Ignored (already in library): ${skippedExisting} across ${splitBuckets.size} team(s) in data/seasons/${seasonSlug}/`);
+  } else {
+    console.log(`\nDone! Imported: ${imported}, Ignored (already in library): ${skippedExisting} in data/seasons/${seasonSlug}/${teamSlug}/`);
+  }
   if (skippedExisting > 0) {
     console.log(`[NOTICE] ${skippedExisting} game(s) already existed in the Match Library and were ignored.`);
   }

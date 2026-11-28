@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "id": "2026-27/saturday-3-30pm-u15-s3-20-over/rd16-vs-mosman-u14-15-border-21-11-2026",
+  "id": "2026-27/ns-u15-mixed-thomas/rd06-vs-mosman-u14-15-border-21-11-2026",
   "matchId": "4ea3ff30-29b1-45e3-a2d6-b9ee0296baf3",
-  "title": "Rd 16: NS U15 Mixed Thomas vs Mosman U14/15 Border (21/11/2026)",
+  "title": "Rd 6: NS U15 Mixed Thomas vs Mosman U14/15 Border (21/11/2026)",
   "season": "2026-27",
-  "team": "Saturday 3.30pm U15 S3 20 Over",
+  "team": "NS U15 Mixed Thomas",
   "opponent": "Mosman U14/15 Border",
   "savedAt": "2026-11-28T09:54:12.100Z",
   "match": {
@@ -13,7 +13,7 @@
     "grade": "Saturday 3.30pm U15 S3 20 Over",
     "venue": "",
     "toss": "",
-    "round": "16",
+    "round": "6",
     "date": "21/11/2026",
     "result": "NS U15 Mixed Thomas won by 6 wickets",
     "scorers": "PlayCricket Auto-Sync"

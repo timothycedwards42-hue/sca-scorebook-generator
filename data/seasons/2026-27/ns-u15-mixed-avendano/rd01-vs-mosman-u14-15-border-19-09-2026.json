@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "id": "2026-27/saturday-3-30pm-u15-s3-20-over/rd02-vs-mosman-u14-15-border-19-09-2026",
+  "id": "2026-27/ns-u15-mixed-avendano/rd01-vs-mosman-u14-15-border-19-09-2026",
   "matchId": "0666bbe4-93af-421b-9605-d9f0082aafc2",
-  "title": "Rd 2: Mosman U14/15 Border vs NS U15 Mixed Avendano (19/09/2026)",
+  "title": "Rd 1: Mosman U14/15 Border vs NS U15 Mixed Avendano (19/09/2026)",
   "season": "2026-27",
-  "team": "Saturday 3.30pm U15 S3 20 Over",
+  "team": "NS U15 Mixed Avendano",
   "opponent": "Mosman U14/15 Border",
   "savedAt": "2026-11-28T09:54:12.077Z",
   "match": {
@@ -13,7 +13,7 @@
     "grade": "Saturday 3.30pm U15 S3 20 Over",
     "venue": "",
     "toss": "",
-    "round": "2",
+    "round": "1",
     "date": "19/09/2026",
     "result": "NS U15 Mixed Avendano won by 12 runs",
     "scorers": "PlayCricket Auto-Sync"

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "id": "2026-27/saturday-3-30pm-u15-s3-20-over/rd08-vs-ldcc-u14-15-inglis-24-10-2026",
+  "id": "2026-27/ns-u15-mixed-avendano/rd04-vs-ldcc-u14-15-inglis-24-10-2026",
   "matchId": "6016f728-5c13-4925-8e75-4ff288ff6927",
-  "title": "Rd 8: LDCC U14/15 Inglis vs NS U15 Mixed Avendano (24/10/2026)",
+  "title": "Rd 4: LDCC U14/15 Inglis vs NS U15 Mixed Avendano (24/10/2026)",
   "season": "2026-27",
-  "team": "Saturday 3.30pm U15 S3 20 Over",
+  "team": "NS U15 Mixed Avendano",
   "opponent": "LDCC U14/15 Inglis",
   "savedAt": "2026-11-28T09:54:12.086Z",
   "match": {
@@ -13,7 +13,7 @@
     "grade": "Saturday 3.30pm U15 S3 20 Over",
     "venue": "",
     "toss": "",
-    "round": "8",
+    "round": "4",
     "date": "24/10/2026",
     "result": "NS U15 Mixed Avendano won by 24 runs",
     "scorers": "PlayCricket Auto-Sync"
